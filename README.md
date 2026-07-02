@@ -13,7 +13,7 @@ C:\西井\06AI\sync-codex-skills-to-leander.ps1
 计划任务：
 
 ```text
-Sync Leander PPT Skill To GitHub
+Sync Leander Skills To GitHub
 ```
 
 当前设置为每周五 18:00 自动同步。电脑需要开机且网络可用，PowerShell 窗口不需要一直打开。
