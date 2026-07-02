@@ -1,0 +1,35 @@
+{
+  "chapterId": "ch02-core-components",
+  "title": "Core Components",
+  "productionRole": "Prove reusable editable PPT components for common report pages.",
+  "visibleInPpt": false,
+  "pages": [
+    {
+      "pageId": "p03",
+      "title": "Three Metric Cards",
+      "takeaway": "Metric cards work when the number, label, evidence, and caveat are visible together.",
+      "visualIntent": "three-metric-cards",
+      "componentSource": "ppt-component",
+      "dataBoundary": "sample",
+      "assetNeed": "none"
+    },
+    {
+      "pageId": "p04",
+      "title": "Big Word + Card Matrix",
+      "takeaway": "A big-word matrix turns whitespace into a memory anchor with supporting evidence.",
+      "visualIntent": "big-word-card-matrix",
+      "componentSource": "ppt-component",
+      "dataBoundary": "none",
+      "assetNeed": "none"
+    },
+    {
+      "pageId": "p05",
+      "title": "Four-Column Mechanism",
+      "takeaway": "Four-column pages should balance explanation, icon, and conclusion in each lane.",
+      "visualIntent": "four-column-mechanism",
+      "componentSource": "ppt-component",
+      "dataBoundary": "none",
+      "assetNeed": "none"
+    }
+  ]
+}

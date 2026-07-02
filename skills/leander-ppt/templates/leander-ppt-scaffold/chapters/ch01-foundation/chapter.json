@@ -1,0 +1,26 @@
+{
+  "chapterId": "ch01-foundation",
+  "title": "Foundation",
+  "productionRole": "Set the scaffold tone and prove the section divider pattern.",
+  "visibleInPpt": false,
+  "pages": [
+    {
+      "pageId": "p01",
+      "title": "Leander PPT",
+      "takeaway": "This scaffold produces editable PPTX from staged outline, theme, components, and QA.",
+      "visualIntent": "minimal-cover-right-title",
+      "componentSource": "ppt-component",
+      "dataBoundary": "none",
+      "assetNeed": "none"
+    },
+    {
+      "pageId": "p02",
+      "title": "Componentized Expression",
+      "takeaway": "Recurring slide problems should become reusable layouts, components, and QA rules.",
+      "visualIntent": "section-divider-big-number",
+      "componentSource": "ppt-component",
+      "dataBoundary": "none",
+      "assetNeed": "none"
+    }
+  ]
+}

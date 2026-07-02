@@ -1,0 +1,10 @@
+{
+  "name": "leander-ppt",
+  "version": "0.2.0",
+  "category": "Presentation / Internal Reporting",
+  "description": "Turn source material (PPTX, Word, outlines, scripts, notes) into a formal editable PPTX deck through the Leander PPT workflow for internal sharing, management reports, product introductions, presales/customer demos, training, and project reviews. Pipeline: brief -> outline -> theme/template -> anchor sample PPTX -> full deck -> rendered visual QA. Uses progressive disclosure through references/, reusable themes/components, and strict self-check gates. No audio, no recording, no React, no automatic HTML-to-PPT conversion.",
+  "compat": [
+    "codex",
+    "claude-code"
+  ]
+}

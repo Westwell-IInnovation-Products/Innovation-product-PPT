@@ -1,0 +1,8 @@
+interface:
+  display_name: "Leander PPT"
+  short_description: "用标准流程生成、打磨和修复可编辑 PPTX，支持章节隔离、组件库和渲染 QA。"
+  brand_color: "#C51516"
+  default_prompt: "请使用 $leander-ppt，基于这份材料先生成 brief 和标准化大纲，不要直接做完整 PPT。"
+
+policy:
+  allow_implicit_invocation: true
