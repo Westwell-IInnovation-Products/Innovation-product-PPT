@@ -35,72 +35,52 @@ Before producing any PPTX page, confirm these items exist:
 
 - `brief.md` and `outline.md`.
 - Approved or explicitly chosen theme/template.
-- Deck project scaffold with `theme/`, `components/`, `chapters/`, `deck.gen.*`, and `output/preview/`.
-- For multi-chapter decks, one physical chapter folder per outline chapter.
-- `chapter.json` for each chapter, generated from the approved outline.
+- Deck project scaffold with `theme/`, `components/`, `pages/`, `tools/deck.js`, `deck.config.js`, and `output/`.
+- One page folder per outline page: `pages/<id>/{page.js, page.json, qa.md, out/}`.
+- `page.json` for each page (the per-page contract), generated from the approved outline.
 - Anchor sample PPTX and rendered PNGs, unless the user is only asking for outline/theme work.
 
 If any item is missing, create or request it before producing slides. Do not silently continue with a one-off script.
 
-## Physical Chapter Isolation
+## Page Isolation (current model)
 
-Full-deck production should use physical chapter folders whenever a deck has more than one logical chapter or may use subagents.
-
-Recommended structure:
+The isolation unit is the **per-page folder** `pages/<id>/{page.js, page.json, qa.md, out/}`. A "chapter" or "batch" is a *logical grouping* of those page folders (by outline chapter) used for production sequencing and review — not a separate folder tree. Page order = sorted folder names under `pages/`.
 
 ```text
-chapters/
-+-- ch01-background/
-|   +-- chapter.json
-|   +-- pages/
-|   |   +-- p01-cover.js
-|   |   +-- p02-context.js
-|   +-- assets/
-|   +-- external-renders/
-|   +-- qa.md
-+-- ch02-product/
-    +-- chapter.json
-    +-- pages/
+pages/
++-- p01-cover/      page.js · page.json · qa.md · out/p01.png
++-- p02-context/    page.js · page.json · qa.md · out/p02.png
++-- p03-product/    ...
 ```
 
-The `Chapter ID` is a production-control ID. It may or may not appear as a visible chapter divider in the final PPT.
+Each page folder is the production-control unit. `page.json` is its local contract (`id, title, component, dataBoundary, assetNeed`); `outline.md` owns the global story and each page's takeaway/visual intent. Without per-page folders, minimum-unit repair and the `tools/deck.js` QA gate are not available.
 
-Physical chapter isolation is required for any deck with more than one logical chapter. It is not only for parallel production. Without physical chapter folders and `chapter.json`, minimum-unit repair is not considered available.
+> Legacy: earlier scaffolds used `chapters/<id>/chapter.json` + a monolithic `deck.gen.js`. That is superseded by the per-page model; "chapter/batch" below means a group of page folders, and `chapter.json` is optional (its per-page role is covered by `page.json`).
 
 ## Local Truth Source
 
-Each physical chapter should have a `chapter.json`. It is the local truth source for that chapter, similar in purpose to `narrations.ts` in `web-video-presentation`, but adapted to PPT.
+In the per-page model the local truth source is each page's `page.json` (plus that page's row in `outline.md` for takeaway/visual intent). It plays the role `chapter.json` did in the legacy model.
 
-Required fields:
+`page.json` fields:
 
 ```json
 {
-  "chapterId": "ch01-background",
-  "title": "Background",
-  "productionRole": "Introduce why this deck matters",
-  "visibleInPpt": false,
-  "pages": [
-    {
-      "pageId": "p01",
-      "title": "Opening",
-      "takeaway": "One sentence the audience should remember.",
-      "visualIntent": "minimal-cover-right-title",
-      "componentSource": "ppt-component",
-      "dataBoundary": "none",
-      "assetNeed": "none"
-    }
-  ]
+  "id": "p01",
+  "title": "Opening",
+  "component": "cover",
+  "dataBoundary": "none",
+  "assetNeed": "none"
 }
 ```
 
 Rules:
 
-- `outline.md` owns the global story.
-- `chapter.json` owns the local page contract for a chapter.
-- Page files implement `chapter.json`; they should not silently change title, takeaway, visual intent, or data boundary.
-- QA and repair reports should refer to `chapterId + pageId`.
-- If the global outline changes, update affected `chapter.json` files before production continues.
-- If a page changes visual form during implementation, update `chapter.json` first or record the approved reason in chapter QA.
+- `outline.md` owns the global story and each page's takeaway + visual intent.
+- `page.json` owns the local build contract for a page (component source, data boundary, asset need).
+- `page.js` implements them; it should not silently change title, takeaway, visual intent, or data boundary.
+- QA and repair reports should refer to the `pageId` (`pages/<id>/`).
+- If the global outline changes, update the affected `page.json` / `page.js` before production continues.
+- If a page changes visual form during implementation, update `page.json` (and the outline row) first, or record the approved reason in the page's `qa.md`.
 
 ## Anchor Before Scale
 
@@ -161,8 +141,8 @@ Parallel work is allowed only after anchor sample approval.
 
 Each subagent prompt must include:
 
-- The exact chapter/page range from `outline.md`.
-- The physical chapter folder path and `chapter.json`.
+- The exact page range from `outline.md` (the batch of pages assigned).
+- The page-folder paths (`pages/<id>/`) and each page's `page.json`.
 - `references/SLIDE-CRAFT.md` path.
 - `references/VISUAL-COMPOSITION.md` path when visual/component decisions are needed.
 - `references/QA.md` path.
@@ -210,7 +190,7 @@ Subagents must not own:
 
 When feedback identifies slide problems, repair the smallest affected unit.
 
-1. Locate the slide number(s), `chapterId`, `pageId`, and generator/function/object that produced them.
+1. Locate the slide number(s) and page id(s) (`pages/<id>/`), and the `page.js` that produced them.
 2. Classify the issue:
    - content error
    - layout/clipping/overlap
@@ -251,9 +231,9 @@ If a defect comes from a reusable component:
 
 ## Isolation Rules
 
-- Use physical chapter folders for long or multi-chapter decks.
-- Keep `chapter.json` in sync with `outline.md`.
-- Keep page-specific logic in page functions or clearly named slide blocks.
+- Use per-page folders (`pages/<id>/`) for every deck; group them into batches/chapters logically for long decks.
+- Keep each `page.json` in sync with `outline.md`.
+- Keep page-specific logic in its `page.js` build function, not in shared files.
 - Keep theme tokens separate from page content.
 - Keep component helpers reusable and generic.
 - Import approved theme and components from scaffold files; do not redefine a new palette or layout system inside a page script.
@@ -267,7 +247,7 @@ If a defect comes from a reusable component:
 Before reporting any batch/chapter/page as complete:
 
 - [ ] The unit matches its `outline.md` slice.
-- [ ] The unit matches its `chapter.json` local truth source.
+- [ ] The unit matches its `page.json` contract and its `outline.md` row.
 - [ ] The visual form matches the page relationship, not just the title.
 - [ ] The unit uses approved theme/template and anchor style.
 - [ ] The unit imports scaffold theme/components instead of using a one-off local style.

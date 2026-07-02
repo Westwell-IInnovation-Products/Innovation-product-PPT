@@ -51,11 +51,41 @@ Then choose the page form.
 | Relationship | Prefer |
 |---|---|
 | Sequence / process | horizontal or circular flow with arrows |
-| Hierarchy / architecture | stack, hub-and-spoke, layered blocks |
+| System architecture (what it's made of) | `archLayered` (Type A): top-down layered bands + module rows |
+| Scenario architecture (how it collaborates) | `archDualEngine` (Type B): dual core ✕ + wings + AI base |
+| Hierarchy / org / decomposition | `orgTree` (2-level tree + grandchild chips) |
+| Network / deployment topology | `topology` (cloud-edge-device nodes + links) |
+| Geographic / site coverage | `coverageMap` (region + hub + plotted sites + list) |
+| Vertical milestone timeline | `timelineVertical` (axis + dated cards) |
+| Numbered narrative points | `numberedList` (big index + title + desc) |
+| 2×2 positioning | `quadrantMatrix` (axes + quadrants + plotted dots) |
+| Priority / importance tiers | `priorityPyramid` (apex = most important) |
+| Conversion / narrowing | `funnel` (narrowing bands + values) |
+| Percentage outcomes | `ringStats` (rings + centered %) |
+| A vs B decision | `twoOptionCompare` (two columns + VS + recommended) |
+| Image / screenshot showcase | `imageGallery` (framed cells + captions) |
+| Annotated screenshot / diagram | `annotatedDiagram` (image + numbered markers + legend) |
+| Key statement / testimonial | `quoteHighlight` (big centered pull-quote) |
+| Schedule / project plan | `gantt` (tasks × periods + bars + milestones) |
+| Role-based process | `swimlaneProcess` (role lanes × phase columns) |
+| Value / process chain | `valueChain` (overlapping chevrons) |
+| Contribution / value bridge | `waterfall` (start + deltas + end) |
+| Intensity matrix (risk/priority) | `heatmap` (tinted cells + legend) |
+| Multi-dim capability compare | `radar` (native chart, marker style) |
+| Set overlap / intersection | `venn` (translucent circles) |
+| Trend over time | `lineChart` (native) |
+| Category comparison | `barChart` (native) |
+| Composition / share | `pieBreakdown` (native doughnut + list) |
 | Four parallel values | four-column mechanism |
+| Parallel capabilities (5-6) | `featureGrid` (icon feature cards) |
+| Three products / pillars | `pillarTrio` (icon circle + name + desc + sub-points) |
 | Two-sided tradeoff | split comparison or before/after |
+| Option / competitor comparison | `capabilityMatrix` (table: ✓ / level-dots / text, focal column) |
+| Layered deployment (云-边-端 / platform tiers) | `tierStack` (tier label rail + component chips) |
+| Categorized enumeration (needs / pains / capabilities) | `bulletColumns` (category columns + conclusion banner) |
 | Strategic judgement | big-word + card matrix |
 | Metrics / quantified evidence | metric cards + formula / caveat band |
+| Quantified scale (a few headline numbers) | `statBand` (big numbers + dividers + note) |
 | Product capability | system diagram + capability callouts |
 | Roadmap / delivery | timeline + milestones + risks |
 | Risks / gaps | heat map, priority stack, red highlight |
@@ -64,12 +94,23 @@ Then choose the page form.
 
 - Chinese font: `Microsoft YaHei` / `微软雅黑`.
 - English and numbers: `Century Gothic` when available.
-- Body text should normally be at least 15-16pt; card body at least 14-15pt; footnotes can be 11-13pt only if not carrying main information.
+- Type is a **wide hierarchy**, driven by the shared `theme.type` scale: titles/numbers big (~18–25pt), but the bulk of supporting text — labels, captions, chips, table cells, in-graphic detail — genuinely small (~6.5–10.5pt). Standard body ≈ 10.5pt, dense pages ≈ 9pt, micro labels ≈ 7pt. Use ≥4 distinct sizes per page; contrast (not uniform bigness) reads as refined.
 - Do not solve crowded slides by shrinking text blindly. Reduce text, split pages, or convert to diagrams.
 - Keep all content inside the safe area. For 16:9 1920x1080 design, use approximately `x=96..1824`, `y=80..980`.
 - Make the visual center feel centered unless the page intentionally uses left/right composition.
 - Use fill for emphasis, data panels, badges, and focal blocks. Use lines and whitespace for separation and structure. Do not use all-fill or all-line pages by habit.
 - Icons must carry meaning: role, action, metric, status, module, risk, or asset. Do not add icons as decoration only.
+
+## Color Semantics — Color Must Encode Meaning
+
+This is a hard rule. The most common AI-smell defect is color used for decoration: items differ in color, but the color difference means nothing. Reviewers must reject it.
+
+- **Default everything to one structural color** (in Leander Base: deep navy `primary`). Peer items — four equal values, six equal metrics, sequential stages of one process — all use the same color. Sameness is correct when the things are the same.
+- **Reserve the accent (red) for the single most important element on the page** — the one headline number, the focal layer, the current step, the one card you want the eye to land on. If everything is accented, nothing is. Aim for one accent focus per page.
+- **Semantic colors map to fixed meanings only**: green = best / positive / success; amber = warning / caution; red = error / blocking / focal emphasis. Never use green/amber/red for a category that is not success/warning/error.
+- **A second hue (e.g. blue) is allowed only for a genuine second category**, not for variety. If you cannot name what the second color *means*, delete it and use the structural color.
+- **Encode real relationships with color**: emphasis (focal vs context), weight/progression (filled vs outlined, dark vs light of one hue), status (ok/warn/error). Do not rotate colors per item like a rainbow.
+- Before shipping a page, for every distinct color ask "what does this color tell the audience?" If the answer is "it's just different," it fails.
 
 ## Designed Whitespace Vs Empty Space
 
@@ -91,6 +132,15 @@ Empty space usually has:
 
 Empty-space pages must be redesigned.
 
+### Fill The Body, Or Center It
+
+The most common whitespace defect is a content block pinned to the top of the page with a large dead gap above the footer. This reads as AI-generated. A component must do one of:
+
+- **Fill the body safe area** (roughly `y≈210..950` below the header): size cards and spacing so content reaches the lower third. Enrich sparse pages with sub-points, a short example line, or a bottom takeaway/caveat band rather than leaving the bottom empty.
+- **Or center the block vertically** so the top and bottom margins are roughly equal. Symmetric breathing room reads as designed; a big bottom-only gap reads as a bug.
+
+When a page genuinely has only a few short items (e.g. a 4-item agenda), add real substance (sub-bullets, the chapter's contents) or center the block — do not stretch a thin row across the top and leave the rest blank. Never solve emptiness by enlarging fonts past the type scale.
+
 ## Anti AI Visual Fingerprints
 
 Avoid:
@@ -102,6 +152,52 @@ Avoid:
 - Tiny text used to hide weak structure.
 - Fake data, fake logos, or claims without source/boundary.
 - Overusing one layout across the whole deck.
+
+## Universal Output Rules
+
+Non-negotiable, theme-independent. The most common quality failures are systemic, not page-specific.
+
+### Color must encode meaning
+
+Color is a semantic channel, not decoration. Never vary color for visual variety.
+
+- One structural default (Leander Base: navy `primary`) for all peer/equal elements.
+- Reserve the brand accent (Leander Base: Westwell red) for the single focal element per page — at most one. If nothing is focal, use none.
+- A second hue only for a genuine second category, never for alternation.
+- Status colors carry fixed meaning: success/best = green, warning = amber, error/blocking = red, neutral/inactive = grey. Use only for those.
+- Test: for every color difference, name what it encodes (focus, category, sequence, status, weight). If you cannot, make them the same color.
+- Anti-pattern: N equal cards cycling accent/navy/blue. Equal cards = one color.
+
+### Cards fit content; leftover space becomes symmetric margin
+
+Meaningless internal whitespace (half-empty card, dead band at the bottom) is the top AI-smell signal.
+
+- Size a card/panel to its content; do not fix a tall height and let content float at the top.
+- Compute block height from item/row count, then vertically center the block in the body so leftover space becomes equal top/bottom breathing room.
+- Symmetric margins = designed whitespace (fine). Asymmetric dead space = defect (redesign).
+- If content is genuinely sparse, enrich it (sub-points, takeaway band, inline detail) rather than inflating empty boxes.
+- **Line frames are not a loophole.** Switching a white fill to a line-frame/outline does not fix fill-the-page — a frame stretched over little content (sparse top, dead bottom) reads just as AI-generated. The fit-content-then-center rule applies to frames exactly as to filled cards.
+- **Two sanctioned layouts for a light page:** (a) background ground + line-frame dividers, or (b) a text zone + a graphic zone split. Never stretch cards/frames to span the whole page. (See `editorial.js`.)
+
+### Typography uses one shared scale
+
+- Drive every text size from a single **type scale** token (`theme.type`: `hero/h1/h2/lead/h3/bodyLg/body/bodySm/cap/micro/tiny`), not ad-hoc numbers. The same role (page title, card title, body, caption) uses the same size on every page; dense pages take the smaller step, airy pages the larger — harmony comes from the shared scale, not per-page guesses.
+- **Calibrated to the cactus reference deck (measured `sz` values): section/card titles ~20–22pt, lead ~15–18pt, standard body ~10.5pt, dense body ~9pt, and the MAJORITY of text — in-graphic labels, chips, table cells — 6.5–7.5pt.** (design-px = pt×2, `pxPerPt:2`, so body = 21px → 10.5pt.) Drive every size from `theme.type` (`hero/h1/h2/lead/h3/bodyLg/body/bodySm/cap/micro/tiny`); never hardcode ad-hoc point sizes.
+- **Do NOT "fix small fonts" by bumping everything to one size** — that flattens the hierarchy and makes supporting text look oversized/ugly ("小字太大了实在太丑"). Detail labels are *meant* to be small (6.5–9pt); the reject is text that's unreadable for its role or disproportionate to its container, not smallness itself. When the user cites a reference for "fonts feel small/refined", open it and read the real `sz` values rather than guessing — big titles + lots of small fused detail is what reads as 精致.
+- A **subtitle is the page's one-line thesis** — it summarizes the core takeaway, never a colloquial restatement of the title.
+
+### Vary the visual form every page
+
+- **Never reuse one component 3–4× in a deck.** Repeating the same template across pages is visual fatigue and reads as auto-generated. Give each page a different form and audit for repeats before shipping.
+- Avoid "every page = a box with text inside" (死板/lifeless). Mix three registers: **line-frame structure** (`editorial.js`), **large illustrative metaphor** (`bespoke.js`: dual-circle, hub-radial, journey path, pipeline, tier ladder, resource board, action tracks, bespoke scene line-art), and the occasional white-card. Budget **≥1 large pure-graphic page per ~3 pages**. Study the reference deck's actual artwork; draw per-domain glyphs from primitives rather than dropping in stock icons.
+
+### Every page establishes the theme ground
+
+- Every content page sets the theme background; never rely on default white. A page whose background differs from cover/section pages is a defect.
+
+### Brand chrome is single-sourced
+
+- Logo size/position is one standard value in theme tokens, applied identically on cover, content, and back cover. Never hand-set logo size per page. Match the source template (Leander Base ≈ 90px wide on a 1920 canvas).
 
 ## Anchor Sample Rules
 

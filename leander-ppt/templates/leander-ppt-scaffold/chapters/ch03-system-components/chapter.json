@@ -30,6 +30,15 @@
       "componentSource": "ppt-component",
       "dataBoundary": "none",
       "assetNeed": "none"
+    },
+    {
+      "pageId": "p09",
+      "title": "Closing Back Cover",
+      "takeaway": "Back cover mirrors the Westwell reference: centered slogan + Make a Well Change.",
+      "visualIntent": "closing",
+      "componentSource": "ppt-component",
+      "dataBoundary": "none",
+      "assetNeed": "logo-westwell.png"
     }
   ]
 }

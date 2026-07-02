@@ -23,7 +23,8 @@ const chapters = [
     pages: [
       require("./chapters/ch03-system-components/pages/p06-architecture"),
       require("./chapters/ch03-system-components/pages/p07-hub-spoke"),
-      require("./chapters/ch03-system-components/pages/p08-roadmap")
+      require("./chapters/ch03-system-components/pages/p08-roadmap"),
+      require("./chapters/ch03-system-components/pages/p09-closing")
     ]
   }
 ];

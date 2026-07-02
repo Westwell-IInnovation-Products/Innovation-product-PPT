@@ -6,55 +6,47 @@ A scaffold is the reusable working structure that prevents each PPT task from be
 
 For Leander PPT, a real scaffold is not just instructions. It is a folder structure, theme tokens, component helpers, extraction utilities, and QA utilities that can be reused across decks.
 
-The current executable scaffold lives at:
+The executable scaffold ships under the skill at `templates/leander-ppt-scaffold/` (mirrored in both `.claude` and `.codex` skill dirs). It includes theme tokens, the component libraries, icon helpers, the per-page production tooling, and output dirs.
 
-```text
-C:\Users\admin\.codex\skills\leander-ppt\templates\leander-ppt-scaffold\
-```
+## Per-page production model (current)
 
-It includes theme tokens, reusable component helpers, icon helpers, a sample deck generator, PPTX output, and rendered preview output.
-
-Recommended structure for a deck project:
+A deck is a set of **per-page folders** plus a config and a tool. The build code for each page lives in its own `page.js`, so a page can be rendered, reviewed, and repaired in isolation — and a **hard QA gate** in `tools/deck.js` refuses to assemble any page that isn't freshly rendered + reviewed.
 
 ```text
 <deck-project>/
-+-- source/
-|   +-- original.pptx / notes.docx / outline.md
-|   +-- extracted/
++-- source/                 original.docx / notes / extracted
 +-- brief.md
 +-- outline.md
-+-- theme/
-|   +-- theme.json
-|   +-- tokens.js
-|   +-- assets/
-+-- components/
-|   +-- ppt-components.js
-|   +-- icons.js
-|   +-- external-renders/
-+-- chapters/
-|   +-- ch01-background/
-|   |   +-- chapter.json
-|   |   +-- pages/
-|   |   |   +-- p01-cover.js
-|   |   +-- assets/
-|   |   +-- external-renders/
-|   |   +-- qa.md
-+-- deck.gen.js
-+-- output/
-|   +-- deck.pptx
-|   +-- preview/
-|       +-- slide_01.png
-|       +-- contact_sheet.png
-+-- qa.md
++-- deck.config.js          { name, theme, fileName }
++-- theme/                  tokens.js (+ leander-global.js), assets/
++-- components/             ppt-components.js · editorial.js · bespoke.js · icons.js
++-- examples/               domain-specific bespoke graphics (copy & adapt; not core)
++-- pages/
+|   +-- p01-cover/
+|   |   +-- page.js         module.exports = { id, title, build(slide, ctx) }
+|   |   +-- page.json       contract { id, title, component, dataBoundary, assetNeed }
+|   |   +-- qa.md           per-page verdict — "Verdict: PASS" required, newer than page.js
+|   |   +-- out/p01.png     isolated render of THIS page
+|   +-- p02-.../ ...
++-- tools/
+|   +-- deck.js             render | verify (gate) | build (gated assemble)
+|   +-- deck-ctx.js         builds { ui, ed, bp, theme, pptx }
+|   +-- stop-hook.js        optional Claude Code Stop-hook guard (runs the gate)
++-- output/                 <deck>.pptx + preview/
++-- qa.md                   deck-level QA summary (per-page table + reviewer verdict)
 ```
+
+Pipeline: `node tools/deck.js render` → review each `pages/<id>/out/<id>.png`, set its `qa.md` `Verdict: PASS` → `node tools/deck.js verify` (gate) → `node tools/deck.js build` (assembles only fresh+PASS pages; refuses otherwise). The gate compares mtimes, so editing a `page.js` without re-render/re-review is caught automatically. Optionally wire `tools/stop-hook.js` into `.claude/settings.json` `hooks.Stop` to run the gate at completion.
+
+> Legacy note: earlier scaffolds used `chapters/<id>/chapter.json` + a monolithic `deck.gen.js`. That is superseded by the per-page model above; "chapter/batch" in `PRODUCTION.md` now means a *group of page folders*.
 
 ## Scaffold Responsibilities
 
 - Read theme tokens.
 - Provide stable PPTX helpers.
 - Provide reusable component functions.
-- Provide page-level functions or clearly marked slide blocks so a single page can be repaired without rebuilding the deck logic.
-- Provide physical chapter folders with `chapter.json` local truth sources.
+- Provide per-page folders (`pages/<id>/page.js`) so a single page can be repaired without rebuilding the deck logic.
+- Provide a `page.json` contract per page as its local truth source.
 - Keep source extraction separate from final output.
 - Keep external render sources together with exported PNG/SVG.
 - Export slide previews for QA.
@@ -74,20 +66,21 @@ When creating a new scaffold, copy or mirror:
 ```text
 -- theme/
 -- components/
--- chapters/
--- deck.gen.js
+-- pages/            (one folder per page: page.js · page.json · qa.md · out/)
+-- tools/            (deck.js · deck-ctx.js · stop-hook.js)
+-- deck.config.js
 -- output/
 |   +-- preview/
 -- qa.md
 ```
 
-The scaffold must be the working source of truth for generation. Any temporary renderer, screenshot script, chart render, or asset extraction should live inside the scaffold under `source/`, `components/external-renders/`, or `chapters/<chapter-id>/assets/`.
+The scaffold must be the working source of truth for generation. Any temporary renderer, screenshot script, chart render, or asset extraction should live inside the scaffold under `source/`, `components/external-renders/`, or a page's own folder.
 
 ## Anti-Bypass Rules
 
 - Do not redefine a full theme inside a page file. Put global colors, fonts, grid, logo rules, and safe areas in `theme/`.
 - Do not create a component that is named only for the current case when it can be a reusable pattern. Put reusable patterns in `components/`.
-- Do not place all pages in one long generator when the deck has chapters. Put page builders under `chapters/<chapter-id>/pages/`.
+- Do not place all pages in one long generator. Each page's build code lives in its own `pages/<id>/page.js`.
 - Do not deliver previews from ad hoc images if the PPTX itself has not been rendered, unless the user explicitly accepts a low-confidence preview.
 - Do not call a deck "template based" unless the generator imports the template/theme/component files.
 
@@ -118,22 +111,23 @@ The bundled scaffold currently implements:
 
 The next components to add should come from `COMPONENT-CATALOG.md`, especially flow/process, pyramid, positioning matrix, dashboard mockup, and image-led product pages.
 
-## Physical Chapter Contract
+## Per-Page Contract
 
-Each chapter folder is a production-control boundary, not necessarily a visible PPT section.
+Each page folder is the production-control boundary and the smallest repair unit.
 
 ```text
-chapters/<chapter-id>/
-+-- chapter.json
-+-- pages/<page-id>-<name>.js
-+-- assets/
-+-- external-renders/
-+-- qa.md
+pages/<id>-<name>/
++-- page.js      module.exports = { id, title, build(slide, ctx) }
++-- page.json    { id, title, component, dataBoundary, assetNeed }
++-- qa.md        per-page verdict (Verdict: PASS, newer than page.js)
++-- out/<id>.png isolated render of THIS page
 ```
 
-`chapter.json` is the local truth source for that chapter. Page files implement it. QA and repair reports should refer to `chapterId + pageId`.
+`page.json` is the local truth source for that page; `page.js` implements it. QA and repair reports should refer to the `pageId`.
 
-Each page entry in `chapter.json` must include `componentSource`, `assetNeed`, and `dataBoundary`. If a page uses a custom visual form, label it as `page-specific custom component` and explain why an existing component was not enough.
+Each `page.json` must include `component` (source), `assetNeed`, and `dataBoundary`. If a page uses a custom visual form, label its `component` as `page-specific custom` and explain in `qa.md` why an existing component was not enough.
+
+> Legacy: earlier scaffolds used `chapters/<id>/chapter.json` + a monolithic `deck.gen.js`; that is superseded by the per-page model above. "Chapter/batch" now means a logical group of page folders.
 
 ## What Examples Are For
 
@@ -166,10 +160,9 @@ Final PPT output should insert high-resolution PNG/SVG stills and retain the ext
 - [ ] The scaffold can regenerate the PPTX from source files.
 - [ ] Theme tokens are separate from slide content.
 - [ ] Components are reusable and named by purpose, not case.
-- [ ] Pages are addressable by stable ID or named function.
-- [ ] Chapter folders exist for multi-chapter decks.
-- [ ] Each chapter has `chapter.json`.
-- [ ] Every page contract names component source, asset need, and data boundary.
+- [ ] Each page is its own folder `pages/<id>/` with `page.js`, `page.json`, `qa.md`, `out/`.
+- [ ] `tools/deck.js` (render/verify/build) + `deck.config.js` are present.
+- [ ] Every `page.json` names component source, asset need, and data boundary.
 - [ ] The generator imports scaffold theme/components instead of redefining a new local theme.
 - [ ] External render sources are retained.
 - [ ] Preview export and contact sheet are part of the workflow.

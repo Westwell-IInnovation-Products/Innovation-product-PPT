@@ -6,24 +6,37 @@ QA is mandatory. The first render is assumed to have issues.
 
 Read this file before reporting any sample or full deck as done.
 
+## Pre-Flight: Accumulated Lessons
+
+Before the checklist below, read [`LESSONS.md`](LESSONS.md) and check the deck against every accumulated lesson. It is the deduplicated list of defects this skill has already been corrected on; re-shipping one of them is an automatic fail. This list grows over time — always re-read it, do not rely on memory.
+
 ## Hard Rule
 
 Every generated PPTX must be rendered to images before delivery. Inspect a contact sheet and key pages at full size. Fix visible issues before reporting completion.
 
 Use the most independent review method available:
 
-1. Reviewer agent / Agent Teams: pass only the output path, relevant checklist, rendered preview path, and necessary outline slice. Require pass/fail + evidence + suggested repairs.
-2. Subagent: use the same review prompt if reviewer teams are not available.
-3. Current-agent self-check: walk the checklist item by item. A quick glance is not enough.
+1. **Reviewer subagent** using the shipped [`agents/reviewer.md`](../agents/reviewer.md): pass the preview PNG dir, the `outline.md` slice, and the theme. It returns pass/fail + evidence + repairs + a SHIP/FIX-FIRST verdict.
+2. Self-check only if subagents are unavailable: walk the checklist item by item. A quick glance is not enough.
 
 Fail items must be repaired before reporting completion unless the user explicitly accepts the risk.
+
+## Definition of Done (artifact-gated)
+
+No prose gate can *force* the agent to run QA — so make skipping it **visible** by tying "done" to artifacts the user can see:
+
+- **`qa.md` exists and lists every page with a PASS/FAIL verdict** (use the scaffold template). A deck with no per-page qa.md is not done.
+- **The final report pastes the reviewer's verdict block** (`Scope/Pass/Fail/Risk/Verdict`). If you cannot paste a reviewer verdict, you did not run the review — say so explicitly rather than implying QA happened.
+- **Every render (samples, full deck, each feedback re-render) refreshes qa.md.** A qa.md older than the latest render = stale = not done.
+
+This is the honest enforcement: not a guarantee of execution, but the absence of the artifact (or a stale one) is a visible signal to you and the user that Gate 6 was skipped.
 
 ## Required QA Artifacts
 
 - Output `.pptx`.
 - Exported slide PNGs.
-- Contact sheet.
-- Short QA notes: passed, fixed, remaining risks.
+- Contact sheet **or** per-slide inspection (if no montage tool is available — record which).
+- `qa.md`: per-page PASS/FAIL, what was fixed, remaining risks, + the reviewer verdict block.
 - For repairs: affected page IDs and what was intentionally not changed.
 - Theme/template evidence: selected theme name, approved anchor sample path, and component source summary.
 - Scaffold evidence: generator path, theme/component imports, and chapter/page contract location.
@@ -33,7 +46,7 @@ Fail items must be repaired before reporting completion unless the user explicit
 Check every slide, then zoom into key slides.
 
 - [ ] Page ID/page number can be traced back to `outline.md`.
-- [ ] Page can be traced to `chapter.json` when the deck has chapters.
+- [ ] Page can be traced to its `pages/<id>/page.json` contract.
 - [ ] Page uses the approved theme/template and looks consistent with approved anchor samples.
 - [ ] Page uses declared component sources; custom components are justified.
 - [ ] No element is outside the page or clipped.
@@ -58,6 +71,21 @@ Automatic fail conditions:
 - Sample pages were not generated from the same theme/component system intended for full production.
 - A page has no real visual explanation and is only text cards.
 - A fallback toolchain was used but not recorded in `qa.md`.
+- **Color carries no meaning**: a page uses two or more colors whose difference encodes nothing (decorative rainbow). See `SLIDE-CRAFT.md` → Color Semantics.
+- **Asymmetric dead whitespace**: a content block is pinned to the top with a large empty band above the footer, and the block is neither filling the body nor vertically centered. See `SLIDE-CRAFT.md` → Fill The Body.
+- **Background or logo inconsistency**: a content page uses a different background than the cover/section pages, or the logo size/position differs across pages instead of the single theme standard.
+
+## Design Review Pass (Required)
+
+Rendered-QA is not only "nothing clips." After the mechanical checks, run a dedicated **design review** specifically hunting AI-smell, using the most independent reviewer available (reviewer agent → subagent → self-check, per the methods above). The design review must answer, per page:
+
+- Does every distinct color encode a real meaning (emphasis, category, status, progression)? Name it. Flag any decorative color.
+- Is the body filled or symmetrically centered, with no asymmetric dead whitespace? Flag top-pinned blocks with empty bottoms.
+- Is the background and logo (size + position) identical to the rest of the deck?
+- Does any element (icon, number, shape) float alone in space without anchoring content?
+- Would a designer call this intentional, or auto-generated?
+
+Treat design-review findings with the same weight as clipping/overlap: fix them before reporting completion. Prefer fixing the **shared component** so every page using it improves at once, not the single page.
 
 ## Content QA Checklist
 
@@ -101,6 +129,7 @@ For feedback on existing slides:
 4. If a shared component or theme token changed, re-export every affected page and refresh the contact sheet.
 5. Confirm no unrelated pages changed unless required.
 6. Report the repair scope.
+7. **Log the lesson.** Append a structured entry to [`feedback/LOG.md`](feedback/LOG.md) capturing the general lesson, and if it recurs or is universal, distill it into [`LESSONS.md`](LESSONS.md). A repair is not complete until logged — see SKILL.md → Feedback & Lessons Loop.
 
 ## Reviewer Prompt Contract
 

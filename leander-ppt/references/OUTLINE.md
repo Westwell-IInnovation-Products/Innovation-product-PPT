@@ -66,6 +66,7 @@ Pick 2-3 representative pages for sample production:
 - Production chapters are control units for isolation, QA, and repair. They do not have to appear as visible PPT chapter pages.
 - Every content page must declare a `Visual intent`: flow, comparison, timeline, matrix, layered architecture, evidence board, dashboard mockup, process map, icon mechanism, image-led page, or big-word + card matrix.
 - Every content page must declare `Component source`: reusable PPT component, external render, image2/generated image, real asset, or mixed.
+- For `image2` / `real-image` pages (a scene/realistic depiction vector renders crudely — see [`IMAGE-ASSETS.md`](IMAGE-ASSETS.md)): plan the page to **reserve an image slot** (`imageSlot`, transparent PNG blends on the theme ground, vector fallback until it arrives), and add the asset to the prompt-spec list so a `<deck>-images.gpt-image-2.md` can be emitted. Default to vector for relationships/structure; reserve images for scenes/evidence/decorative strips.
 - `Content / evidence pool` must include the facts, figures, examples, or claims that justify the page.
 - `Data boundary` must label achieved, planned, estimate, public reference, or unknown.
 - `Asset need` must name images, icons, screenshots, product visuals, or placeholders needed.

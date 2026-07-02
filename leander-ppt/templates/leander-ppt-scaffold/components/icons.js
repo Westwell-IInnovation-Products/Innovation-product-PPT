@@ -46,6 +46,31 @@ function icon(pptx, slide, U, cx, cy, type, opts = {}) {
     addCircle(cx, cy, 25);
     addLine(cx, cy, cx, cy - 14);
     addLine(cx, cy, cx + 13, cy + 8);
+  } else if (type === "gear") {
+    addCircle(cx, cy, 21, none, line);
+    addCircle(cx, cy, 8, { color: c }, none);
+    for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; addLine(cx + Math.cos(a) * 21, cy + Math.sin(a) * 21, cx + Math.cos(a) * 30, cy + Math.sin(a) * 30); }
+  } else if (type === "cloud") {
+    slide.addShape(shape.roundRect, { x: U(cx - 26), y: U(cy - 2), w: U(52), h: U(22), fill, line, rectRadius: U(11) });
+    addCircle(cx - 12, cy - 4, 12);
+    addCircle(cx + 11, cy - 4, 13);
+  } else if (type === "target") {
+    addCircle(cx, cy, 22, none, line);
+    addCircle(cx, cy, 13, none, line);
+    addCircle(cx, cy, 5, { color: c }, none);
+  } else if (type === "lock") {
+    addCircle(cx, cy - 6, 12, none, line);
+    slide.addShape(shape.roundRect, { x: U(cx - 18), y: U(cy - 2), w: U(36), h: U(30), fill: { color: c }, line: none, rectRadius: U(5) });
+    addCircle(cx, cy + 11, 3, { color: soft }, none);
+  } else if (type === "leaf") {
+    slide.addShape(shape.ellipse, { x: U(cx - 14), y: U(cy - 20), w: U(28), h: U(40), fill, line, rotate: 45 });
+    addLine(cx - 9, cy + 11, cx + 8, cy - 11);
+  } else if (type === "layers") {
+    [13, 0, -13].forEach((dy, i) => slide.addShape(shape.roundRect, { x: U(cx - 22), y: U(cy + dy - 6), w: U(44), h: U(13), fill: i === 1 ? { color: c } : fill, line, rectRadius: U(3) }));
+  } else if (type === "gauge") {
+    addCircle(cx, cy, 22, none, line);
+    addLine(cx, cy, cx + 12, cy - 12, "triangle");
+    addCircle(cx, cy, 4, { color: c }, none);
   } else {
     addCircle(cx, cy, 24);
     slide.addText("i", { x: U(cx - 18), y: U(cy - 16), w: U(36), h: U(32), fontFace: "Century Gothic", fontSize: 20, color: c, bold: true, align: "center", valign: "mid", margin: 0 });
