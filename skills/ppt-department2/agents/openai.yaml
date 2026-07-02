@@ -1,4 +1,0 @@
-interface:
-  display_name: "PPT 部门模板 2"
-  short_description: "基于近期内部 BGMH 与 Cactus PPT 抽象出的部门汇报与产品介绍设计规范。"
-  default_prompt: "请使用 ppt-department2 的部门 PPT 规范，为这份内容设计或改写一套内部汇报 PPT。"

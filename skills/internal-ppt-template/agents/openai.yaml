@@ -1,4 +1,0 @@
-interface:
-  display_name: "内部 PPT 模板范式"
-  short_description: "按公司内部汇报场景设计统一、可复用的 PPT 模板范式。"
-  default_prompt: "请使用内部 PPT 模板范式，为这份内容设计一套统一的汇报型 PPT 结构与页面规范。"
