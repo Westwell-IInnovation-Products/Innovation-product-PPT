@@ -10,6 +10,12 @@
 C:\西井\06AI\sync-codex-skills-to-leander.ps1
 ```
 
+同步日志位于本机：
+
+```text
+C:\西井\06AI\sync-codex-skills-to-leander.log
+```
+
 计划任务：
 
 ```text
