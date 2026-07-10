@@ -1,0 +1,9 @@
+node_modules/
+archive/
+output/_*/
+output/*.pdf
+output/*.pptx
+pages/*/out/*.png
+pages/*/out/*.pdf
+agent-reviews/archive/
+references/feedback/

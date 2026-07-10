@@ -5,330 +5,165 @@ description: "Create, redesign, standardize, or polish editable PPTX decks throu
 
 # Leander PPT
 
-Turn source material into a **formal, editable, presentable `.pptx`**. This skill borrows the staged harness from `web-video-presentation`, but adapts it to PowerPoint:
+Produce formal, editable, presentable `.pptx` decks through a staged harness: brief -> outline -> design/theme contract -> layout blueprint -> anchor samples -> full production -> evidence-backed rendered QA -> repair/learning loop.
 
-- No webpage output.
-- No video, narration, audio, or recording workflow.
-- No automatic HTML-to-PPT conversion as the default.
-- Use editable PowerPoint shapes and PPTX generation/editing methods.
+This `SKILL.md` is only the router. Load detailed references only for the active stage.
 
-## Core Principle
+## Non-Negotiables
 
-This skill is a production system, not a style memo. Work through staged files, hard checkpoints, and rendered QA:
+- Work in a real scaffold from `templates/leander-ppt-scaffold/` for any multi-slide deck.
+- Keep one page per folder: `pages/<id>/{page.js,page.json,qa-result.json,qa.md,out/}`.
+- Use editable PPT shapes/components where practical; use image slots only when images carry real explanatory value.
+- Run visual selection before drawing content pages: `node tools/select-visual-route.js pages/<id>/page.json --write`.
+- Run Chinese dynamic QA before render: `node tools/build-qa-profile.js pages/<id>/page.json --write`.
+- Each content `page.js` must export `visualBinding: { route, name }` matching `page.json.visualSelection.selectedRoute`; component-library routes must also produce a matching real runtime trace.
+- Render before reporting quality. A glance at code is not QA.
+- Use a project `DESIGN.md` and `visual-direction.md` when making substantial visual, component, theme, or layout decisions; lint `DESIGN.md` when created or edited.
+- Treat `visual-direction.md` as a project-level visual brief, not a new subagent role. Existing `visual-designer-zh` and the main flow read it; do not create a separate "visual direction" agent.
+- Use a project `role-briefs.md` for multi-agent work. It translates the same project goal into planner/layout/designer/component/reviewer/presenter-specific guidance; it is not a new role.
+- Keep skill references/templates generic. Project-specific deck titles, page IDs, current workflow states, customer names, screenshots, and feedback belong in the project scaffold or clearly marked examples, not in generic rules.
+- After editing the shared Skill, run `node templates/leander-ppt-scaffold/tools/lint-scope-hygiene.js --skill-root .`.
+- Run `node tools/verify-design-gates.js` at outline/blueprint/page stages to prove design rules are present in the executable artifacts, not only written in prose.
+- Keep canonical terms in `terminology.json` for decks with repeated framework concepts; run `node tools/verify-terminology.js` after title/outline/blueprint changes.
+- Keep lightweight task memory in `state/`; run `node tools/verify-state-memory.js` when the deck explains state, memory, recovery, or handoff.
+- After every phase output or feedback round, update artifact labels with `node tools/artifact-map.js --write`; report files as user-confirm, next-input, internal-evidence, final-output, or archive-reference.
+- Fix obvious overlap, clipping, crooked connectors, unreadable text, meaningless accent colors, dead space, and text-card-only pages before delivery.
+- Do not invent data, customer claims, implementation status, logos, or external facts.
 
-```text
-Phase 1   Brief + outline
-          Read BRIEF.md + OUTLINE.md + SLIDE-CRAFT.md
-          Produce brief.md + outline.md
-          Self-check, fix, then stop for Checkpoint Plan
+## Token-First Entry
 
-Checkpoint Plan
-          Align outline, deck type, theme/template, assets, and sample pages
+For an existing scaffold, start with a compact context packet:
 
-Phase 2   Theme/template selection
-          Read THEMES.md
-          Confirm or choose template before samples
-
-Phase 3   Anchor sample PPTX
-          Read SLIDE-CRAFT.md + QA.md
-          Produce 2-3 real editable sample pages
-          Render to PNG, self-check, fix, then stop for user approval
-
-Phase 4   Full deck production
-          Read PRODUCTION.md + SLIDE-CRAFT.md + QA.md
-          Implement by selected mode: A chapter/batch confirmation, B sequential full deck, C parallel chapters
-          Render to PNG, run the Design Review Pass, fix, then report
-
-Phase 5   Iteration & repair (each feedback round)
-          Locate the minimum unit -> patch -> re-render -> re-run the Design Review Pass -> log the lesson
-          A shared token/component change -> re-render & re-review the WHOLE deck (Gate 7)
+```bash
+node tools/context-pack.js --mode status
+node tools/context-pack.js --mode repair --pages p11,p12
+node tools/context-pack.js --mode agent --role reviewer-zh --pages p09,p11
 ```
 
-Do not jump to full-deck generation when the structure, theme, or sample quality has not been approved.
+Use the packet's `recommendedReads` as the default context boundary. Expand only when changing story, theme, layout blueprint, shared components, or final delivery gates.
 
-## Execution Gates
+## Phase Map
 
-These gates are mandatory. If a gate is missing, stop and complete it before moving forward.
-
-| Gate | Required evidence | Blocks |
+| Phase | Action | Required reading |
 |---|---|---|
-| Gate 1 - Plan | `brief.md` + `outline.md` pass their self-checks | Any theme or slide work |
-| Gate 2 - Theme | A named theme/template contract with tokens, component style, logo/image rules, and user approval or explicit "you decide" | Anchor samples |
-| Gate 3 - Scaffold | A real deck project scaffold copied from `templates/leander-ppt-scaffold/` with `theme/`, `components/`, `pages/`, `tools/deck.js`, `deck.config.js`, and `output/` | Any PPTX generation |
-| Gate 4 - Page folders | One folder per page `pages/<id>/{page.js, page.json, qa.md, out/}` generated from `outline.md`; the build code lives in `page.js` (isolation enables per-page render, review, and repair) | Production and minimum-unit repair |
-| Gate 5 - Anchor proof | 2-3 rendered editable sample slides, checked against theme, components, layout, and source boundaries | Full deck production |
-| Gate 6 - Rendered QA | Slide PNGs (contact sheet **or** per-slide inspection if no montage tool) + the `QA.md` Design Review Pass actually walked + QA notes, fail items fixed | Reporting completion **and every re-render** |
-| Gate 7 - Change impact | After changing a **shared token or component** (type scale, a color, any `components/*` function), the FULL deck is re-rendered and re-reviewed — not just the page in focus | Reporting after any shared change |
+| Fast run / repair | Continue or patch an existing deck with minimal context | `references/FAST-RUN.md`, then `tools/context-pack.js` |
+| 1. Brief | Define source, audience, goal, deck type, boundaries | `references/BRIEF.md` |
+| 1. Outline | Plan story, pages, visual intent, evidence, anchors | `references/OUTLINE.md` + `references/NARRATIVE-FRAMEWORK.md` + `references/SLIDE-CRAFT.md` |
+| 1.1 Design / Terms / State | Establish project design system, visual direction, canonical terms, run memory | `references/DESIGN-SYSTEM.md` + `references/VISUAL-COMPOSITION.md` + `references/TERMINOLOGY.md` + `references/STATE-MEMORY.md` |
+| 1.3 Theme | Choose Leander Base / Global or another PPT-safe theme and define color semantics | `references/THEMES.md` |
+| 1.5 Layout blueprint | Whole-deck rhythm, visual signatures, layout contracts within the approved theme semantics | `references/LAYOUT-BLUEPRINT.md` |
+| 3. Anchor samples | Build 2-3 real editable sample pages and render PNGs | `references/SLIDE-CRAFT.md` + `references/VISUAL-COMPOSITION.md` + `references/QA.md` |
+| 4. Production | Build active pages by batch or full deck, route visuals, render, review, assemble | `references/PRODUCTION.md` + `references/SCAFFOLD.md` |
+| Components | Select/reuse/extend visual components | `references/COMPONENTS.md` + `references/COMPONENT-LIBRARY-DESIGN.md`; use `tools/component-index.min.json` before `COMPONENT-CATALOG.md` |
+| Images | Reserve generated/real image slots and prompt specs | `references/IMAGE-ASSETS.md` |
+| Dynamic QA | Build page-specific Chinese QA checks | `references/DYNAMIC-QA.md` |
+| Agents | Coordinate planner/layout/designer/component/reviewer/presenter roles | `references/AGENT-COLLABORATION.md` + `references/ROLE-GUIDANCE.md` + relevant `agents/*.md` |
+| Artifacts | Distinguish what the user reviews from what the next task consumes | `references/ARTIFACTS.md`; run `tools/artifact-map.js --write` |
+| Learning loop | Log, classify, promote, archive recurring lessons | `references/SELF-EVOLUTION.md` + `references/LESSONS.md` |
+| Scope hygiene | Edit skill rules, templates, examples, or feedback logs without leaking project facts into generic rules | `references/SCOPE-HYGIENE.md` |
 
-Do not create one-off slide scripts in a loose project folder unless the task is a tiny single-slide experiment. For any deck, sample deck, or multi-slide preview, instantiate the scaffold first and place scripts inside the scaffold structure.
+## Checkpoints And Gates
 
-Gate 6 fires on **every** render, including each feedback re-render — not once at the end. "Rendered then glanced" is not QA; walk the checklist. Gate 7 exists because a one-knob global change (e.g. bumping the type scale) silently alters many pages; re-render and re-review all of them.
+Do not skip these unless the user explicitly bypasses them and the bypass is recorded.
 
-If tool or dependency issues force a fallback, record the fallback in `qa.md`, label the affected pages as lower-confidence, and do not call the result final quality.
+| Gate | Evidence | Blocks |
+|---|---|---|
+| Gate 1 Plan | `brief.md`, `outline.md` self-check pass | Design/theme/blueprint work |
+| Gate 1.1 Design, terms, state | `DESIGN.md`, `visual-direction.md`, optional `terminology.json`, `state/run-state.json` | Layout blueprint and production |
+| Gate 1.2 Design hard gate | `output/design-gate-audit.md/json` from `tools/verify-design-gates.js outline` | Layout blueprint |
+| Gate 1.3 Theme | Named theme/template contract + approval | Layout blueprint and anchor samples |
+| Gate 1.5 Layout blueprint | `layout-blueprint.md/json` + stable SVG previews + geometry/QA evidence + diversity audit + approval/bypass | Anchor samples and production |
+| Gate 3 Scaffold | Project scaffold with `theme/`, `components/`, `pages/`, `tools/`, `deck.config.js` | PPTX generation |
+| Gate 4 Page folders | `pages/<id>/{page.js,page.json,qa.md,out/}` | Production and repair |
+| Gate 4.5 Visual selection | `visual-selector.v2`, ranked routes, confidence/margin, and matching `visualBinding` | Anchor/production/repair |
+| Gate 4.6 Dynamic QA | Chinese compact `qa-profile.zh.v2` in every content `page.json` | Rendered QA/build |
+| Gate 4.65 Page design hard gate | `output/design-gate-audit.md/json` from `tools/verify-design-gates.js pages` | Rendered QA/build |
+| Gate 4.7 Runtime and QA evidence | `out/component-trace.json` + `qa-result.json` hashes and per-rule evidence | Rendered QA/build |
+| Gate 4.75 Agent evidence | event-triggered `agent-collaboration.v2` + role artifact hashes | Final build |
+| Gate 4.8 Artifact map | concise `artifact-manifest.v3` updated after the current output | User report and next-phase handoff |
+| Gate 5 Anchor proof | Rendered editable sample slides + user approval | Full production |
+| Gate 5.5 Phase transition | `checkpoint-status.json` approves plan, blueprint, theme, anchor, production mode | Phase 4 |
+| Gate 6 Rendered QA | PNGs/contact sheet + QA notes + fail items fixed | Reporting completion |
+| Gate 7 Change impact | Full re-render/re-review after shared theme/component edits | Reporting after shared change |
 
----
+Use the scaffold gates:
 
-## Hard Self-Check Protocol
-
-Every major output must go through:
-
-```text
-produce -> self-check -> fix fail items -> report or move to checkpoint
+```bash
+node tools/lint-layout-blueprint.js
+node tools/render-layout-blueprint.js
+node tools/lint-blueprint-preview.js
+node tools/verify-design-gates.js outline
+node tools/verify-design-gates.js blueprint
+node tools/verify-design-gates.js pages
+node tools/verify-terminology.js
+node tools/verify-state-memory.js
+node tools/verify-checkpoints.js phase4
+node tools/artifact-map.js --write
+node tools/lint-scope-hygiene.js --skill-root <skill-root>
+node tools/deck.js render
+node tools/deck.js verify
+node tools/deck.js verify --final
+node tools/deck.js build
 ```
 
-| Output | Required check |
-|---|---|
-| `brief.md` | `references/BRIEF.md` self check |
-| `outline.md` | `references/OUTLINE.md` self check |
-| theme/template choice | `references/THEMES.md` self check |
-| anchor sample PPTX | `references/SLIDE-CRAFT.md` + `references/QA.md` |
-| page/batch/chapter production | `references/PRODUCTION.md` + `references/SLIDE-CRAFT.md` + `references/QA.md` |
-| page repair | `references/PRODUCTION.md` minimum-unit repair protocol + `references/QA.md` |
-| full deck PPTX | `references/PRODUCTION.md` + `references/SLIDE-CRAFT.md` + `references/QA.md` |
+## Agent Collaboration
 
-Use the most isolated review method available:
+Use event-triggered multi-agent roles. Production Mode A/B/C does not enable or disable roles; open workflow events do. The main agent owns final integration and user communication.
 
-1. Reviewer agent / Agent Teams, if available: pass the output path, relevant checklist file, and only the needed context. Require pass/fail + evidence + repair suggestions.
-2. Subagent, if reviewer teams are unavailable but subagents exist: use the same review prompt shape.
-3. Current-agent self-check as fallback: strictly walk each checklist item. Do not treat a quick visual glance as QA.
+Default roles:
 
-**Use the shipped reviewer.** [`agents/reviewer.md`](agents/reviewer.md) is a ready independent-reviewer spec — spawn a subagent (tier 2) with it after every render, passing the preview PNG dir + the `outline.md` slice + the theme. It returns pass/fail + evidence + repairs. Only if subagents are unavailable does tier-3 self-check apply — and tier-3 only counts if you render every page and walk the checklist line by line. "Rendered then glanced" is the failure mode that lets overlaps, dead space, and color-meaning lapses ship.
+- `agents/planner-zh.md`: story, outline, page intent.
+- `agents/layout-architect-zh.md`: whole-deck rhythm and layout contracts.
+- `agents/visual-designer-zh.md`: anchor style, color meaning, typography, image simplicity.
+- `agents/component-curator-zh.md`: relationship-first component reuse, visual route, route rejection reasons.
+- `agents/reviewer-zh.md`: rendered QA, dynamic QA, SHIP/FIX-FIRST.
+- `agents/presenter-zh.md`: rehearsal flow, transition notes, audience confusion, supplementary knowledge.
 
-The rule is non-negotiable: **fix fail items before telling the user the work is done**. Do not hand over a PPTX with obvious clipping, overlap, unreadable text, accidental blankness, or text-card-only pages.
+For subagents, pass a context pack, role spec, affected PNG/page.json paths, and the exact decision needed. Do not pass full outline, full catalog, full QA, and all historical reports by default.
 
-For production and repair, the main agent keeps final accountability. Subagents can draft isolated chapters or review rendered artifacts, but the main agent must integrate, normalize style, run final QA, and report.
+For production decks, page-production workers do not satisfy role review. Full-deck render always triggers reviewer; visual/component roles trigger on visual risk, shared changes, or low-confidence selection; internal sharing triggers presenter.
 
----
+Every role must read the project `role-briefs.md` section for its role before producing evidence. If a real subagent is not used, the main-agent fallback must still apply that role brief and record the fallback.
 
-## Feedback & Lessons Loop
+## Production Rules
 
-This skill is designed to get better with use. Every correction is captured, distilled, and fed back so recurring defects stop recurring.
+- Use the approved outline, theme, layout blueprint, and anchor style.
+- Prefer the smallest unit: page repair -> batch -> chapter -> full deck.
+- In Mode A, set `workflow.stage = "production-batch"`, whitelist only the current `activePages`, and write `batchFileName`; use `production` only for the integrated final deck.
+- Before page implementation, route the visual form, inspect relationship/slots/capacity/theme/risk evidence and confidence margin, then draw.
+- Do not bypass the component library with custom boxes before evaluating component-library, external-graphic, image2, and page-specific-custom routes.
+- Treat component-library maintenance as a separate temporary mode. Run `enrich-component-registry`, `build-component-index`, and `lint-component-library --strict` only when evolving shared components, not during routine page production.
+- Keep shared tokens/components in shared files; keep slide-specific implementation inside that page folder.
+- If a shared token or component changes, trigger Gate 7.
+- Do not report a pile of generated files. Use `artifact-manifest.md` to separate files that require user confirmation from files that only feed the next step.
 
-- **Read before producing.** Before anchor samples, before full production, and during QA, read [`references/LESSONS.md`](references/LESSONS.md) — the deduplicated pre-flight list of past mistakes — and check the deck against it. It stays short on purpose; always read it.
-- **Log after fixing.** Whenever the user gives feedback and you repair it, append one structured entry to [`references/feedback/LOG.md`](references/feedback/LOG.md) (append-only; never edit past entries). Record the **general** lesson, not the project-specific symptom.
-- **Distill.** When a defect `Category` has recurred (≥2×) or an entry is clearly general, promote a one-line rule into `LESSONS.md`; promote true theme-independent universals into `SLIDE-CRAFT.md` → Universal Output Rules, and tag the lesson `[graduated]`. Mark the log entry `Promoted`.
-- **Taxonomy.** Tag every entry with the fixed defect categories (color-semantics, whitespace-fill, logo-brand, background-ground, architecture, typography, density, data-boundary, layout-composition, theme-fit, chrome-signature, icon-meaning, component-gap, process) so recurrence is countable.
-- **Make lessons actually get checked.** The reviewer (`agents/reviewer.md`) reads `LESSONS.md` as its hunt-list every render — that's how accumulated lessons become enforced checks rather than a doc nobody re-reads. If a lesson can't be checked from a rendered PNG, sharpen it until it can.
-- **Keep the loop lean (consolidate).** `LESSONS.md` must stay short — when it drifts past ~1 screen or an item is superseded, merge/prune. When `feedback/LOG.md` grows large (≳40 entries), do a consolidation pass: fold recurring categories into `LESSONS.md`, mark folded entries `Promoted`, and never edit past raw entries (append-only). An unbounded log dilutes the signal; a bloated lessons list stops being pre-flight-readable.
+## Feedback Loop
 
-Logging a fix is part of "done." A repair that is not logged loses the lesson. **Honest limit:** none of this *forces* execution — a skill is instructions the agent can skip. The enforcement is indirect: artifact-gated "done" (`qa.md` + pasted reviewer verdict) makes a skipped review *visible*, and the reviewer reading LESSONS makes the accumulated rules *checked*. Reliability comes from those visible artifacts, not from the prose alone.
+Every repair must:
 
----
+1. Map feedback to page/component/token.
+2. Patch the minimum unit.
+3. Re-render affected pages; full deck if shared changes occurred.
+4. Re-run QA, update `qa-result.json`, and generate the Chinese `qa.md` summary.
+5. Record reusable issues through `tools/issue-registry.js`; keep project facts in the project.
+6. Generate promotion candidates; only manually promote de-identified, abstracted, regression-tested rules.
 
-## Stage Reading Guide
+Keep `LESSONS.md` short and active. Do not let an unbounded lesson list become another token sink.
 
-Use progressive disclosure. Read only the relevant reference file(s) for the current stage.
+## PPT Defaults
 
-| Stage | Required reading | Purpose |
-|---|---|---|
-| Phase 1 brief | [`references/BRIEF.md`](references/BRIEF.md) | Define audience, deck type, output goal, evidence boundary |
-| Phase 1 outline | [`references/OUTLINE.md`](references/OUTLINE.md) + [`references/SLIDE-CRAFT.md`](references/SLIDE-CRAFT.md) | Plan storyline, pages, visual intent, assets, anchor samples |
-| Phase 2 theme | [`references/THEMES.md`](references/THEMES.md) | Select or define reusable PPT theme/template contract |
-| Component library | [`references/COMPONENTS.md`](references/COMPONENTS.md) + [`references/COMPONENT-CATALOG.md`](references/COMPONENT-CATALOG.md) | Reuse or extend PPT page components and icon patterns |
-| Complex images | [`references/IMAGE-ASSETS.md`](references/IMAGE-ASSETS.md) | When a page needs a generated/real image (not vector): reserve an image slot (`imageSlot`, transparent PNG blends on theme ground) + emit a prompt-spec markdown |
-| Accumulated lessons | [`references/LESSONS.md`](references/LESSONS.md) | Pre-flight check against past defects; read before anchor samples, before full production, and during QA |
-| Scaffold design | [`references/SCAFFOLD.md`](references/SCAFFOLD.md) + `templates/leander-ppt-scaffold/` | Use the executable PPT scaffold, theme tokens, and component helpers |
-| Phase 3 samples | [`references/SLIDE-CRAFT.md`](references/SLIDE-CRAFT.md) + [`references/VISUAL-COMPOSITION.md`](references/VISUAL-COMPOSITION.md) + [`references/QA.md`](references/QA.md) | Produce and verify 2-3 representative sample slides |
-| Phase 4 production mode | [`references/PRODUCTION.md`](references/PRODUCTION.md) | Select chapter/batch/sequential/parallel mode and isolation strategy |
-| Phase 4 full deck | [`references/PRODUCTION.md`](references/PRODUCTION.md) + [`references/SLIDE-CRAFT.md`](references/SLIDE-CRAFT.md) + [`references/VISUAL-COMPOSITION.md`](references/VISUAL-COMPOSITION.md) + [`references/QA.md`](references/QA.md) | Produce final deck and rendered visual QA |
-| Feedback / repair | [`references/PRODUCTION.md`](references/PRODUCTION.md) + [`references/QA.md`](references/QA.md) + [`references/LESSONS.md`](references/LESSONS.md) | Patch the smallest affected page set, re-render, then log the lesson |
-
-If the user provides an existing PPT as the source of truth, use `OUTLINE.md` manual-deck standardization mode before redesigning.
-
-Do not load every reference file at task start. Load the file named for the current phase, and load component/scaffold files only when template or component work is actually needed.
-
----
-
-## Phase 1 - Brief + Outline
-
-### 1.1 Input Recognition
-
-| User input | Action |
-|---|---|
-| Existing PPT to standardize | Extract source structure and produce faithful `outline.md`; do not redesign first |
-| Source docs / notes / script | Produce `brief.md` and `outline.md` in one pass |
-| User only says "make a PPT about X" | Ask for source material or at least audience, goal, target pages, and key points |
-| User asks for review | Review against brief/outline if available; otherwise infer deck type and report risks first |
-
-### 1.2 Produce `brief.md`
-
-Read `references/BRIEF.md`. Create `brief.md` with:
-
-- Source and source type.
-- Audience and occasion.
-- Output goal.
-- Deck type.
-- Constraints, data boundaries, and asset boundaries.
-
-If required information is missing and cannot be reasonably inferred, ask the user before continuing.
-
-### 1.3 Produce `outline.md`
-
-Read `references/OUTLINE.md` and `references/SLIDE-CRAFT.md`. Create `outline.md` with:
-
-- Storyline.
-- Chapter structure.
-- Page plan.
-- Evidence pool.
-- Visual intent for each page.
-- Data boundary for each page.
-- Asset list.
-- 2-3 anchor sample pages.
-
-The outline plans **logic + page content + visual intent**. It does not write final slide code or over-specify drawing details.
-
-### 1.4 Checkpoint Plan
-
-After `brief.md` and `outline.md` pass self-check, stop and ask the user to confirm:
-
-1. Brief: audience, deck type, output goal, target pages.
-2. Outline: chapter structure and page plan.
-3. Theme/template direction.
-4. Assets: available, missing, placeholder allowed.
-5. Anchor sample pages to produce first.
-6. Production mode after anchor approval:
-   - A default: chapter/batch confirmation.
-   - B sequential full deck.
-   - C parallel chapter production with subagents.
-
-Do not continue to sample slides until this checkpoint is resolved. If the user says "you decide", make the decision, state it briefly, and continue.
-
-**The page-by-page outline confirmation is mandatory and is not covered by a blanket "you decide".** Even when the user delegates theme/assets/mode, you must surface the explicit page list (page → title → form) and get a clear go before producing. "you decide" lets you pick the theme and defaults — it does not authorize skipping the structure sync. Building a whole deck off an unconfirmed outline is a process failure even if the output is good. (Lesson 2026-06-25.)
-
----
-
-## Phase 2 - Theme / Template
-
-Read `references/THEMES.md`.
-
-A PPT template is a reusable contract:
-
-- Fonts.
-- Colors.
-- Grid and safe area.
-- Header/footer/section style.
-- Reusable components.
-- Layout archetypes.
-- Image/icon style.
-
-**Ask which bundled company theme first.** Two company themes ship with this skill; pick by occasion before offering anything else:
-
-- **Leander Base** (`leander-base`) — internal / company decks. Warm off-white ground, deep-navy + **Westwell-red** signal, solid red title rule + footer, warm right-aligned cover, `Make a Well Change.` Distilled from `岸桥自动化系统产品介绍.pptx`, `cactus产品介绍.pptx`.
-- **Leander Global** (`leander-global`) — external / international / formal decks. Clean white ground, navy `#002060` + **azure `#00B0F0`** signal (red demoted to status-only), dotted azure title rule + thin footer, dark port-skyline photo cover or clean white-minimal cover, Century Gothic English-first. Distilled from `国际展会_…_ReeWell presentation`, `…FMS Clarification`, `CTN…Scheduler`.
-
-Ask one question: **"Internal report → Leander Base, or external/international → Leander Global? (or a different style)"** Recommend by audience: internal/company = Base; customer-facing/overseas/formal = Global. Both come from one shared component library; they differ only in theme tokens + the chrome `signature`.
-
-Only if the user declines both bundled themes, present 2-3 alternative templates based on deck type and audience (adapt from `web-video-presentation/themes/*` into PPT-safe contracts). Do not lead with the alternatives.
-
-Confirm the theme/template before anchor samples.
-
-When adding reusable templates or components, also read `references/COMPONENTS.md`, `references/COMPONENT-CATALOG.md`, and `references/SCAFFOLD.md`.
-
-Theme confirmation is not optional. If the user says "continue", treat that as approval only when a concrete theme/template choice has already been stated in the previous assistant message. Otherwise stop and present the theme checkpoint.
-
----
-
-## Phase 3 - Anchor Sample PPTX
-
-Read `references/SLIDE-CRAFT.md` and `references/QA.md`.
-Read `references/SCAFFOLD.md` before creating sample pages. Instantiate or reuse the deck scaffold before generating PPTX output.
-
-Create 2-3 real editable PPTX sample pages. **Choose them to expose risk, not just to look nice:**
-
-1. Cover or tone-setting page.
-2. The **most at-risk page type for this deck** (the densest table, the busiest flow/comparison, or a small-text-in-graphic page) — not a generic easy content page.
-3. The most complex diagram/mechanism page.
-
-These are not wireframes. They must prove final quality, typography, layout density, visual explanation style, and theme fit.
-
-**Probe visual style explicitly before, or with, the samples.** Style disagreement is the most expensive thing to discover *after* a full deck. Surface the choice and confirm: card vs line-frame vs image-led; information density; the type scale (`theme.type` — wide: titles big, body/detail small); and whether pages will use real imagery (`IMAGE-ASSETS.md`). The anchor gate validates **style fit**, not only "nothing clips" — if the user wouldn't approve this look for all 14 pages, the sample failed even when it's technically clean.
-
-Every sample page must include slide notes or a nearby page contract that names:
-
-- Page ID and source outline item.
-- Theme/template used.
-- Component source: bundled component, extracted internal component, external render, or page-specific custom component.
-- Asset source and data boundary.
-
-Render the sample PPTX to PNG, inspect it, fix visible issues, then stop for user approval.
-
-Do not start full-deck production until the user approves the anchor sample or explicitly asks to continue despite known issues.
-
----
-
-## Phase 4 - Full Deck Production
-
-Use the approved `outline.md`, theme/template, and anchor sample style.
-
-Read `references/PRODUCTION.md` first, then `references/SCAFFOLD.md`, `references/SLIDE-CRAFT.md`, and `references/QA.md`.
-Use `references/VISUAL-COMPOSITION.md` when selecting or combining PPT components, external renders, images, and whitespace.
-
-Implementation rules:
-
-- Keep pages aligned with `outline.md`.
-- Generate or update `chapter.json` before implementing multi-chapter decks.
-- Keep page code in page files or named page functions so a single page can be repaired without rebuilding unrelated pages.
-- Use the approved scaffold `theme/` and `components/` files. Do not redefine a new full theme inside page scripts.
-- Each page must declare its component source and asset/data boundary.
-- Work by the selected production mode:
-  - Mode A: default chapter/batch confirmation.
-  - Mode B: sequential full deck, then full QA.
-  - Mode C: parallel chapter production with subagents, then main-agent integration and QA.
-- Use existing local generation/editing patterns when available.
-- Prefer editable vector shapes, text, tables, and image placeholders over flattened images.
-- Use real images/screenshots when they carry product, scene, or evidence value.
-- Keep data and claim boundaries visible.
-- For feedback, use the minimum-unit repair protocol: patch only affected slide(s), shared component(s), or theme token(s) as needed.
-
-### Production pipeline (per-page model + hard gate)
-
-Each page is `pages/<id>/{page.js, page.json, qa.md, out/}`. Drive the deck with `tools/deck.js`:
-
-- `node tools/deck.js render` — render every page to its own `pages/<id>/out/<id>.png` (isolated artifact for review).
-- `node tools/deck.js verify` — the **QA gate**: each page must have `qa.md` with `Verdict: PASS`, *newer than* `page.js`, and a render *newer than* `page.js`. Exits non-zero and lists offenders otherwise. (This is what the optional `tools/stop-hook.js` runs.)
-- `node tools/deck.js build` — runs the gate, then **refuses to assemble the final deck unless every page is fresh+PASS** (`--draft` overrides for work-in-progress).
-
-This makes "edited a page but skipped re-render / re-review" a *structural* failure: the build won't ship it and the freshness check (qa.md/out vs page.js mtimes) catches staleness automatically. Workflow each round: edit a `page.js` → `render` → review its `out/<id>.png` and set its `qa.md` `Verdict: PASS` → `build`. After production, read `references/QA.md`, inspect the per-page PNGs, fix, and re-render as needed.
-
----
-
-## Phase 5 - Iteration & Repair
-
-A real deck is finished over several feedback rounds, not in one pass. Treat iteration as a first-class phase, not an afterthought — most quality is won or lost here.
-
-Each feedback round:
-
-1. **Locate the minimum unit** — the affected page(s), shared component(s), or theme token(s). Map every point of feedback to a concrete target before editing.
-2. **Patch at that unit.** Page-only fix → that page. Shared component/token fix → expect Gate 7 (re-render all).
-3. **Re-render and re-run Gate 6** (the Design Review Pass) on the affected pages — every round. Do not "glance".
-4. **Resolve every listed point**; don't fix one and silently regress another. After a shared change, scan the dense/diagram pages for new overlaps.
-5. **Log the lesson** (`feedback/LOG.md`), and promote recurring/general ones to `LESSONS.md`. A repair isn't done until logged.
-
-Anti-pattern that caused churn on real decks: reacting one-knob-per-complaint (e.g. a global font bump) without re-rendering the whole deck and re-reviewing. That ships regressions and drifts quality down across rounds. One change → full re-render → full review.
-
----
-
-## PPT-Specific Non-Negotiables
-
-- Chinese font: `Microsoft YaHei` / `微软雅黑`.
-- English and numbers: `Century Gothic` when available.
-- Theme tokens may reuse or adapt `web-video-presentation` themes when they are converted into PPT-safe font, color, grid, and component contracts.
+- Chinese font: Microsoft YaHei.
+- English/numbers: Century Gothic when available.
+- Internal/company decks: start with `leander-base`.
+- External/international/customer-facing decks: start with `leander-global`.
+- Red/azure are semantic accent colors, not decoration.
 - Each content page needs a real visual explanation: diagram, chart, image, timeline, matrix, dashboard mockup, mechanism map, or equivalent.
-- Do not treat text cards as a diagram.
-- Do not shrink fonts to hide overcrowding.
-- Do not leave accidental empty space.
-- Do not invent data, logos, customer claims, or implementation status.
-- Label achieved / planned / estimate / public-reference claims.
-- Render before reporting completion.
-- If rendered preview pages do not look like the approved anchor sample or selected template, QA fails even when nothing overlaps or clips.
 
----
+## When Unsure
 
-## Token And Context Discipline
-
-- Keep `SKILL.md` as the router. Put detailed rules in `references/`.
-- Do not read every reference file for every task.
-- Reuse source extraction, outline, and prior user feedback already in context.
-- For generated PPTX code, locate target pages first and edit locally.
-- For long decks, sample first, then batch.
-- Stop at checkpoints; cheap checkpoints prevent expensive full-deck rework.
+- New deck or new phase: read the phase reference.
+- Existing project: run `tools/context-pack.js` first.
+- Component choice: read `component-index.min.json` first; open `COMPONENT-CATALOG.md` only after shortlisting.
+- Many output files: run `tools/artifact-map.js --write` and report from `artifact-manifest.md`.
+- Repair: read `FAST-RUN.md` and affected page files only.
+- Final delivery: run `node tools/deck.js verify --final` and `node tools/deck.js build`.

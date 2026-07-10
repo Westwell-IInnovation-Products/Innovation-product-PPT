@@ -4,6 +4,7 @@ const { getTheme } = require("../theme/tokens");
 const { makeComponents } = require("../components/ppt-components");
 const { makeEditorial } = require("../components/editorial");
 const { makeBespoke } = require("../components/bespoke");
+const { makeToolSystemTree } = require("../components/tool-system-tree");
 
 function newPptx(theme) {
   const p = new pptxgen();
@@ -15,11 +16,53 @@ function newPptx(theme) {
   return p;
 }
 
-function makeCtx(pptx, theme) {
-  const ui = makeComponents(pptx, theme);
-  const ed = makeEditorial({ ui, theme, pptx });
-  const bp = makeBespoke({ ui, theme, pptx });
-  return { ui, ed, bp, theme, pptx };
+function makeTrace() {
+  let currentPage = null;
+  const pages = new Map();
+  function ensure() {
+    if (!currentPage) return null;
+    if (!pages.has(currentPage)) pages.set(currentPage, new Map());
+    return pages.get(currentPage);
+  }
+  return {
+    beginPage(pageId) { currentPage = pageId; pages.set(pageId, new Map()); },
+    mark(namespace, name) {
+      const calls = ensure();
+      if (!calls) return;
+      const key = `${namespace}.${name}`;
+      calls.set(key, (calls.get(key) || 0) + 1);
+    },
+    endPage(pageId) {
+      const calls = pages.get(pageId) || new Map();
+      currentPage = null;
+      return [...calls.entries()].map(([qualifiedName, count]) => {
+        const split = qualifiedName.indexOf(".");
+        return { namespace: qualifiedName.slice(0, split), name: qualifiedName.slice(split + 1), count };
+      });
+    }
+  };
 }
 
-module.exports = { newPptx, makeCtx };
+function tracedNamespace(namespace, source, trace) {
+  return new Proxy(source, {
+    get(target, property, receiver) {
+      const value = Reflect.get(target, property, receiver);
+      if (typeof value !== "function") return value;
+      return (...args) => {
+        trace.mark(namespace, String(property));
+        return value(...args);
+      };
+    }
+  });
+}
+
+function makeCtx(pptx, theme) {
+  const trace = makeTrace();
+  const ui = tracedNamespace("ui", makeComponents(pptx, theme), trace);
+  const ed = tracedNamespace("ed", makeEditorial({ ui, theme, pptx }), trace);
+  const bp = tracedNamespace("bp", makeBespoke({ ui, theme, pptx }), trace);
+  const toolTree = tracedNamespace("toolTree", makeToolSystemTree({ ui, theme, pptx }), trace);
+  return { ui, ed, bp, toolTree, theme, pptx, trace };
+}
+
+module.exports = { newPptx, makeCtx, makeTrace, tracedNamespace };

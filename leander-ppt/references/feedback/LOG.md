@@ -2,6 +2,8 @@
 
 Raw history of every improvement/feedback this skill received. This is the **full record**; the distilled, deduplicated working set lives in [`../LESSONS.md`](../LESSONS.md). Universals that graduate go into [`../SLIDE-CRAFT.md`](../SLIDE-CRAFT.md) → Universal Output Rules.
 
+This file is an **archive of examples and raw feedback**, not a default production rulebook. Do not load it as routine context for page production. Use `LESSONS.md` for active rules; open this log only when tracing why a rule exists, consolidating repeated issues, or promoting a new lesson.
+
 **Never edit past entries.** Append new ones at the bottom. When you promote an entry's lesson, set its `Promoted` line — don't delete it.
 
 ## How to use
@@ -413,3 +415,207 @@ Raw history of every improvement/feedback this skill received. This is the **ful
 - Scope: page-level repair + project design decision
 - Generalizable: yes — when explaining shared Skill evolution, do not stop at "people upload to Git." Design the governance mechanism: base version, local version metadata, periodic diff, abstraction/public-pool classifier, sensitivity filter, local QA, generated summary, and automated PR/push. Also, module composition pages should use an explicit correspondence structure when the point is "what module contains / does / outputs."
 - Promoted: no
+
+### Entry: visual selection gate missing from per-page workflow
+- Date: 2026-07-02
+- Theme: leander-base
+- Affected: `leander-ppt` skill docs and scaffold gate
+- Category: component-gap, process, layout-composition
+- Raw feedback: "组件库里面应该是有不少适配的图形，为什么不用？检查 leander-ppt 针对每一页的图形使用机制是什么；我要根据这一页表达内容自动选择图形库、外部图形、或者 image2，并由 subagent 校验。怀疑图形选择机制、检查机制都没效果。"
+- Root cause: The skill had a component catalog, slide decision tree, imageSlot workflow, and reviewer checklist, but no hard per-page artifact that forced the builder to evaluate component-library / external-graphic / image2 / custom routes before drawing. `tools/deck.js` only gated `qa.md` PASS and render freshness; it did not reject missing visual-route decisions. This let page-specific box diagrams bypass reusable components such as `stateFlow`, `workflowConfig`, and `pipelineFlow`.
+- Fix: Added `references/VISUAL-SELECTION.md` and made it required in SKILL phases, Gate 4.5, Production, QA, Scaffold, Components, and reviewer prompt. Each content page now needs `page.json.visualSelection` with relationship, candidate routes, selected route, rejected routes, and review focus. Updated scaffold `tools/deck.js` to fail verify/build when `page.json.visualSelection.selectedRoute.route` is missing or stale versus QA.
+- Scope: skill docs + scaffold gate
+- Generalizable: yes — component reuse cannot rely on advice alone. Make the visual route a per-page contract, then have the build gate and reviewer enforce it. Page-specific custom composition is last-resort after component-library, external-graphic, and image2/imageSlot routes are evaluated.
+- Promoted: LESSONS.md
+
+### 2026-07-03 路 QA must catch connector geometry and semantic-icon failures
+- Context: Harness internal sharing deck, P11-P13 mechanism pages
+- Theme: leander-base
+- Affected: P11 context routing, P12 page-folder memory, P13 tool-system tree, `toolSystemTree` component
+- Category: process, layout-composition, icon-meaning, component-gap
+- Raw feedback: "文字和图形还有重叠；P13 箭头都不是直的，是歪的，这是低级错误；主题库、组件库图形不好，看不出来是什么；彩色横线太丑且没意义。"
+- Fix: Rebuilt P11 right-side routing with separated text/chip zones and clearer vector AI node. Rebuilt P12 as folder-row plus selected-folder expansion. Promoted P13 into a reusable `toolSystemTree` component with orthogonal connectors, semantic theme/component/image icons, and vertical accent detail cards; backfilled it into the scaffold component registry.
+- Scope: page + component + skill-rule
+- Generalizable: yes - connector geometry, text clearance, and semantic icon meaning are hard QA gates. Tree/flow diagrams must use straight/orthogonal connectors where intended; labels and chips must clear nodes/strokes; asset-library icons must be drawn from domain metaphors, not generic labeled boxes.
+- Promoted: LESSONS.md
+
+### 2026-07-03 · Mechanism slides must reflect real artifacts and use image assets flexibly
+- Context: Harness internal sharing deck, P11-P13 mechanism pages
+- Theme: leander-base
+- Affected: P11 context management, P12 state memory, P13 tool system, `toolSystemTree`, image2 asset workflow
+- Category: process, layout-composition, typography, component-gap
+- Raw feedback: "P11 AI 图形不好就用 image2 PNG；P12 展开内容和实际文件夹不一致；P13 线条还是歪的、图标圆圈没必要；字体大小、图形对齐这些细节要注意；有必要用 image2 就直接用。"
+- Fix: P11 switched the AI overload metaphor to an image2 PNG asset, grouped MD files in one framed input area, aligned paired result boxes, and enlarged route numbers. P12 was corrected against the real page folder structure: `page.json`, `page.js`, `qa.md`, and `out/`; it now explains that `visualSelection` lives inside `page.json` and lessons live in the skill feedback log. P13's shared `toolSystemTree` component now uses strict horizontal/vertical connectors, removes unnecessary circular icon grounds, reduces dense detail text, and aligns the right engine panel with the tree.
+- Scope: page + component + skill-rule
+- Generalizable: yes - before drawing a mechanism about files/folders, inspect the real artifact structure; image2 assets need real alpha-channel verification, not visual assumptions; peer cards/result boxes need consistent typography and alignment; shared diagram components should enforce straight connector geometry by construction.
+- Promoted: LESSONS.md
+
+### 2026-07-03 - Page design method before drawing components
+- Context: Harness internal sharing deck, full 24-page method refresh after repeated P11/P12/P13 repair rounds
+- Theme: leander-base
+- Affected: `references/PAGE-DESIGN-METHOD.md`, SKILL stage guide, QA checklist, SLIDE-CRAFT, P5/P8/P11/P12/P13/P14/P20 pages, scaffold `harness-slides.js`
+- Category: process, layout-composition, visual-selection, image-asset, typography
+- Raw feedback: P11 image2 became too complex; repeated revisions showed that the issue was not a single page, but the lack of a design method for deciding message, visual route, artifact truth, layout skeleton, image complexity, connector geometry, and typography QA.
+- Fix: Added `PAGE-DESIGN-METHOD.md` and wired it into the skill stage guide, QA, and slide craft rules. The method requires: one-sentence message first; relationship classification; four-route visual gate (component, external graphic, image2/imageSlot, custom); real artifact inspection; layout skeleton before decoration; low-complexity image2 usage; and geometry/type QA. Updated the full deck with refreshed reusable components: `platformTrend`, `problemMap`, `repairScope`, and `shareBoundary`, plus the simpler P11 image2 asset.
+- Scope: skill-rule + component + full-deck refresh
+- Generalizable: yes - mechanism slides should not start from boxes or a favorite component. They start from the intended relationship, then choose the simplest faithful expression route. image2 is for simple focal metaphors or real scenes, while editable PPT components carry text, steps, and logic.
+- Promoted: PAGE-DESIGN-METHOD.md, LESSONS.md, QA.md, SLIDE-CRAFT.md, scaffold component library
+
+### 2026-07-06 - Token-light workflow, component library layers, and layout blueprint gate
+- Context: User reviewed the Leander-PPT harness and identified three immediate optimization needs before deeper scoring/QA work: reduce token use, clarify component-library design, and add a low-fidelity whole-deck layout checkpoint after outline approval.
+- Theme: skill-level
+- Affected: `SKILL.md`, `FAST-RUN.md`, `COMPONENT-LIBRARY-DESIGN.md`, `LAYOUT-BLUEPRINT.md`, `COMPONENTS.md`, `OUTLINE.md`, `SCAFFOLD.md`, `VISUAL-SELECTION.md`, scaffold `build-component-index.js`, scaffold `component-index.min.json`
+- Category: process, component-gap, visual-selection
+- Raw feedback: The skill consumes too much token; component use and scoring are unclear; the library needs stable/easy-to-use construction rules; after outline confirmation there should be a low-fidelity whole-deck layout preview before detailed PPT production.
+- Fix: Added a fast-run mode for full/repair/fast-QA/deep-QA context control; added a three-layer component model (page patterns, layout blocks, visual parts) plus promotion/fusion rules; added a Layout Blueprint Gate and reference; added a compact component index generator so routine component selection can read a smaller registry before the full catalog.
+- Scope: skill docs + scaffold tool
+- Generalizable: yes - before improving the visual scoring algorithm or dynamic QA, reduce context load, clarify component granularity, and add a cheap structural checkpoint to catch deck-level layout problems early.
+- Promoted: FAST-RUN.md, COMPONENT-LIBRARY-DESIGN.md, LAYOUT-BLUEPRINT.md
+
+### 2026-07-06 - Chinese self-evolution lifecycle and dynamic per-page QA profile
+- 等级：P1
+- 状态：promoted
+- 触发场景：skill-level QA and feedback loop design
+- 原始反馈：继续修改剩余的自进化机制和 QA 机制，并注意 QA 等材料用中文来写。
+- 根因：原机制有 `LOG -> LESSONS -> QA` 的方向，但缺少问题等级、生命周期、归档机制；QA 也主要是通用清单，没有强制生成每页针对性的检查项。
+- 修复：新增 `SELF-EVOLUTION.md`，定义 P0-P3、new/active/promoted/stable/archived、抽象和归档规则；新增 `DYNAMIC-QA.md` 和中文 reviewer；新增 `tools/build-qa-profile.js`，把每页的关系、路线、组件和内容转成中文 `qaProfile`；`deck.js verify` 增加 `qaProfile` gate。
+- 抽象规则：自进化要管理问题生命周期，而不是无限堆积问题；QA 必须由通用检查 + 页面关系检查 + 视觉路线检查 + 内容证据检查组成，并以中文 `qaProfile` 作为每页契约。
+- 进入位置：SELF-EVOLUTION.md / DYNAMIC-QA.md / agents/reviewer-zh.md / scaffold tools / SKILL gate / QA.md / SCAFFOLD.md / PRODUCTION.md / VISUAL-SELECTION.md
+
+### 2026-07-06 - Full 24-page rerun exposed visual-binding and image2 traceability gates
+- 等级：P1
+- 状态：active
+- 触发场景：使用更新后的 Leander-ppt skill 重新跑原 24 页 Harness 内部分享 PPT
+- 原始反馈：用户要求按更新后的 skill 重新跑完整 24 页，每一步流程都要走，大纲和每页表述内容不变，一边跑一边看问题。
+- 根因：
+  - 旧页面多数没有显式导出 `visualBinding`，新 Gate 无法稳定判断页面实际采用的视觉路线。
+  - 自动视觉选择仍存在关键词倾向，P05/P08/P11/P20 出现自动选择与当前页面实现不一致。
+  - image2 路线如果没有 `promptSpec.file`，后续 QA 无法追溯图片生成意图。
+  - P11 的 image2 插图虽然解决了手绘粗糙问题，但元素仍偏多，影响“上下文堆叠导致注意力稀释”的快速理解。
+- 修复：
+  - 为本项目生成 `layout-blueprint.md`，作为 Gate 1.5 的整包布局观察。
+  - 重新生成 24 页 `visualSelection` 和中文 `qaProfile`。
+  - 生成 `output/v6-gate-contract-report.md`，记录自动选择、实际绑定和 QA 绑定差异。
+  - 对旧页面做兼容对齐：不改正文和画面，只补齐 `actualBinding` 或沿用 page.js 的真实 `visualBinding`。
+  - 为 P11 补齐 `promptSpec.file` 与 image2 输出文件关系。
+  - 重新渲染 24 页，写入中文 `qa.md`；Gate 最终达到 23/24 PASS，P11 因图像复杂度标记为 FIX-FIRST。
+- 抽象规则：
+  - 新 Gate 推广到旧项目时，要有“兼容对齐”阶段：先记录自动选择与实际实现的差异，再决定是调优评分、改 page.js 绑定，还是保留历史适配。
+  - 所有 image2 路线必须同时具备图片槽位、输出文件和 promptSpec；否则不能进入 PASS。
+  - image2 插图不应追求复杂完整，应优先服务单一焦点隐喻；机制页上的复杂逻辑仍应由可编辑组件承担。
+  - QA 的 PASS 不只看是否无溢出，还要看图像复杂度、第一眼理解、表达路线是否承载页面意图。
+- 进入位置：feedback/LOG.md；待推广到 LESSONS.md、DYNAMIC-QA.md、VISUAL-SELECTION.md、PAGE-DESIGN-METHOD.md
+
+### 2026-07-06 - Layout blueprint must be story-first, not page-only
+- 等级：P1
+- 状态：active
+- 触发场景：Leander-PPT 内部分享 deck 的 Gate 1.5 布局蓝图阶段
+- 原始反馈：布局不能只考虑单页内容，因为 PPT 是一个完整故事；逻辑性和叙事完整性也要体现在整套 PPT 的布局节奏上，形成层层递进、环环相扣。
+- 根因：原 Layout Blueprint 规则只要求每页 message、relationship、skeleton、route、risk，缺少 deck-level narrative job、chapter rhythm、page handoff 和视觉节奏控制，容易得到“单页成立但整套故事松散”的蓝图。
+- 修复：更新 `references/LAYOUT-BLUEPRINT.md`，要求先做 story-level layout pass，再做 page-level skeleton；当前项目新增 story arc、chapter narrative job、story handoff rules，并输出 `layout-blueprint-story-v5.png`。
+- 抽象规则：长 deck 的布局蓝图必须先设计整套故事弧线，再设计单页骨架。每页需要声明叙事角色、前后承接和版式节奏变化。低保真预览不要求精美，但必须居中、结构可读、线条不误导。
+- 进入位置：LAYOUT-BLUEPRINT.md / feedback LOG；后续可推广到 OUTLINE.md 和 reviewer QA。
+
+### 2026-07-06 - Low-fi layout previews must also pass geometry QA
+- 等级：P1
+- 状态：promoted
+- 触发场景：Leander-PPT 内部分享 deck 的 Gate 1.5 布局蓝图预览
+- 原始反馈：用户指出预览图里仍有组件重叠和展示问题，并质疑这是否会延续到正式 PPT。
+- 根因：之前把低保真预览定位为“只看大概结构”，但没有给预览图本身设置碰撞、越界、对齐、连接线可读性的硬门槛，导致预览绘制器的粗糙问题和真实布局风险混在一起。
+- 修复：更新 `references/LAYOUT-BLUEPRINT.md`，新增 Low-Fi Preview QA；当前项目将 `layout-blueprint-story-v5.png` 标记为未通过诊断稿，并重绘 `layout-blueprint-story-v6.png`，使用固定安全区、正交线、等距节点和简化骨架。
+- 抽象规则：低保真不是免检。只要预览出现明显重叠、越界、误导性线条或页面骨架失衡，Gate 1.5 就不能通过；必须先修蓝图或预览器，再进入样张和正式 PPT。
+- 进入位置：LAYOUT-BLUEPRINT.md / 当前项目 layout-blueprint.md。
+
+### 2026-07-06 - Layout blueprint should create a component-selection contract
+- 等级：P1
+- 状态：promoted
+- 触发场景：Leander-PPT 内部分享 deck 的 Gate 1.5 预览图继续出现重复模板和语义表达不准
+- 原始反馈：用户指出预览图如果做得更深，会和后续组件库选择环节重叠；需要重新设计预览图环节和整条作业链路。
+- 根因：原机制从 `relationship -> fixed preview template` 直接出图，缺少 `relationshipSubtype`、`visualSignature`、`candidateFamilies`、`avoidSignatures` 和全 deck 重复度约束，导致 p02/p04/p22 这类同属 compare 的页面被画成同一种模板。
+- 修复：将 Gate 1.5 升级为 Blueprint-to-Component Contract。更新 `SKILL.md`、`LAYOUT-BLUEPRINT.md`、`PAGE-DESIGN-METHOD.md`、`VISUAL-SELECTION.md`、`DYNAMIC-QA.md`；脚手架 `select-visual-route.js` 支持读取 `layout-blueprint.json` 或页面 `blueprintContract`，`build-qa-profile.js` 增加 `blueprintChecks`。
+- 抽象规则：预览图不是提前做 PPT，而是提前做设计决策。它负责确定故事节奏、页面视觉签名、候选组件族、禁止复用骨架和复杂度预算；组件选择负责在该合同内选择、组合和参数化组件；QA 负责检查最终页是否偏离合同。
+- 进入位置：LAYOUT-BLUEPRINT.md / PAGE-DESIGN-METHOD.md / VISUAL-SELECTION.md / DYNAMIC-QA.md / scaffold tools。
+
+### 2026-07-06 - Layout preview needs color semantics and signature coverage gates
+- 等级：P1
+- 状态：promoted
+- 触发场景：Leander-PPT 内部分享 deck 的 Gate 1.5 v7/v8 预览复查
+- 原始反馈：用户指出部分红框页仍有重叠风险，输出文件太多不清楚哪些需要看；同时要求颜色使用必须有意义，不能只依赖主题色，红色、蓝色、灰色需要服务页面逻辑。
+- 根因：
+  - 预览 QA 只检查几何，没有把“文件分工”和“颜色语义”纳入硬门槛。
+  - 低保真预览器对未覆盖的 `visualSignature` 会退回通用占位，导致 P11 这种关键机制页看似通过但表达失真。
+  - 组件前置合同只定义位置和候选组件族，未定义页面强调对象和颜色角色，后续正式制作仍要重新猜“哪里该红、哪里该弱化”。
+- 修复：
+  - 更新 `LAYOUT-BLUEPRINT.md`，新增 Color Semantics Contract 和预览 QA 文件分工要求。
+  - 更新 `PAGE-DESIGN-METHOD.md`，新增“先定颜色角色再做样式”的页面设计步骤。
+  - 更新 `DYNAMIC-QA.md`，新增蓝图预览 QA 补充，要求检查几何、连接线、故事一致、颜色语义和文件分工。
+  - 当前项目新增 `layout-blueprint.json.colorSemantics`，并生成 `layout-blueprint-story-v8.png`、`layout-blueprint-risk-pages-v8.png`、`layout-blueprint-preview-qa-v8.md`。
+  - 预览器新增签名覆盖门槛：未覆盖的 `visualSignature` 不能自动退回通用占位并通过 QA。
+- 抽象规则：Gate 1.5 预览必须同时回答三件事：这套 PPT 的故事节奏是否成立；每页视觉签名是否有专属骨架；颜色是否承担明确语义。用户只需要看 story preview 和 risk preview；合同 JSON、QA md、渲染脚本服务后续自动制作。
+- 进入位置：LAYOUT-BLUEPRINT.md / PAGE-DESIGN-METHOD.md / DYNAMIC-QA.md / 当前项目 layout-blueprint.md。
+
+### 2026-07-07 - Multi-agent roles need executable evidence gates
+- 等级：P1
+- 状态：promoted
+- 触发场景：用户希望将 Leander-PPT 从单一 agent 流程升级为多角色协作，包括策划师、设计师、组件管理员、质检员和汇报人。
+- 原始反馈：用户担心只创建多个子 agent 规格但没有实际效果，希望设计后进行校验，确认机制能运行，而不是只有形式。
+- 根因：
+  - 旧机制只有 reviewer 子 agent 规格和文档要求，缺少多角色分工。
+  - 即使要求使用 subagent，也没有机器可检查的角色证据；`deck.js verify` 不能证明角色真的参与或 fallback 已记录。
+  - 多角色如果没有所有权边界，容易导致故事、设计、组件和 QA 互相覆盖。
+- 修复：
+  - 新增 `references/AGENT-COLLABORATION.md`，定义角色、阶段、证据合同、fallback/bypass 规则和失败条件。
+  - 新增中文角色 agent：`planner-zh.md`、`layout-architect-zh.md`、`visual-designer-zh.md`、`component-curator-zh.md`、`presenter-zh.md`，并将 `reviewer-zh.md` 设为默认 QA reviewer。
+  - 脚手架新增 `agent-collaboration.json`、`agent-collaboration.md`、`tools/verify-agent-collaboration.js`，并在 `deck.js verify/build` 中启用协作门禁。
+  - 新增 passing 示例，验证填写完整的角色证据可以通过；默认 pending 状态会被 gate 拦住。
+- 抽象规则：多 agent 不能靠“角色名”生效，必须靠产物合同生效。每个角色要么留下具体 artifact + verdict，要么留下 fallback/bypass reason；最终构建前由脚本检查 required roles，主 agent 保留最终责任。
+- 进入位置：AGENT-COLLABORATION.md / agents/*.md / SKILL.md / PRODUCTION.md / QA.md / SCAFFOLD.md / scaffold tools。
+
+### 2026-07-07 - Agent collaboration gate must not become a decorative or overblocking gate
+- 等级：P1
+- 状态：promoted
+- 触发场景：独立子 agent 审查新增多角色协作机制
+- 原始反馈：协作机制已有接入和门禁，但仍可能只是验证 JSON；required role 可 bypass 过松；`agent-collaboration.md` 不参与校验；默认 `verify` 过早阻塞页面 QA；artifact 校验太浅。
+- 根因：
+  - 第一版门禁把“最终协作证据检查”和“日常页面 QA verify”绑在一起。
+  - 脚本只看 JSON 状态，没有检查 Markdown 证据和 reviewer SHIP 原文。
+  - required role 允许 bypass，容易使复杂 deck 形式合规。
+  - wildcard artifact 直接返回 true，不能证明页面合同存在。
+- 修复：
+  - `deck.js verify` 改为页面 QA gate；`deck.js verify --final` 和非 draft `deck.js build` 才触发协作门禁。
+  - `verify-agent-collaboration.js` 增强：required role 默认不能 bypass；fallback 也需要 verdict、summary、reason；completed 需要 evidence；Markdown 必须提到角色；reviewer completed 时 Markdown 必须包含 `结论：SHIP`；wildcard artifact 改为真实文件扫描。
+  - agent frontmatter `name` 与 JSON role key 对齐，如 `planner-zh`、`reviewer-zh`。
+  - visual designer 和 reviewer artifact 拆开，避免都指向 `qa.md`。
+- 抽象规则：协作门禁要分阶段。工作中先保证页面 QA 可运行，最终交付前再检查角色协作证据；required role 不能轻易 bypass，fallback 可以存在但必须留下可审计证据。
+- 进入位置：deck.js / verify-agent-collaboration.js / AGENT-COLLABORATION.md / SCAFFOLD.md / PRODUCTION.md / QA.md / agents frontmatter。
+## 2026-07-07 - Deck gate should tolerate UTF-8 BOM in JSON contracts
+
+- Category: process
+- Defect: `deck.js verify` treated an otherwise valid `page.json` as `BAD-CONTRACT` when the file contained a UTF-8 BOM. Other scaffold tools already strip BOM, so the gate was less robust than the surrounding toolchain.
+- Fix: Strip a leading BOM in `tools/deck.js` before parsing page JSON.
+- General lesson: All scaffold JSON readers should normalize BOM consistently; otherwise the gate can fail for encoding artifacts rather than real contract defects.
+- Promoted: no
+
+## 2026-07-07 - Module map pages need a dedicated correspondence component
+
+- Category: component-gap / visual-selection
+- Defect: p09 "Skill 模块组成" used a page-specific custom drawing because the selector scored generic `archLayered` higher than the actual visual need. This made the page depend on manual layout and weakened the directory-to-module correspondence.
+- Fix: Promoted `moduleCorrespondenceMap` into the base component library, registered it with `module-correspondence-map`, `system.module-map`, and `directory-to-module-responsibility-output` tags, rebuilt the compact component index, and updated p09 to bind the component directly.
+- General lesson: Layout Blueprint should not only name a relationship; it must name the visual signature and candidate family strongly enough that component selection can do useful front-loading work.
+- Promoted: LESSONS.md
+
+## 2026-07-07 - Checkpoint approval must be machine-checkable
+
+- Category: process
+- Defect: After anchor sample QA passed, the workflow response almost jumped to Phase 4 batch production without explicit user approval. The skill prose required stopping, but there was no machine-checkable state to distinguish "QA passed" from "user approved".
+- Fix: Added `checkpoint-status.json` and `tools/verify-checkpoints.js`; documented Gate 5.5; updated `deck.js` so projects marked `workflow.stage = "production"` run the Phase 4 checkpoint gate before final verify/build.
+- General lesson: Stage transitions need explicit artifacts. A rendered page gate validates quality; a checkpoint gate validates user approval and production mode.
+- Promoted: LESSONS.md
+
+## 2026-07-07 - Production mode workers must not satisfy final role review
+
+- Category: process, agent-collaboration, QA
+- Defect: Mode C parallel chapter production created real page-production subagents, but the final collaboration evidence could still rely on fallback roles or older anchor-sample reviewer evidence. This made it look as if component curator, visual designer, reviewer, and presenter had participated in final deck review when they had not all run against the integrated full deck.
+- Fix: Added a post-production role review gate to `SKILL.md`, `PRODUCTION.md`, `AGENT-COLLABORATION.md`, scaffold `deck.config.js`, and `verify-agent-collaboration.js`. Production-stage decks now require completed `component-curator-zh`, `visual-designer-zh`, `reviewer-zh`, and `presenter-zh` reviews with `phase="post-production"` and `full-deck` evidence.
+- General lesson: Production mode and role review are separate. Page-production workers draft content; final role reviewers judge the integrated deck after render. Do not let chapter self-checks, fallback notes, or anchor reviews masquerade as final multi-agent evidence.
+- Promoted: LESSONS.md

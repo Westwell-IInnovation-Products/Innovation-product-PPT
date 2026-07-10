@@ -7,6 +7,7 @@ This is the single required craft guide for producing or editing slide pages.
 - [When To Read](#when-to-read)
 - [This Is PPT, Not A Text Summary](#this-is-ppt-not-a-text-summary)
 - [Slide-Making Decision Tree](#slide-making-decision-tree)
+- [Graphic Route Selection](#graphic-route-selection)
 - [Typography And Layout Rules](#typography-and-layout-rules)
 - [Designed Whitespace Vs Empty Space](#designed-whitespace-vs-empty-space)
 - [Anti AI Visual Fingerprints](#anti-ai-visual-fingerprints)
@@ -47,6 +48,8 @@ Before drawing a page, answer these five questions:
 5. What is the data boundary: achieved, planned, estimate, public reference, or unknown?
 
 Then choose the page form.
+
+For repair or full production, also apply `PAGE-DESIGN-METHOD.md`: message first, relationship second, route third, artifact truth before drawing, and geometry/type QA before PASS.
 
 | Relationship | Prefer |
 |---|---|
@@ -89,6 +92,26 @@ Then choose the page form.
 | Product capability | system diagram + capability callouts |
 | Roadmap / delivery | timeline + milestones + risks |
 | Risks / gaps | heat map, priority stack, red highlight |
+
+## Graphic Route Selection
+
+The decision tree above chooses the page relationship. `VISUAL-SELECTION.md` chooses the production route. Do both before drawing.
+
+Route order:
+
+1. **Component library** — use `COMPONENT-CATALOG.md` and scaffold `components/` first. A page that can be expressed by `stateFlow`, `workflowConfig`, `pipelineFlow`, `featureGrid`, `hubSpokeCapability`, `capabilityMatrix`, `topology`, or another existing archetype should not be redrawn as loose boxes.
+2. **External graphic** — use existing PPT graphics, screenshots, product images, maps, GIS/3D renders, or source diagrams when the asset is evidence or would take too long to redraw.
+3. **image2 / imageSlot** — reserve a slot for scene, product, realistic, or metaphorical imagery that would look crude as vector; emit the prompt-spec from `IMAGE-ASSETS.md`.
+4. **Page-specific custom** — allowed only after the first three routes are evaluated and recorded.
+
+Relationship shortcuts:
+
+- State, memory, lifecycle, "one page folder has local memory" -> try `stateFlow`, `workflowConfig`, `goalPath`, or `topology` before custom. For example, a "state and memory" page should show state transitions and memory anchors, not generic text boxes.
+- Tool system / asset pool -> try `featureGrid`, `hubSpokeCapability`, `splitDossier`, `panelDuo`, or `bulletColumns`; reserve `imageSlot` for example screenshots or generated visual samples.
+- Process / execution orchestration -> try `processTimeline`, `pipelineFlow`, `milestoneTimeline`, `valueChain`, or `workflowConfig`.
+- Review / evaluation / gate -> try `swimlaneProcess`, `stateFlow`, `dashboardMock`, or `capabilityMatrix`, depending on whether the page is a role handoff, lifecycle, monitoring view, or scorecard.
+
+Line-frame is a style, not a route. A line-frame page still needs a relationship: flow, state, hierarchy, comparison, toolbox, evidence, or scene.
 
 ## Typography And Layout Rules
 
@@ -226,6 +249,7 @@ Run this for every anchor page and after each final slide batch.
 
 - [ ] The page ID and page number match `outline.md`.
 - [ ] The page has one clear takeaway.
+- [ ] `page.json.visualSelection` exists and explains why the selected route beats component-library/external/image2 alternatives.
 - [ ] The page has a real diagram or visual explanation, not just text cards.
 - [ ] Text size is readable and not artificially shrunk.
 - [ ] Visual weight is centered or intentionally composed.

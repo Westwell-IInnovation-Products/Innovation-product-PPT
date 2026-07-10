@@ -1,0 +1,53 @@
+{
+  "version": "agent-collaboration.v1",
+  "mode": "self-check-fallback-example",
+  "roles": {
+    "planner-zh": {
+      "status": "fallback",
+      "artifact": "outline.md",
+      "verdict": "PASS",
+      "summary": "Example: main agent performed planner checklist.",
+      "evidence": "See examples/agent-collaboration.passing.md#planner-zh",
+      "reason": "Example file for validating the gate without spawning a real subagent."
+    },
+    "layout-architect-zh": {
+      "status": "fallback",
+      "artifact": "layout-blueprint.md",
+      "verdict": "PASS",
+      "summary": "Example: main agent performed layout blueprint checklist.",
+      "evidence": "See examples/agent-collaboration.passing.md#layout-architect-zh",
+      "reason": "Example file for validating the gate."
+    },
+    "visual-designer-zh": {
+      "status": "fallback",
+      "artifact": "qa.md",
+      "verdict": "PASS",
+      "summary": "Example: main agent performed visual-design checklist.",
+      "evidence": "See examples/agent-collaboration.passing.md#visual-designer-zh",
+      "reason": "Example file for validating the gate."
+    },
+    "component-curator-zh": {
+      "status": "fallback",
+      "artifact": "pages/*/page.json",
+      "verdict": "PASS",
+      "summary": "Example: main agent performed component-curator checklist.",
+      "evidence": "See examples/agent-collaboration.passing.md#component-curator-zh",
+      "reason": "Example file for validating the gate."
+    },
+    "reviewer-zh": {
+      "status": "completed",
+      "artifact": "qa.md",
+      "verdict": "SHIP",
+      "summary": "Example: reviewer verdict recorded.",
+      "evidence": "See examples/agent-collaboration.passing.md#reviewer-zh"
+    },
+    "presenter-zh": {
+      "status": "bypassed",
+      "artifact": "speaker-notes.md",
+      "verdict": "",
+      "summary": "Example: presenter review not required.",
+      "evidence": "",
+      "reason": "Optional role not required for this validation example."
+    }
+  }
+}

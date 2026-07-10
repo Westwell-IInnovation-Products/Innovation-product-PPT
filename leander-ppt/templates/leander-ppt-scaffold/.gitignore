@@ -1,0 +1,8 @@
+node_modules/
+output/_*/
+output/*.pdf
+output/*.tmp
+pages/*/out/*.pptx
+pages/*/out/*.pdf
+~$*.pptx
+*.log

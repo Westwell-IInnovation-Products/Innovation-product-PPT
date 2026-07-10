@@ -1,7 +1,8 @@
-// Example content page using a generic bespoke component (hub + radiating value cards).
+﻿// Example content page using a generic bespoke component (hub + radiating value cards).
 module.exports = {
   id: "p02",
   title: "核心价值",
+  visualBinding: { route: "component-library", name: "hubRadial" },
   build(slide, { bp }) {
     bp.hubRadial(slide, {
       title: "<页面标题>",

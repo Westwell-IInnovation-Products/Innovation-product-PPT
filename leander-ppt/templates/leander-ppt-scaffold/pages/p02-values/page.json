@@ -1,1 +1,202 @@
-{ "id": "p02", "title": "核心价值", "component": "hubRadial", "dataBoundary": "—", "assetNeed": "none" }
+{
+  "id": "p02",
+  "title": "核心价值",
+  "component": "hubRadial",
+  "dataBoundary": "—",
+  "assetNeed": "none",
+  "relationship": "system-map",
+  "expressionMode": "mechanism-diagram",
+  "implementationStatus": "implemented",
+  "colorIntent": "强调色只标记一个焦点，其余同级节点使用主题结构色。",
+  "requiredSlots": [
+    "coreNode",
+    "modules"
+  ],
+  "contentShape": {
+    "maxItems": 4
+  },
+  "candidateFamilies": [
+    "hubRadial"
+  ],
+  "visualSelection": {
+    "engineVersion": "visual-selector.v2",
+    "intent": "核心价值",
+    "relationship": "system-map",
+    "relationshipSubtype": "system-map",
+    "visualSignature": "system-map",
+    "blueprintRef": null,
+    "expressionMode": "mechanism-diagram",
+    "requiredSlots": [
+      "coreNode",
+      "modules"
+    ],
+    "contentShape": {
+      "maxItems": 4
+    },
+    "candidateRoutes": [
+      {
+        "route": "component-library",
+        "name": "hubRadial",
+        "score": 95,
+        "confidenceCap": 0.74,
+        "reasons": [
+          "relationship.exact",
+          "contract.family",
+          "slots.2/2",
+          "capacity.fit"
+        ],
+        "rejections": []
+      },
+      {
+        "route": "component-library",
+        "name": "archLayered",
+        "score": 75,
+        "confidenceCap": 0.74,
+        "reasons": [
+          "relationship.exact",
+          "slots.2/2",
+          "capacity.fit",
+          "theme.proven"
+        ],
+        "rejections": []
+      },
+      {
+        "route": "component-library",
+        "name": "fourColumnMechanism",
+        "score": 75,
+        "confidenceCap": 0.74,
+        "reasons": [
+          "relationship.exact",
+          "slots.2/2",
+          "capacity.fit",
+          "theme.proven"
+        ],
+        "rejections": []
+      },
+      {
+        "route": "external-graphic",
+        "name": "source-evidence",
+        "score": 28,
+        "reasons": [
+          "evidence.not-required"
+        ],
+        "rejections": []
+      },
+      {
+        "route": "image2",
+        "name": "imageSlot",
+        "score": 22,
+        "reasons": [
+          "image.not-primary"
+        ],
+        "rejections": []
+      },
+      {
+        "route": "page-specific-custom",
+        "name": "custom-composition",
+        "score": 18,
+        "reasons": [
+          "last-resort"
+        ],
+        "rejections": []
+      }
+    ],
+    "selectedRoute": {
+      "route": "component-library",
+      "name": "hubRadial",
+      "score": 95,
+      "confidence": 0.74,
+      "margin": 20
+    },
+    "selectionEvidence": {
+      "breakdown": {
+        "relationship": 30,
+        "blueprint": 18,
+        "slots": 20,
+        "capacity": 10,
+        "evidence": 5,
+        "theme": 8,
+        "keyword": 4,
+        "risk": 0
+      },
+      "reasons": [
+        "relationship.exact",
+        "contract.family",
+        "slots.2/2",
+        "capacity.fit",
+        "theme.proven"
+      ]
+    },
+    "requiresCuratorReview": false,
+    "rejectedRoutes": [
+      {
+        "route": "component-library",
+        "name": "hubSpokeCapability",
+        "score": 55,
+        "reasons": [
+          "slots.insufficient"
+        ]
+      },
+      {
+        "route": "component-library",
+        "name": "problemMap",
+        "score": 55,
+        "reasons": [
+          "slots.insufficient"
+        ]
+      },
+      {
+        "route": "component-library",
+        "name": "annotatedDiagram",
+        "score": 53,
+        "reasons": [
+          "slots.insufficient"
+        ]
+      }
+    ],
+    "implementation": {
+      "expectedBinding": {
+        "route": "component-library",
+        "name": "hubRadial"
+      },
+      "pageJsMustExport": "visualBinding"
+    },
+    "reviewFocus": [
+      "所选路线是否保持蓝图视觉签名？",
+      "必需槽位和内容容量是否匹配？",
+      "低置信或小分差是否已由组件管理员复核？"
+    ]
+  },
+  "qaProfile": {
+    "version": "qa-profile.zh.v2",
+    "rulesVersion": "qa-rules.zh.v2",
+    "scope": "content-page",
+    "relationship": "system-map",
+    "selectedRoute": {
+      "route": "component-library",
+      "name": "hubRadial"
+    },
+    "blueprintRef": null,
+    "componentRef": "tools/component-index.min.json#hubRadial",
+    "ruleSets": [
+      "universal",
+      "relationship.system-map",
+      "route.component-library",
+      "evidence.implementation"
+    ],
+    "pageRules": [
+      {
+        "id": "page.p02.message",
+        "severity": "P1",
+        "text": "核心信息必须由视觉结构支撑：核心价值"
+      }
+    ],
+    "requiredEvidence": [
+      "render-sha256",
+      "visual-location",
+      "component-trace",
+      "source-reference"
+    ]
+  },
+  "schemaVersion": "leander-page.v2"
+}

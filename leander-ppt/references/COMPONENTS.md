@@ -8,9 +8,31 @@ Read this file when creating anchor samples, extending a template, or extracting
 
 After reading this file, use `COMPONENT-CATALOG.md` as the current menu of reusable page components extracted from internal decks. The catalog is intentionally generic: source PPTs are references, not one-off case rules.
 
+For routine route selection or repair, prefer the scaffold's compact `tools/component-index.min.json` first. Read the full catalog only after candidates are shortlisted. For component evolution, also read `COMPONENT-LIBRARY-DESIGN.md`.
+
+## Maintenance Tools
+
+这些工具只用于组件库维护，不是每次制作 PPT 都要执行：
+
+```bash
+node tools/enrich-component-registry.js
+node tools/build-component-index.js
+node tools/lint-component-library.js --strict
+```
+
+输出文件：
+
+- `tools/component-registry.json`：组件管理员维护的完整注册表，给组件库治理使用。
+- `tools/component-index.min.json`：日常选组件优先读取的轻量索引，给后续生产流程使用。
+- `output/component-library-lint.json`：组件库维护证据，给维护者看，不需要用户每轮确认。
+
+组件维护必须遵循“可运行基线 -> 小步修改 -> 立即检查”。不要用全局替换盲目改组件源文件；先确认 `node tools/lint-component-library.js --strict` 通过，再进入真实 PPT 生产。
+
 ## Component Types
 
 Leander PPT should accumulate components in three layers.
+
+Use the library model in `COMPONENT-LIBRARY-DESIGN.md`: page patterns, layout blocks, and visual parts. Do not treat every useful drawing as a new full-page component.
 
 ### 1. Editable PPT Components
 
@@ -72,7 +94,7 @@ Rule: external components are welcome when they add information. They are not a 
 
 ## Component Source Decision
 
-Choose the component source based on the page relationship, not on what is easiest to draw.
+Choose the component source based on the page relationship, not on what is easiest to draw. Record the decision in `page.json.visualSelection` before implementing the page; see `VISUAL-SELECTION.md`.
 
 | Page need | Prefer | Final PPT form |
 |---|---|---|
@@ -85,7 +107,7 @@ Choose the component source based on the page relationship, not on what is easie
 
 Use mixed sources when useful: for example, an editable PPT architecture frame plus an image2 scene thumbnail, or an ECharts chart inside a PPT evidence board.
 
-Before finalizing a mixed-source page, run `VISUAL-COMPOSITION.md`. The page must look designed, not assembled.
+Before finalizing a mixed-source page, run `VISUAL-COMPOSITION.md`. The page must look designed, not assembled. QA must be able to see why the selected route is better than component-library, external-graphic, image2/imageSlot, or page-specific-custom alternatives.
 
 ## Icon Library Policy
 
@@ -143,3 +165,30 @@ Then classify each pattern:
 - [ ] Editable/non-editable status is explicit.
 - [ ] External assets or source files are retained when needed.
 - [ ] QA risks are known before production.
+
+## Renderer Availability Gate
+
+组件注册表不是“可用证明”。一个组件只有同时满足下面条件，才能进入日常页面选型：
+
+- `route=component-library`
+- 组件库 JS 文件中存在同名导出的真实渲染函数
+- `designStatus` 不是 `planned`、`needs-renderer`、`needs-redesign`、`deprecated`、`archived`
+- `node tools/lint-component-library.js --strict` 通过
+
+维护时必须区分三种状态：
+
+| 状态 | 含义 | 能否进入自动选型 |
+|---|---|---|
+| `usable` + `renderable` | 有真实 JS 渲染器，且设计质量允许复用 | 可以 |
+| `needs-renderer` + `no-renderer` | 只有 registry 信息，还没有迁移成正式组件函数 | 不可以 |
+| `needs-redesign` + `renderable` | 可以画出来，但语义、布局或美感不达标 | 不可以 |
+
+`tools/component-index.min.json` 中的 `selectable` 是生产流程使用的最终判断。视觉选择器必须只从 `selectable=true` 的组件中挑选候选，不能直接相信 registry 条目数量。
+
+真实组件图册通过下面命令生成：
+
+```bash
+node tools/render-component-library-preview.js
+```
+
+图册输出中的 `NO RENDERER` 和 `BLOCKED` 都是组件库治理信号，不是最终 PPT 页面。遇到这类条目，先修组件机制或组件设计，再让它回到候选池。

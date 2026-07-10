@@ -1,0 +1,12 @@
+{
+  "version": "agent-collaboration.v2",
+  "policy": "event-driven.v2",
+  "roles": {
+    "planner-zh": {"status":"pending","event":"","phase":"","runId":"","inputDigest":"","outputDigest":"","artifact":"outline.md","verdict":"","summary":"","reason":""},
+    "layout-architect-zh": {"status":"pending","event":"","phase":"","runId":"","inputDigest":"","outputDigest":"","artifact":"layout-blueprint.md","verdict":"","summary":"","reason":""},
+    "visual-designer-zh": {"status":"pending","event":"","phase":"","runId":"","inputDigest":"","outputDigest":"","artifact":"agent-reviews/visual-designer-zh.md","verdict":"","summary":"","reason":""},
+    "component-curator-zh": {"status":"pending","event":"","phase":"","runId":"","inputDigest":"","outputDigest":"","artifact":"agent-reviews/component-curator-zh.md","verdict":"","summary":"","reason":""},
+    "reviewer-zh": {"status":"pending","event":"","phase":"","runId":"","inputDigest":"","outputDigest":"","artifact":"agent-reviews/reviewer-zh.md","verdict":"","summary":"","reason":""},
+    "presenter-zh": {"status":"pending","event":"","phase":"","runId":"","inputDigest":"","outputDigest":"","artifact":"speaker-notes.md","verdict":"","summary":"","reason":""}
+  }
+}

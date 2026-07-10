@@ -9,21 +9,27 @@ function makeComponents(pptx, theme) {
   const shape = pptx.ShapeType;
 
   function addText(slide, x, y, w, h, text, opts = {}) {
-    slide.addText(text, {
+    const plainText = Array.isArray(text) ? text.map(item => item && item.text || "").join("") : String(text || "");
+    const fontFace = opts.fontFace || (/[一-鿿]/.test(plainText) ? F.cn : F.en);
+    const roleSize = opts.role && theme.type && theme.type[opts.role];
+    const textOptions = {
       x: U(x), y: U(y), w: U(w), h: U(h),
-      fontFace: opts.fontFace || F.cn,
-      fontSize: PT(opts.size || 28),
+      fontFace,
+      fontSize: PT(opts.size || roleSize || 28),
       color: opts.color || C.text,
       bold: !!opts.bold,
       italic: !!opts.italic,
       align: opts.align || "left",
       valign: opts.valign || "top",
       margin: opts.margin ?? 0,
-      fit: opts.fit || "shrink",
       breakLine: false,
       charSpacing: opts.charSpacing,
       lineSpacingMultiple: opts.lineSpacingMultiple || 1
-    });
+    };
+    // Silent shrink makes peer labels inconsistent and can hide an over-capacity
+    // component. Use it only as an explicit, reviewed exception.
+    if (opts.fit) textOptions.fit = opts.fit;
+    slide.addText(text, textOptions);
   }
 
   function rect(slide, x, y, w, h, opts = {}) {
@@ -386,22 +392,42 @@ function makeComponents(pptx, theme) {
   }
 
   function hubSpokeCapability(slide, data) {
-    header(slide, data.title, data.subtitle);
-    const cx = 960, cy = 512;
-    rect(slide, cx - 180, cy - 82, 360, 164, { fill: C.primary, line: C.primary, round: true, shadow: true });
-    addText(slide, cx - 135, cy - 28, 270, 40, data.center || "Core", { size: 30, color: "FFFFFF", bold: true, align: "center" });
-    const points = [
-      [490, 310], [960, 250], [1430, 310],
-      [490, 705], [960, 775], [1430, 705]
+    const cTop = header(slide, data.title, data.subtitle) || 220;
+    const modules = (data.modules && data.modules.length ? data.modules : [
+      { title: "Intent", desc: "page purpose", icon: "target" },
+      { title: "Structure", desc: "visual relation", icon: "layers", status: "key" },
+      { title: "Evidence", desc: "source boundary", icon: "document" },
+      { title: "QA", desc: "render check", icon: "shield" },
+      { title: "Learning", desc: "promote rules", icon: "chart" }
+    ]).slice(0, 6);
+    const cx = 960, cy = 520, hubW = 360, hubH = 138;
+    rect(slide, cx - hubW / 2, cy - hubH / 2, hubW, hubH, { fill: C.primary, line: C.primary, round: true, shadow: true });
+    addText(slide, cx - hubW / 2 + 30, cy - 34, hubW - 60, 38, data.center || "Core", { size: 27, color: "FFFFFF", bold: true, align: "center", fit: "shrink" });
+    if (data.centerSub) addText(slide, cx - hubW / 2 + 36, cy + 12, hubW - 72, 24, data.centerSub, { size: 13, color: "FFFFFF", align: "center", fit: "shrink" });
+    const slots = [
+      { x: 330, y: 318, side: "left" },
+      { x: 960, y: 278, side: "top" },
+      { x: 1590, y: 318, side: "right" },
+      { x: 330, y: 718, side: "left" },
+      { x: 960, y: 760, side: "bottom" },
+      { x: 1590, y: 718, side: "right" }
     ];
-    (data.modules || []).slice(0, 6).forEach((m, i) => {
-      const [x, y] = points[i];
-      line(slide, cx, cy, x, y, { color: C.line, width: 1.2 });
-      const hot = m.status === "key" || i === 0;
-      rect(slide, x - 150, y - 46, 300, 92, { fill: hot ? C.accentSoft : C.surface, line: hot ? C.accent : C.line, round: true, shadow: true });
-      icon(pptx, slide, U, x - 108, y, m.icon || "document", { color: hot ? C.accent : C.primary, soft: hot ? C.accentSoft : C.surface2 });
-      addText(slide, x - 58, y - 20, 188, 24, m.title, { size: 17, color: hot ? C.accent : C.primary, bold: true });
-      if (m.desc) addText(slide, x - 58, y + 12, 188, 20, m.desc, { size: 12, color: C.mute });
+    modules.forEach((m, i) => {
+      const p = slots[i];
+      const hot = m.status === "key" || m.focus === true || i === data.focus;
+      const col = hot ? C.accent : C.primary;
+      const boxW = 310, boxH = 92;
+      const x = p.x - boxW / 2, y = p.y - boxH / 2;
+      let sx = cx, sy = cy, ex = p.x, ey = p.y;
+      if (p.side === "left") { sx = cx - hubW / 2; sy = cy; ex = x + boxW; ey = p.y; }
+      if (p.side === "right") { sx = cx + hubW / 2; sy = cy; ex = x; ey = p.y; }
+      if (p.side === "top") { sx = cx; sy = cy - hubH / 2; ex = p.x; ey = y + boxH; }
+      if (p.side === "bottom") { sx = cx; sy = cy + hubH / 2; ex = p.x; ey = y; }
+      line(slide, sx, sy, ex, ey, { color: hot ? C.accent : C.line, width: hot ? 1.6 : 1.1 });
+      rect(slide, x, y, boxW, boxH, { fill: hot ? C.accentSoft : C.surface, line: hot ? C.accent : C.line, lineWidth: hot ? 1.4 : 1, round: true, shadow: true });
+      icon(pptx, slide, U, x + 42, p.y, m.icon || "document", { color: col, soft: hot ? C.accentSoft : C.surface2 });
+      addText(slide, x + 84, y + 24, boxW - 108, 22, m.title, { size: 17, color: col, bold: true, fit: "shrink" });
+      if (m.desc) addText(slide, x + 84, y + 54, boxW - 108, 20, m.desc, { size: 11.5, color: C.mute, fit: "shrink" });
     });
     if (data.takeaway) caveatBand(slide, data.takeaway, 888);
     footer(slide);
@@ -550,7 +576,7 @@ function makeComponents(pptx, theme) {
         const bh = L.sub ? 60 : 48;
         rect(slide, X, y, W, bh, { fill: bandCol, round: true });
         addText(slide, X + 24, y + (L.sub ? 8 : 11), W - 48, 28, L.label, { size: 20, color: "FFFFFF", bold: true, align: "center" });
-        if (L.sub) addText(slide, X, y + 36, W, 20, L.sub, { size: 13, color: "D7DEF2", align: "center" });
+        if (L.sub) addText(slide, X, y + 36, W, 20, L.sub, { size: 13, color: C.inverseMuted, align: "center" });
         y += bh + 12;
       }
       const ch = L.h || 0;
@@ -673,7 +699,7 @@ function makeComponents(pptx, theme) {
       fs.forEach((f, i) => {
         const fx = fx0 + i * (fpw + fpg);
         rect(slide, fx, py + 64, fpw, 36, { fill: "24347A", line: C.blue, round: true });
-        addText(slide, fx, py + 71, fpw, 22, f, { size: 13, color: "DCEAF2", bold: true, align: "center" });
+        addText(slide, fx, py + 71, fpw, 22, f, { size: 13, color: C.inverseSubtle, bold: true, align: "center" });
       });
     }
     footer(slide);
@@ -998,7 +1024,7 @@ function makeComponents(pptx, theme) {
       const foc = t.focus === true, col = foc ? C.accent : C.primary;
       rect(slide, X, y, labelW, th, { fill: col, round: true });
       addText(slide, X + 22, y + th / 2 - (t.sub ? 28 : 14), labelW - 44, 32, t.name, { size: 21, color: "FFFFFF", bold: true, valign: "middle", fontFace: /[一-鿿]/.test(t.name || "") ? F.cn : F.en });
-      if (t.sub) addText(slide, X + 22, y + th / 2 + 8, labelW - 44, 24, t.sub, { size: 13, color: "D7DEF2" });
+      if (t.sub) addText(slide, X + 22, y + th / 2 + 8, labelW - 44, 24, t.sub, { size: 13, color: C.inverseMuted });
       const rx = X + labelW + 18, rw = W - labelW - 18;
       rect(slide, rx, y, rw, th, { fill: C.surface, line: foc ? C.accent : C.line, lineWidth: foc ? 1.5 : 1, round: true });
       const chips = t.items || [], m = chips.length || 1, cg = 14;
@@ -1115,22 +1141,32 @@ function makeComponents(pptx, theme) {
   // 真·锥形金字塔（梯形带，顶层最重要）。levels 顶→底；标题在右侧带连接线的标签卡，narrow 顶带也清晰。
   function priorityPyramid(slide, data) {
     const cTop = header(slide, data.title, data.subtitle) || 220;
-    const ls = (data.levels || []).slice(0, 5), n = ls.length || 1;
-    const availTop = cTop + 26, availBot = 918, pcx = 700, baseW = 980;
-    const lh = Math.min(146, (availBot - availTop) / n), blockH = n * lh;
-    let y = Math.round(availTop + ((availBot - availTop) - blockH) / 2);
-    const cardX = pcx + baseW / 2 + 70, cardW = 1824 - cardX;
-    ls.forEach((l, i) => {
-      const w = baseW / Math.pow(2, n - 1 - i), x = Math.round(pcx - w / 2);   // 上窄下宽，边缘对齐梯形 0.5 顶宽比
-      const foc = l.focus === true || data.focus === i, col = foc ? C.accent : C.primary;
-      if (i === 0) shp(slide, shape.triangle, x, y, w, lh, { fill: col, shadow: true });
-      else shp(slide, shape.trapezoid, x, y, w, lh, { fill: col, shadow: true });
-      addText(slide, x, y + lh / 2 - 14, w, 28, String(n - i), { size: 17, color: "FFFFFF", bold: true, align: "center", fontFace: F.en });
-      line(slide, pcx + w / 2, y + lh / 2, cardX - 14, y + lh / 2, { color: foc ? C.accent : C.line, width: foc ? 2 : 1.4 });
-      shp(slide, shape.ellipse, cardX - 14 - 5, y + lh / 2 - 5, 10, 10, { fill: foc ? C.accent : C.faint });
-      addText(slide, cardX, y + lh / 2 - (l.sub ? 28 : 15), cardW, 32, l.name, { size: 22, color: col, bold: true, fontFace: /[一-鿿]/.test(l.name || "") ? F.cn : F.en });
-      if (l.sub) addText(slide, cardX, y + lh / 2 + 10, cardW, 24, l.sub, { size: 14, color: C.mute });
-      y += lh;
+    const levels = (data.levels && data.levels.length ? data.levels : [
+      { name: "Critical", desc: "must fix first", focus: true },
+      { name: "Important", desc: "review next" },
+      { name: "Reusable", desc: "promote later" }
+    ]).slice(0, 5);
+    const availTop = cTop + 26, rowH = 112, gap = 22;
+    const blockH = levels.length * rowH + (levels.length - 1) * gap;
+    const y0 = Math.round(availTop + ((918 - availTop) - blockH) / 2);
+    const x0 = 180, maxW = 980, minW = 430, cardX = 1260, cardW = 500;
+    line(slide, x0 + 18, y0 + rowH / 2, x0 + 18, y0 + blockH - rowH / 2, { color: C.line, width: 1.4 });
+    levels.forEach((l, i) => {
+      const rank = i + 1;
+      const foc = l.focus === true || data.focus === i || i === 0;
+      const col = foc ? C.accent : C.primary;
+      const w = maxW - (maxW - minW) * (i / Math.max(1, levels.length - 1));
+      const x = x0 + 70 + (maxW - w) / 2;
+      const y = y0 + i * (rowH + gap);
+      shp(slide, shape.ellipse, x0, y + rowH / 2 - 18, 36, 36, { fill: col, line: "FFFFFF", lw: 2, shadow: true });
+      addText(slide, x0, y + rowH / 2 - 13, 36, 26, String(rank), { size: 15, color: "FFFFFF", bold: true, align: "center", fontFace: F.en });
+      rect(slide, x, y, w, rowH, { fill: foc ? C.accentSoft : C.surface, line: col, lineWidth: foc ? 1.8 : 1.2, round: true, shadow: true });
+      rect(slide, x, y, 9, rowH, { fill: col });
+      addText(slide, x + 34, y + 24, w - 68, 28, l.name, { size: 23, color: col, bold: true, fit: "shrink", fontFace: /[一-鿿]/.test(l.name || "") ? F.cn : F.en });
+      addText(slide, x + 34, y + 62, w - 68, 24, l.desc || l.sub || "", { size: 14, color: C.mute, fit: "shrink" });
+      line(slide, x + w, y + rowH / 2, cardX - 22, y + rowH / 2, { color: foc ? C.accent : C.line, width: foc ? 1.7 : 1 });
+      addText(slide, cardX, y + rowH / 2 - 16, cardW, 28, `P${rank}`, { size: 18, color: col, bold: true, fontFace: F.en });
+      addText(slide, cardX + 58, y + rowH / 2 - 15, cardW - 58, 26, rank === 1 ? "highest priority" : rank === 2 ? "secondary priority" : "candidate pool", { size: 13, color: C.mute, fit: "shrink", fontFace: F.en });
     });
     footer(slide);
   }
@@ -1285,19 +1321,33 @@ function makeComponents(pptx, theme) {
   // 真·漏斗（倒梯形带，上宽下窄）。stages 顶→底，stages:[{name,value?,focus?}]，右侧标注名称+数值。
   function funnel(slide, data) {
     const cTop = header(slide, data.title, data.subtitle) || 220;
-    const st = (data.stages || []).slice(0, 5), n = st.length || 1;
-    const availTop = cTop + 24, availBot = 918, pcx = 660, topW = 900;
-    const lh = Math.min(132, (availBot - availTop) / n), blockH = n * lh;
-    let y = Math.round(availTop + ((availBot - availTop) - blockH) / 2);
-    const cardX = pcx + topW / 2 + 80, cardW = 1824 - cardX;
-    st.forEach((s, i) => {
-      const w = topW / Math.pow(2, i), x = Math.round(pcx - w / 2);   // 上宽下窄，倒梯形（flipV）边缘对齐
-      const foc = s.focus === true || data.focus === i, col = foc ? C.accent : C.primary;
-      shp(slide, shape.trapezoid, x, y, w, lh, { fill: col, shadow: true, flipV: true });
-      line(slide, pcx + w / 2, y + lh / 2, cardX - 14, y + lh / 2, { color: foc ? C.accent : C.line, width: foc ? 2 : 1.4 });
-      addText(slide, cardX, y + lh / 2 - (s.value != null ? 28 : 15), cardW - 150, 32, s.name, { size: 20, color: col, bold: true, fontFace: /[一-鿿]/.test(s.name || "") ? F.cn : F.en });
-      if (s.value != null) addText(slide, cardX, y + lh / 2 + 6, cardW, 40, String(s.value), { size: 30, color: col, bold: true, fontFace: F.en });
-      y += lh;
+    const stages = (data.stages && data.stages.length ? data.stages : [
+      { name: "All Ideas", value: 70 },
+      { name: "Candidates", value: 42 },
+      { name: "Selected", value: 18, focus: true },
+      { name: "Shipped", value: 12 }
+    ]).slice(0, 5);
+    const availTop = cTop + 28, availBot = 920;
+    const n = stages.length || 1, rowH = Math.min(96, (availBot - availTop - (n - 1) * 24) / n);
+    const blockH = n * rowH + (n - 1) * 24;
+    const y0 = Math.round(availTop + ((availBot - availTop) - blockH) / 2);
+    const x0 = 160, maxW = 940, minW = 430, labelX = 1230;
+    line(slide, labelX - 70, y0 + rowH / 2, labelX - 70, y0 + blockH - rowH / 2, { color: C.line, width: 1.2 });
+    stages.forEach((s, i) => {
+      const foc = s.focus === true || data.focus === i;
+      const col = foc ? C.accent : C.primary;
+      const ratio = 1 - i / Math.max(1, n - 1);
+      const w = minW + (maxW - minW) * ratio;
+      const x = x0 + (maxW - w) / 2;
+      const y = y0 + i * (rowH + 24);
+      rect(slide, x, y, w, rowH, { fill: foc ? C.accentSoft : C.surface, line: col, lineWidth: foc ? 1.7 : 1.1, round: true, shadow: true });
+      rect(slide, x, y, 8, rowH, { fill: col });
+      addText(slide, x + 28, y + 22, w - 220, 26, s.name, { size: 20, color: col, bold: true, fit: "shrink", fontFace: /[一-鿿]/.test(s.name || "") ? F.cn : F.en });
+      if (s.value != null) addText(slide, x + w - 176, y + 20, 140, 34, String(s.value), { size: 26, color: col, bold: true, align: "right", fontFace: F.en });
+      if (i < n - 1) line(slide, x0 + maxW / 2, y + rowH + 5, x0 + maxW / 2, y + rowH + 20, { color: C.line, width: 1.1, arrow: "triangle" });
+      line(slide, x + w, y + rowH / 2, labelX - 70, y + rowH / 2, { color: foc ? C.accent : C.line, width: foc ? 1.6 : 1 });
+      shp(slide, shape.ellipse, labelX - 78, y + rowH / 2 - 8, 16, 16, { fill: col, line: "FFFFFF", lw: 1.5 });
+      addText(slide, labelX, y + rowH / 2 - 18, 390, 28, foc ? "current focus" : i === 0 ? "input pool" : i === n - 1 ? "final output" : "filter stage", { size: 15, color: col, bold: foc, fontFace: F.en });
     });
     footer(slide);
   }
@@ -1596,16 +1646,320 @@ function makeComponents(pptx, theme) {
     footer(slide);
   }
 
+  function moduleCorrespondenceMap(slide, data) {
+    header(slide, data.title, data.subtitle);
+
+    const folders = data.folders || [];
+    const modules = data.modules || [];
+    const left = { x: 96, y: 222, w: 430, h: 642 };
+    const rightX = 650;
+    const colGap = 42;
+    const cardW = 560;
+    const cardH = 150;
+    const rowGap = 26;
+    const cardTop = 226;
+    const railX = 585;
+
+    rect(slide, left.x, left.y, left.w, left.h, { fill: C.surface, line: C.line, round: true, shadow: true });
+    rect(slide, left.x, left.y, left.w, 7, { fill: C.primary });
+    addText(slide, left.x + 30, left.y + 34, left.w - 60, 32, data.rootTitle || "leander-ppt/", {
+      size: 26,
+      color: C.primary,
+      bold: true,
+      fontFace: F.en
+    });
+    addText(slide, left.x + 30, left.y + 78, left.w - 60, 54, data.rootDesc || "一套可执行、可复用、可校验、可演进的 PPT 生产目录。", {
+      size: 15,
+      color: C.text,
+      lineSpacingMultiple: 1.15
+    });
+
+    const treeX = left.x + 64;
+    const rowX = left.x + 112;
+    const rowW = left.w - 148;
+    const rowH = 40;
+    const rowStart = left.y + 160;
+    const rowStep = 55;
+    const spineTop = rowStart + 20;
+    const spineBottom = rowStart + Math.max(0, folders.length - 1) * rowStep + 20;
+    line(slide, treeX, spineTop, treeX, spineBottom, { color: C.line, width: 1 });
+
+    folders.forEach((f, i) => {
+      const y = rowStart + i * rowStep;
+      const hot = !!f.focus;
+      const ink = hot ? C.accent : C.primary;
+      line(slide, treeX, y + rowH / 2, rowX - 10, y + rowH / 2, { color: C.line, width: 1 });
+      rect(slide, rowX, y, rowW, rowH, {
+        fill: hot ? C.accentSoft : C.surface2,
+        line: hot ? C.accent : C.line,
+        lineWidth: hot ? 1.25 : 1,
+        round: true
+      });
+      addText(slide, rowX + 18, y + 9, 118, 18, f.name, {
+        size: 13,
+        color: ink,
+        bold: true,
+        fontFace: F.en,
+        fit: "shrink"
+      });
+      addText(slide, rowX + 150, y + 10, rowW - 168, 18, f.role, {
+        size: 12,
+        color: C.mute,
+        fit: "shrink"
+      });
+    });
+
+    line(slide, left.x + left.w + 18, 544, railX, 544, { color: C.line, width: 1.2 });
+    line(slide, railX, cardTop + 75, railX, cardTop + 2 * (cardH + rowGap) + 75, { color: C.line, width: 1.2 });
+
+    modules.forEach((m, i) => {
+      const row = Math.floor(i / 2);
+      const col = i % 2;
+      const x = rightX + col * (cardW + colGap);
+      const y = cardTop + row * (cardH + rowGap);
+      const hot = !!m.focus;
+      const ink = hot ? C.accent : C.primary;
+      const sourceText = (m.sources || []).join(" / ");
+
+      if (col === 0) {
+        line(slide, railX, y + cardH / 2, x - 22, y + cardH / 2, {
+          color: C.line,
+          width: 1.1,
+          arrow: "triangle"
+        });
+      }
+
+      rect(slide, x, y, cardW, cardH, {
+        fill: hot ? C.accentSoft : C.surface,
+        line: hot ? C.accent : C.line,
+        lineWidth: hot ? 1.45 : 1,
+        round: true,
+        shadow: true
+      });
+      rect(slide, x + 22, y + 22, 5, cardH - 44, { fill: ink });
+      addText(slide, x + 46, y + 22, 270, 28, m.title, {
+        size: 22,
+        color: ink,
+        bold: true,
+        fit: "shrink"
+      });
+      addText(slide, x + 322, y + 28, cardW - 348, 16, m.label || "", {
+        size: 10,
+        color: C.faint,
+        bold: true,
+        align: "right",
+        fontFace: F.en,
+        fit: "shrink"
+      });
+      addText(slide, x + 46, y + 58, cardW - 92, 30, m.role, {
+        size: 14,
+        color: C.text,
+        fit: "shrink",
+        lineSpacingMultiple: 1.12
+      });
+      rect(slide, x + 46, y + 104, 206, 28, {
+        fill: C.surface2,
+        line: hot ? C.accent : C.line,
+        lineWidth: 0.85,
+        round: true
+      });
+      addText(slide, x + 58, y + 111, 182, 12, `来自 ${sourceText}`, {
+        size: 9.5,
+        color: hot ? C.accent : C.primary,
+        bold: true,
+        fontFace: F.en,
+        fit: "shrink"
+      });
+      addText(slide, x + 274, y + 108, cardW - 320, 18, `输出：${m.output}`, {
+        size: 12.5,
+        color: C.mute,
+        fit: "shrink"
+      });
+    });
+
+    if (data.note) caveatBand(slide, data.note, 884);
+    footer(slide);
+  }
+
+  function platformTrend(slide, data) {
+    const cTop = header(slide, data.title, data.subtitle) || 220;
+    const items = (data.cols || data.items || [
+      { title: "Industry Signal", desc: "Common direction is becoming visible.", items: ["agent", "workflow", "QA"] },
+      { title: "Platform Move", desc: "Capability is moving from prompt to harness.", items: ["tools", "state", "routing"], focus: true },
+      { title: "Project Value", desc: "Local practice turns into reusable assets.", items: ["components", "lessons", "templates"] }
+    ]).slice(0, 3);
+    const center = { x: 690, y: 412, w: 540, h: 150 };
+    rect(slide, center.x, center.y, center.w, center.h, { fill: C.primary, line: C.primary, round: true, shadow: true });
+    addText(slide, center.x + 36, center.y + 36, center.w - 72, 34, data.center || "Shared Trend", { size: 27, color: "FFFFFF", bold: true, align: "center", fit: "shrink" });
+    addText(slide, center.x + 42, center.y + 82, center.w - 84, 28, data.centerBody || "A repeated signal across platform, product, and project layers.", { size: 13, color: "FFFFFF", align: "center", fit: "shrink" });
+    const cards = [
+      { x: 126, y: 288, w: 430, h: 230, anchor: [center.x, center.y + 74] },
+      { x: 1364, y: 288, w: 430, h: 230, anchor: [center.x + center.w, center.y + 74] },
+      { x: 520, y: 682, w: 880, h: 142, anchor: [center.x + center.w / 2, center.y + center.h] }
+    ];
+    items.forEach((it, i) => {
+      const p = cards[i], hot = it.focus === true || data.focus === i || i === 1, col = hot ? C.accent : C.primary;
+      const targetX = i === 0 ? p.x + p.w : i === 1 ? p.x : p.x + p.w / 2;
+      const targetY = i === 2 ? p.y : p.y + p.h / 2;
+      line(slide, p.anchor[0], p.anchor[1], targetX, targetY, { color: hot ? C.accent : C.line, width: hot ? 1.5 : 1.1, arrow: "triangle" });
+      rect(slide, p.x, p.y, p.w, p.h, { fill: hot ? C.accentSoft : C.surface, line: hot ? C.accent : C.line, lineWidth: hot ? 1.5 : 1, round: true, shadow: true });
+      rect(slide, p.x, p.y, p.w, 6, { fill: col });
+      addText(slide, p.x + 28, p.y + 28, p.w - 56, 28, it.title, { size: 20, color: col, bold: true, fit: "shrink" });
+      addText(slide, p.x + 28, p.y + 70, p.w - 56, i === 2 ? 24 : 58, it.desc || "", { size: 14, color: C.text, lineSpacingMultiple: 1.2, fit: "shrink" });
+      (it.items || []).slice(0, i === 2 ? 4 : 3).forEach((chip, j) => {
+        const chipW = i === 2 ? 160 : 116;
+        const x = p.x + 28 + j * (chipW + 14), y = p.y + (i === 2 ? 98 : 154);
+        rect(slide, x, y, chipW, 28, { fill: C.surface2, line: hot ? C.accent : C.line, round: true });
+        addText(slide, x + 8, y + 9, chipW - 16, 10, chip, { size: 10, color: col, bold: true, align: "center", fit: "shrink", fontFace: F.en });
+      });
+    });
+    if (data.takeaway) caveatBand(slide, data.takeaway, 884);
+    footer(slide);
+  }
+
+  function problemMap(slide, data) {
+    const cTop = header(slide, data.title, data.subtitle) || 220;
+    const rows = (data.rows || [
+      { name: "Drift", problem: "context moves away", mechanism: "State", result: "keep local memory" },
+      { name: "Rework", problem: "changes spread too far", mechanism: "Scope", result: "repair the smallest unit", focus: true },
+      { name: "Noise", problem: "too much context", mechanism: "Route", result: "read only needed files" },
+      { name: "Quality", problem: "visual issues slip through", mechanism: "QA", result: "rendered evidence gate" }
+    ]).slice(0, 5);
+    const leftX = 110, rightX = 1160, rowH = 74, gap = 26;
+    const blockH = rows.length * rowH + (rows.length - 1) * gap;
+    const y0 = Math.round(cTop + 28 + ((900 - cTop) - blockH) / 2);
+    addText(slide, leftX, y0 - 42, 520, 26, data.leftTitle || "Problem", { size: 20, color: C.primary, bold: true });
+    addText(slide, rightX, y0 - 42, 520, 26, data.rightTitle || "Harness Mechanism", { size: 20, color: C.accent, bold: true });
+    rows.forEach((r, i) => {
+      const y = y0 + i * (rowH + gap), hot = r.focus === true || data.focus === i, col = hot ? C.accent : C.primary;
+      rect(slide, leftX, y, 540, rowH, { fill: hot ? C.accentSoft : C.surface, line: hot ? C.accent : C.line, lineWidth: hot ? 1.4 : 1, round: true, shadow: true });
+      shp(slide, shape.ellipse, leftX + 28, y + 19, 36, 36, { fill: col });
+      addText(slide, leftX + 28, y + 29, 36, 12, String(i + 1), { size: 10, color: "FFFFFF", bold: true, align: "center", fontFace: F.en });
+      addText(slide, leftX + 84, y + 16, 160, 20, r.name, { size: 16, color: col, bold: true, fit: "shrink" });
+      addText(slide, leftX + 250, y + 18, 250, 28, r.problem, { size: 12.5, color: C.mute, fit: "shrink" });
+      line(slide, leftX + 560, y + rowH / 2, rightX - 24, y + rowH / 2, { color: hot ? C.accent : C.line, width: hot ? 1.6 : 1, arrow: "triangle" });
+      rect(slide, rightX, y, 540, rowH, { fill: C.surface, line: hot ? C.accent : C.line, lineWidth: hot ? 1.4 : 1, round: true, shadow: true });
+      rect(slide, rightX, y, 7, rowH, { fill: col });
+      addText(slide, rightX + 28, y + 16, 150, 20, r.mechanism, { size: 16, color: col, bold: true, fit: "shrink" });
+      addText(slide, rightX + 196, y + 18, 300, 28, r.result, { size: 12.5, color: C.text, fit: "shrink" });
+    });
+    if (data.takeaway) caveatBand(slide, data.takeaway, 884);
+    footer(slide);
+  }
+
+  function repairScope(slide, data) {
+    const cTop = header(slide, data.title, data.subtitle) || 220;
+    const levels = (data.levels || [
+      { title: "Page", body: "repair one page folder", check: "render page PNG", focus: true },
+      { title: "Component", body: "repair reusable block", check: "rerender affected pages" },
+      { title: "Theme", body: "repair shared tokens", check: "full deck gate" }
+    ]).slice(0, 4);
+    const x0 = 150, y0 = cTop + 64, cardW = 360, cardH = 150, gap = 52;
+    levels.forEach((l, i) => {
+      const x = x0 + i * (cardW + gap), y = y0 + i * 38, hot = l.focus === true || data.focus === i, col = hot ? C.accent : C.primary;
+      rect(slide, x, y, cardW, cardH, { fill: hot ? C.accentSoft : C.surface, line: hot ? C.accent : C.line, lineWidth: hot ? 1.6 : 1, round: true, shadow: true });
+      rect(slide, x, y, cardW, 6, { fill: col });
+      addText(slide, x + 26, y + 26, cardW - 52, 28, l.title, { size: 22, color: col, bold: true, fit: "shrink" });
+      addText(slide, x + 26, y + 68, cardW - 52, 34, l.body || "", { size: 14, color: C.text, fit: "shrink" });
+      addText(slide, x + 26, y + 112, cardW - 52, 18, l.check || "", { size: 11.5, color: C.mute, fit: "shrink" });
+      if (i < levels.length - 1) line(slide, x + cardW, y + cardH / 2, x + cardW + gap - 8, y + cardH / 2 + 38, { color: C.line, width: 1.2, arrow: "triangle" });
+    });
+    rect(slide, 260, 760, 1400, 72, { fill: C.surface2, line: C.line, round: true });
+    addText(slide, 300, 782, 220, 24, data.ruleTitle || "Repair Rule", { size: 18, color: C.accent, bold: true, fontFace: F.en });
+    addText(slide, 540, 782, 1060, 24, data.rule || "Choose the smallest affected unit first; expand scope only when shared assets changed.", { size: 16, color: C.primary, bold: true, fit: "shrink" });
+    footer(slide);
+  }
+
+  function shareBoundary(slide, data) {
+    const cTop = header(slide, data.title, data.subtitle) || 220;
+    const zones = (data.zones || [
+      { title: "Share", body: "common logic, neutral components, theme tokens", items: ["component", "template", "QA rule"], focus: true },
+      { title: "Review", body: "needs judgment before promotion", items: ["variant", "example", "lesson"] },
+      { title: "Keep Local", body: "project-specific or sensitive content", items: ["customer data", "private file", "one-off claim"] }
+    ]).slice(0, 3);
+    const gap = 42, w = (1728 - 2 * gap) / 3, y = cTop + 76, h = 440;
+    zones.forEach((z, i) => {
+      const x = 96 + i * (w + gap), hot = z.focus === true || data.focus === i, col = hot ? C.accent : C.primary;
+      rect(slide, x, y, w, h, { fill: hot ? C.accentSoft : C.surface, line: hot ? C.accent : C.line, lineWidth: hot ? 1.6 : 1, round: true, shadow: true });
+      rect(slide, x, y, w, 7, { fill: col });
+      addText(slide, x + 30, y + 34, w - 60, 30, z.title, { size: 24, color: col, bold: true, fit: "shrink" });
+      addText(slide, x + 30, y + 82, w - 60, 58, z.body, { size: 14, color: C.text, lineSpacingMultiple: 1.2, fit: "shrink" });
+      (z.items || []).slice(0, 5).forEach((it, j) => {
+        const yy = y + 170 + j * 46;
+        rect(slide, x + 34, yy, w - 68, 30, { fill: C.surface2, line: j === 0 && hot ? C.accent : C.line, round: true });
+        addText(slide, x + 52, yy + 9, w - 104, 12, it, { size: 11.5, color: col, bold: j === 0 && hot, align: "center", fit: "shrink" });
+      });
+      if (i < zones.length - 1) line(slide, x + w + 4, y + h / 2, x + w + gap - 6, y + h / 2, { color: C.line, width: 1.2, arrow: "triangle" });
+    });
+    if (data.bottom) caveatBand(slide, data.bottom, 842);
+    footer(slide);
+  }
+
+  function scenarioBankGrid(slide, data) {
+    const cTop = header(slide, data.title, data.subtitle) || 220;
+    const items = (data.items || [
+      { title: "Project", desc: "case-specific scene", icon: "document" },
+      { title: "Process", desc: "repeatable workflow", icon: "route", focus: true },
+      { title: "Component", desc: "visual expression", icon: "layers" },
+      { title: "Evidence", desc: "source-backed proof", icon: "target" },
+      { title: "QA", desc: "check profile", icon: "shield" },
+      { title: "Lesson", desc: "promoted rule", icon: "chart" }
+    ]).slice(0, 6);
+    const cols = 3, cardW = 500, cardH = 170, gapX = 54, gapY = 36;
+    const blockW = cols * cardW + (cols - 1) * gapX, x0 = 960 - blockW / 2, y0 = cTop + 52;
+    items.forEach((it, i) => {
+      const x = x0 + (i % cols) * (cardW + gapX), y = y0 + Math.floor(i / cols) * (cardH + gapY);
+      const hot = it.focus === true || data.focus === i, col = hot ? C.accent : C.primary;
+      rect(slide, x, y, cardW, cardH, { fill: hot ? C.accentSoft : C.surface, line: hot ? C.accent : C.line, lineWidth: hot ? 1.5 : 1, round: true, shadow: true });
+      icon(pptx, slide, U, x + 58, y + 78, it.icon || "document", { color: col, soft: hot ? C.accentSoft : C.surface2 });
+      addText(slide, x + 116, y + 40, cardW - 150, 28, it.title, { size: 21, color: col, bold: true, fit: "shrink" });
+      addText(slide, x + 116, y + 82, cardW - 150, 36, it.desc || "", { size: 14, color: C.mute, fit: "shrink" });
+    });
+    footer(slide);
+  }
+
+  function positioningMatrix(slide, data) {
+    const cTop = header(slide, data.title, data.subtitle) || 220;
+    const x = 260, y = cTop + 42, w = 1100, h = 610;
+    rect(slide, x, y, w, h, { fill: C.surface, line: C.line, round: true, shadow: true });
+    line(slide, x + w / 2, y + 48, x + w / 2, y + h - 48, { color: C.line, width: 1.2 });
+    line(slide, x + 58, y + h / 2, x + w - 58, y + h / 2, { color: C.line, width: 1.2 });
+    addText(slide, x + w - 270, y + h - 40, 250, 24, data.xLabel || "Higher reuse", { size: 13, color: C.mute, align: "right", fontFace: F.en });
+    addText(slide, x + 18, y + 18, 260, 24, data.yLabel || "Higher impact", { size: 13, color: C.mute, fontFace: F.en });
+    const labels = data.quadrants || ["Strategic", "Scale", "Niche", "Foundation"];
+    [[x + w / 2 + 34, y + 74], [x + 86, y + 74], [x + 86, y + h / 2 + 34], [x + w / 2 + 34, y + h / 2 + 34]].forEach((p, i) => {
+      addText(slide, p[0], p[1], 260, 26, labels[i], { size: 15, color: C.faint, bold: true, fontFace: F.en });
+    });
+    const items = (data.items || [
+      { name: "A", x: 0.72, y: 0.78, focus: true },
+      { name: "B", x: 0.42, y: 0.62 },
+      { name: "C", x: 0.30, y: 0.34 },
+      { name: "D", x: 0.68, y: 0.38 }
+    ]).slice(0, 8);
+    items.forEach((it, i) => {
+      const px = x + 80 + it.x * (w - 160), py = y + h - 80 - it.y * (h - 160);
+      const hot = it.focus === true || data.focus === i, col = hot ? C.accent : C.primary;
+      shp(slide, shape.ellipse, px - 18, py - 18, 36, 36, { fill: col, line: "FFFFFF", lw: 2, shadow: true });
+      addText(slide, px - 18, py - 12, 36, 24, it.name, { size: 12, color: "FFFFFF", bold: true, align: "center", fontFace: F.en });
+      if (it.desc) addText(slide, px + 24, py - 13, 170, 24, it.desc, { size: 11, color: col, bold: hot, fit: "shrink" });
+    });
+    rect(slide, 1430, y + 80, 360, 280, { fill: C.surface2, line: C.line, round: true });
+    addText(slide, 1460, y + 112, 300, 26, data.legendTitle || "Decision Reading", { size: 18, color: C.primary, bold: true, fontFace: F.en });
+    addText(slide, 1460, y + 158, 290, 118, data.legend || "Use the upper-right area for high-impact, high-reuse candidates. Red marks the recommended focus.", { size: 14, color: C.text, lineSpacingMultiple: 1.25, fit: "shrink" });
+    footer(slide);
+  }
+
   return {
     U, PT, addText, rect, line, logo, header, footer, cover, closing,
     metricCards, bigWordCardMatrix, fourColumnMechanism,
     sectionDivider, sectionDividerBigNumber, sectionDividerUnderline, systemArchitectureCenter, hubSpokeCapability, roadmapSwimlane,
     caveatBand, stepNav, painCards, cycleLoop, processTimeline,
-    archLayered, archDualEngine,
+    archLayered, archDualEngine, moduleCorrespondenceMap,
     stateFlow, beforeAfter, roadmapPhases, workbenchMock, workflowConfig, dashboardMock,
     capabilityMatrix, featureGrid, tierStack, statBand, bulletColumns, pillarTrio,
     quadrantMatrix, priorityPyramid, coverageMap, topology, imageGallery, ringStats,
     numberedList, timelineVertical, quoteHighlight, funnel, twoOptionCompare, orgTree,
+    platformTrend, problemMap, repairScope, shareBoundary, scenarioBankGrid, positioningMatrix,
     gantt, heatmap, radar, valueChain, waterfall, swimlaneProcess, venn, annotatedDiagram,
     barChart, lineChart, pieBreakdown
   };

@@ -1,0 +1,10 @@
+{
+  "version": "leander-terminology.v1",
+  "deck": "Leander-PPT deck",
+  "canonicalTerms": [],
+  "forbiddenAliases": {},
+  "notes": [
+    "Fill this file when a deck has repeated framework names or domain concepts.",
+    "Use tools/verify-terminology.js before layout approval and final QA."
+  ]
+}
