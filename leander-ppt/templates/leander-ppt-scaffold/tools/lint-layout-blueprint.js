@@ -140,22 +140,22 @@ function main() {
     if (!isContentPage(prev) || !isContentPage(curr)) continue;
     if (norm(prev.layoutArchetype) === norm(curr.layoutArchetype) && !allowsEcho(curr, prev.page)) {
       addFinding(
-        findings,
-        "error",
+        warnings,
+        "warning",
         "adjacent-archetype-repeat",
         [prev.page, curr.page],
         `相邻页面复用了同一个布局骨架：${prev.page} / ${curr.page} -> ${norm(curr.layoutArchetype)}`,
-        "为其中一页更换布局骨架，或在 echoWith / echoRationale 中说明这是有意呼应。"
+        "检查它们是否属于有意系列/对照；如果叙事任务不同，再更换骨架或补充 echoWith / echoRationale。"
       );
     }
     if (previewPatternOf(prev) === previewPatternOf(curr) && !allowsEcho(curr, prev.page)) {
       addFinding(
-        findings,
-        "error",
+        warnings,
+        "warning",
         "adjacent-preview-pattern-repeat",
         [prev.page, curr.page],
         `相邻页面在低保真预览中会落到同一渲染形态：${prev.page} / ${curr.page} -> ${previewPatternOf(curr)}`,
-        "为其中一页指定不同 previewPattern / skeletonFamily，或让预览器为该签名提供不同画法；不能只在文字合同里换名字。"
+        "检查是否为有意系列；如果两页任务不同，再指定不同 previewPattern / skeletonFamily。"
       );
     }
   }
@@ -165,13 +165,14 @@ function main() {
     if (!run.every(isContentPage)) continue;
     const families = run.map(familyOf);
     if (families.every((item) => item === families[0]) && families[0] !== "transition/brand") {
+      const justified = run.slice(1).some((item, index) => allowsEcho(item, run[index].page));
       addFinding(
-        findings,
-        "error",
+        justified ? warnings : findings,
+        justified ? "warning" : "error",
         "three-page-family-run",
         run.map((item) => item.page),
         `连续三页属于同一粗骨架家族：${pagesOf(run)} -> ${families[0]}`,
-        "在三页中至少插入一个不同视觉寄存器，例如由流程页切换为放大页、证据页、矩阵页或决策页。"
+        justified ? "已说明系列/呼应关系，生产时仍需检查细节区分。" : "确认是否为有意系列；否则至少插入一个不同视觉寄存器。"
       );
     }
   }
@@ -180,12 +181,12 @@ function main() {
     if (sig !== "unknown" && sig && pages.length > 1) {
       const allJustified = pages.every((page) => allowsEcho(page, pages[0].page));
       addFinding(
-        allJustified ? warnings : findings,
-        allJustified ? "warning" : "error",
+        warnings,
+        "warning",
         "visual-signature-repeat",
         pages.map((page) => page.page),
         `visualSignature 重复：${sig} -> ${pagesOf(pages)}`,
-        allJustified ? "已存在呼应说明，后续制作时仍需确保视觉细节有区分。" : "改写其中一页 visualSignature，或补充明确的故事呼应理由。"
+        allJustified ? "已存在呼应说明，后续制作时仍需确保视觉细节有区分。" : "检查是否为有意系列；若页面关系不同，再改写 visualSignature 或补充理由。"
       );
     }
   }
@@ -193,13 +194,15 @@ function main() {
   for (const [pattern, pages] of countBy(content, previewPatternOf)) {
     if (pattern !== "brand-transition" && pattern !== "unknown-preview-pattern" && pages.length > 1) {
       const allJustified = pages.every((page) => allowsEcho(page, pages[0].page));
+      const ratio = pages.length / Math.max(content.length, 1);
+      const blocking = pages.length >= 3 && ratio > 0.4 && !allJustified;
       addFinding(
-        allJustified ? warnings : findings,
-        allJustified ? "warning" : "error",
+        blocking ? findings : warnings,
+        blocking ? "error" : "warning",
         "preview-pattern-repeat",
         pages.map((page) => page.page),
         `previewPattern 重复：${pattern} -> ${pagesOf(pages)}`,
-        allJustified ? "已存在复用说明，后续制作时仍需让文本、颜色和层级明显区分。" : "给这些页面拆成不同 previewPattern，或写明它们是有意呼应；不能让非相邻页面反复套同一低保真图形。"
+        blocking ? "该形态占比过高；重新规划部分页面或补充真实系列/呼应理由。" : "检查是否为有意系列，并在生产时用内容、层级和证据形成区分。"
       );
     }
   }

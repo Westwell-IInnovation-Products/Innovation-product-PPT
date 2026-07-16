@@ -8,6 +8,22 @@ Read this file in Phase 1 after `brief.md` and before sample slide production. A
 
 ## Core Rule
 
+For decks with 10 or more pages, create a compact `source-evidence-index.json` before Gate 1 approval:
+
+```json
+{
+  "version": "source-evidence-index.v1",
+  "targetPages": 20,
+  "evidenceCapacityPages": 12,
+  "expansionPolicy": "research-added",
+  "sources": [{"path":"source/input.docx","boundary":"user-provided"}],
+  "assets": [{"path":"source/install.jpg","use":"real evidence"}],
+  "gaps": ["benchmark evidence", "two scenario screenshots"]
+}
+```
+
+`expansionPolicy` must be `supported`, `research-added`, `merge-pages`, or `user-approved-low-evidence`. Do not turn a source that naturally supports 10 pages into 20 pages by splitting the same claim into more slides.
+
 The outline plans **logic + page content + visual intent**. It does not write final slide code and does not pretend text cards are diagrams.
 
 ## Output Format
@@ -71,6 +87,8 @@ Pick 2-3 representative pages for sample production:
 ## Page Plan Rules
 
 - Every page must have one clear takeaway.
+- Every content page must satisfy `QUALITY-BASELINE.md`: core claim, supporting content, evidence/implementation boundary, audience value, and a natural handoff. A filled table with weak substance is not an approved outline.
+- Content sufficiency is page-type specific: cases need actor/action/result/relevance/source; mechanisms need problem/input/process/output/evidence/limits; frameworks need layers/relations/responsibilities; benefits need baseline/change/result/boundary.
 - Every page should have a stable `Page ID` such as `p01`, `p02`, `p14`. Use the ID in generation code, QA notes, and repair reports.
 - Every production chapter should have a stable `Chapter ID` such as `ch01-background`.
 - Production chapters are control units for isolation, QA, and repair. They do not have to appear as visible PPT chapter pages.
@@ -109,6 +127,7 @@ Run this before Checkpoint Plan.
 - [ ] Every chapter has Chapter ID, page range, production role, and visible/non-visible status.
 - [ ] Internal-sharing decks have a broad narrative mapping, normally covering big problem, environment, target problem, solution, solution detail, and implementation/effect.
 - [ ] Every page has Page ID, Chapter ID, title, takeaway, evidence pool, visual intent, component source, data boundary, and asset need.
+- [ ] Every content page has enough evidence or mechanism detail for 30-90 seconds of useful explanation without relying on filler text.
 - [ ] Visual intent is executable and not vague, e.g. "four-column mechanism with icons" instead of "nice layout".
 - [ ] Pages with weak evidence or missing assets are flagged.
 - [ ] Screenshot/evidence pages declare screenshot slots, source, crop rule, and explanation purpose.

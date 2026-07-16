@@ -1,0 +1,10 @@
+{
+  "version": "0.6.0-beta.8",
+  "qualityLock": "render-quality-evidence.v2",
+  "contextPack": "leander-context-pack.v3",
+  "tokenLedger": "leander-token-report.zh.v2",
+  "pageDigests": "page-digests.v1",
+  "agentCollaboration": "agent-collaboration.v3",
+  "renderDiversity": "render-diversity-audit.v1",
+  "contextRotation": "leander-context-rotation-lock.v1"
+}

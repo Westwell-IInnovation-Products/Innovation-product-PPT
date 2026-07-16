@@ -1,8 +1,9 @@
 {
   "id": "p02",
   "title": "核心价值",
+  "takeaway": "核心价值必须通过可解释的结构、证据和关系被听众直接理解。",
   "component": "hubRadial",
-  "dataBoundary": "—",
+  "dataBoundary": "模板示例；正式项目必须替换为真实来源、实现状态或待确认边界。",
   "assetNeed": "none",
   "relationship": "system-map",
   "expressionMode": "mechanism-diagram",

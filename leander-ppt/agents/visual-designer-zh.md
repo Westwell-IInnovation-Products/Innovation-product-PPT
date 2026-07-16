@@ -19,6 +19,7 @@ tools: Read, Glob, Grep
 - anchor sample PNG/PPTX 或页面渲染图
 - 相关页面 `page.json`
 - 必要时提供 contact sheet
+- `quality-target.json` 与 `output/render-diversity-audit.json`
 
 你需要优先阅读：
 
@@ -39,6 +40,8 @@ tools: Read, Glob, Grep
 5. 判断图标和图形是否有信息价值。
 6. 给出共享组件或样式层面的修复建议。
 7. 对照 `visual-direction.md` 判断页面是否达到目标效果，而不是只判断有没有硬错误。
+8. 判断留白是焦点、停顿、张力、图像强调或章节换气，还是内容不足造成的空洞；不得默认把留白填满。
+9. 对照质量目标分别评估内容、故事、视觉、可读性、证据和可讲述性；任何维度低于门槛时不得 PASS。
 
 ## 硬规则：明显视觉失败必须返工
 
@@ -50,6 +53,7 @@ tools: Read, Glob, Grep
 - 页面风格明显偏离本 deck 的主题节奏，例如突然使用过多颜色、过多填充块、过重阴影。
 - 红色、强调色、状态色没有明确语义。
 - 页面只有“框+文字”，且该页本来适合机制图、架构图、示意图、截图、image2 简单图或真实素材。
+- 内容页为单组件直出：组件即整页，缺少标题带、结论带或任何自定义区，且该页不是封面或章节页。
 - image2 生成图过复杂、含小字、含多步骤逻辑、背景杂乱，导致理解成本上升。
 - 渲染图虽然没有报错，但明显偏离 `visual-direction.md` 中定义的视觉目标、页面表达模式或章节节奏。
 
@@ -71,7 +75,14 @@ tools: Read, Glob, Grep
 - 结构、流程、矩阵、边界、评价机制：优先使用可编辑 PPT 组件。
 - 真实场景、产品样貌、空间关系、抽象氛围、单一隐喻：优先考虑真实图片或 image2。
 - image2 只负责“简单视觉隐喻/场景”，不要让 image2 画密集流程、标签文字或多节点逻辑。
-- 每 3-5 页主动检查是否存在合适的图片/示意图机会，但不能为了图片而图片；图片必须承担证据、场景、类比或情绪锚点。
+- 每个章节主动检查是否存在合适的图片/示意图机会，但不设置数量配额；图片必须承担证据、场景、类比或情绪锚点。
+
+## 留白与密度判断
+
+- 低密度不是低质量。大字、观点、收益、转折、图片和情绪锚点页可以大量留白。
+- 低密度页必须有单一强焦点、清楚层级和可说明的 `whitespaceIntent`；不能只有几个小框贴在上方。
+- 高密度页必须有分组、阅读顺序和足够字号；不能用缩字换密度。
+- 不以本次或历史 PPT 的布局频率作为配额，按当前项目故事节奏决定疏密交替。
 
 ## 设计参考原则
 
@@ -94,6 +105,12 @@ tools: Read, Glob, Grep
 ```text
 检查范围：
 
+渲染集合：
+- [render-set:<output/render-quality-evidence.json 中的 renderSetSha256>]
+- [quality-score:<0-10 总分>]
+- [quality:content=<0-10>] [quality:story=<0-10>] [quality:visual=<0-10>]
+- [quality:readability=<0-10>] [quality:evidence=<0-10>] [quality:talkability=<0-10>]
+
 视觉导向对照：
 - 是否符合 visual-direction.md：
 - 偏离点：
@@ -110,6 +127,9 @@ tools: Read, Glob, Grep
 
 图片与图标：
 - p<页码> / 是否需要图片或 image2 / 理由 / 风险边界
+
+质量基线警告回应：
+- [topic:<quality-baseline warning field>] / 看到的真实渲染证据 / 是否需要返工 / 处理结论
 
 共享组件建议：
 

@@ -125,7 +125,7 @@ function makeComponents(pptx, theme) {
 
   // 封面分发：按 theme.signature.cover（或 data.coverStyle 覆盖）选构图。
   //   warm-right    —— Leander Base：暖白底 + 右对齐红标题（默认）
-  //   photo-dark    —— Leander Global：深色港口大图 + 白字标题 + azure 强调
+  //   photo-dark    —— Leander Global：项目提供的深色大图 + 白字标题 + azure 强调
   //   white-minimal —— 通用：干净白底 + 海军蓝标题 + 点状 azure 线（FMS/CTN 风）
   function cover(slide, data) {
     const sig = theme.signature || {};
@@ -150,13 +150,13 @@ function makeComponents(pptx, theme) {
     footer(slide);
   }
 
-  // 深色港口大图封面（对外旗舰）。data.image 可整图替换 sig.coverPhoto；无图则深色回退底。
+  // 深色项目大图封面。共享 Skill 不提供行业场景；由 data.image 注入，无图则阻断。
   function coverPhotoDark(slide, data, sig) {
     const L = theme.ppt.layout;
     const brand = theme.brand || {};
     const img = data.image || sig.coverPhoto;
-    if (img) slide.addImage({ path: img, x: 0, y: 0, w: L.width, h: L.height });
-    else slide.background = { color: sig.coverInk || "0A0E14" };
+    if (!img) throw new Error("coverStyle=photo-dark requires a project-approved data.image");
+    slide.addImage({ path: img, x: 0, y: 0, w: L.width, h: L.height });
     // 右上角白色字标（深底用文字字标，避免深色 logo 不可见）
     addText(slide, 1300, 78, 480, 40, brand.nameEN || "WESTWELL", { size: 20, color: "FFFFFF", bold: true, align: "right", fontFace: F.en, fit: "none" });
     // 标题（azure 亮蓝），左上清爽区
@@ -234,13 +234,13 @@ function makeComponents(pptx, theme) {
     footer(slide);
   }
 
-  // 深色封底（对外）：港口大图 + 居中白色口号（azure 强调）+ azure 分隔线 + 标语 + 白字标。
+  // 深色封底：项目大图 + 居中白色口号（azure 强调）+ azure 分隔线 + 标语 + 白字标。
   function closingPhotoDark(slide, data, sig) {
     const L = theme.ppt.layout;
     const brand = theme.brand || {};
     const img = data.image || sig.coverPhoto;
-    if (img) slide.addImage({ path: img, x: 0, y: 0, w: L.width, h: L.height });
-    else slide.background = { color: sig.coverInk || "0A0E14" };
+    if (!img) throw new Error("closingStyle=photo-dark requires a project-approved data.image");
+    slide.addImage({ path: img, x: 0, y: 0, w: L.width, h: L.height });
     addText(slide, 1300, 78, 480, 40, brand.nameEN || "WESTWELL", { size: 20, color: "FFFFFF", bold: true, align: "right", fontFace: F.en, fit: "none" });
     const runs = Array.isArray(data.slogan)
       ? data.slogan.map(r => ({ text: r.text, options: { color: r.hot ? C.accent : "FFFFFF", bold: true } }))
@@ -1347,7 +1347,8 @@ function makeComponents(pptx, theme) {
       if (i < n - 1) line(slide, x0 + maxW / 2, y + rowH + 5, x0 + maxW / 2, y + rowH + 20, { color: C.line, width: 1.1, arrow: "triangle" });
       line(slide, x + w, y + rowH / 2, labelX - 70, y + rowH / 2, { color: foc ? C.accent : C.line, width: foc ? 1.6 : 1 });
       shp(slide, shape.ellipse, labelX - 78, y + rowH / 2 - 8, 16, 16, { fill: col, line: "FFFFFF", lw: 1.5 });
-      addText(slide, labelX, y + rowH / 2 - 18, 390, 28, foc ? "current focus" : i === 0 ? "input pool" : i === n - 1 ? "final output" : "filter stage", { size: 15, color: col, bold: foc, fontFace: F.en });
+      const stageNote = s.note || (foc ? "current focus" : i === 0 ? "input pool" : i === n - 1 ? "final output" : "filter stage");
+      addText(slide, labelX, y + rowH / 2 - 18, 390, 28, stageNote, { size: 15, color: col, bold: foc, fontFace: /[一-鿿]/.test(stageNote) ? F.cn : F.en });
     });
     footer(slide);
   }

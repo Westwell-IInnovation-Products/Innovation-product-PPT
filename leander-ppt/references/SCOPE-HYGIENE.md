@@ -24,7 +24,7 @@
 | `references/*.md` | 通用方法、检查规则、流程设计、抽象后的经验 | 某一页的专属内容，除非明确标注为“示例” |
 | `templates/leander-ppt-scaffold/` | 可复用脚手架、占位数据、主题默认值、示例页面 | 当前项目的故事线、截图、客户数据、阶段状态 |
 | `agents/*.md` | 角色职责、输入输出、失败规则 | 某个项目的任务结论或页级修改意见 |
-| `references/feedback/LOG.md` | 原始反馈和历史案例归档 | 默认生产上下文；不应被当作通用规则直接执行 |
+| 项目 `state/feedback-log.md` | 当前项目原始反馈和具体修复证据 | 复制到共享 Skill；提升前必须脱敏、抽象和回归 |
 | `LESSONS.md` | 已抽象、仍然有效的活跃规则 | 未归因的零散反馈或项目偏好 |
 | 项目目录 | 当前 PPT 的 `outline.md`、`visual-direction.md`、`layout-blueprint.*`、`pages/*`、`state/*` | 可复用 skill 规则，除非准备提升并脱敏 |
 

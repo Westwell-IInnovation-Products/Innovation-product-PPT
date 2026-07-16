@@ -66,6 +66,17 @@ function buildPoster(s) {
   addLine(s, "l4", [{ x: 1190, y: 566 }, { x: 1080, y: 566 }, { x: 1080, y: 425 }, { x: 980, y: 425 }], "k4", "focus");
   addRect(s, "shift", 500, 640, 600, 46, "navy", { label: "CAPABILITY SHIFT" });
 }
+function buildDecisionKeywordBoard(s) {
+  addRect(s, "decision", 620, 315, 360, 150, "focus", { label: "DECISION" });
+  const peers = [{ id: "input1", x: 150, y: 245 }, { id: "input2", x: 150, y: 500 }, { id: "input3", x: 1190, y: 245 }, { id: "input4", x: 1190, y: 500 }];
+  peers.forEach((p, i) => addRect(s, p.id, p.x, p.y, 260, 82, i === 0 ? "soft-red" : "normal", { label: `INPUT ${i + 1}`, peerGroup: "decision-inputs" }));
+  addLine(s, "i1", [{ x: 410, y: 286 }, { x: 520, y: 286 }, { x: 520, y: 365 }, { x: 620, y: 365 }], "input1", "decision");
+  addLine(s, "i2", [{ x: 410, y: 541 }, { x: 520, y: 541 }, { x: 520, y: 415 }, { x: 620, y: 415 }], "input2", "decision");
+  addLine(s, "i3", [{ x: 1190, y: 286 }, { x: 1080, y: 286 }, { x: 1080, y: 365 }, { x: 980, y: 365 }], "input3", "decision");
+  addLine(s, "i4", [{ x: 1190, y: 541 }, { x: 1080, y: 541 }, { x: 1080, y: 415 }, { x: 980, y: 415 }], "input4", "decision");
+  addLine(s, "toReturn", [{ x: 800, y: 465 }, { x: 800, y: 610 }], "decision", "return");
+  addRect(s, "return", 500, 610, 600, 54, "navy", { label: "DECISION RETURN" });
+}
 function buildDiagnosis(s) {
   addRect(s, "focus", 660, 300, 280, 300, "focus", { label: "CORE PAIN" });
   const ys = [220, 390, 560];
@@ -98,12 +109,31 @@ function buildLandscape(s) {
   ys.forEach(y => xs.forEach(x => addRect(s, `cell${n}`, x, y, 320, 140, n++ === 5 ? "soft-red" : "normal", { label: "CASE", peerGroup: "landscape" })));
   addRect(s, "result", 520, 650, 560, 42, "line", { label: "BUSINESS OUTCOME" });
 }
+function buildEvidenceImageAnnotation(s) {
+  addRect(s, "sourceImage", 120, 205, 900, 470, "frame-navy", { label: "REAL INSTALLATION IMAGE" });
+  [220, 330, 440, 550].forEach((y, i) => addRect(s, `anchor${i + 1}`, 1110, y, 350, 72, i === 0 ? "soft-red" : "normal", { label: `ANCHOR ${i + 1}`, peerGroup: "evidence-anchors" }));
+  addLine(s, "imageToAnchors", [{ x: 1020, y: 440 }, { x: 1060, y: 440 }, { x: 1060, y: 256 }, { x: 1110, y: 256 }], "sourceImage", "anchor1");
+}
+function buildImageSceneMapping(s) {
+  addRect(s, "sceneImage", 120, 220, 830, 430, "frame-navy", { label: "SIMPLE TEST SCENE" });
+  [245, 385, 525].forEach((y, i) => addRect(s, `mapping${i + 1}`, 1070, y, 390, 92, i === 1 ? "soft-red" : "normal", { label: `CAPABILITY ${i + 1}`, peerGroup: "scene-mappings" }));
+  addLine(s, "sceneToMap", [{ x: 950, y: 435 }, { x: 1010, y: 435 }, { x: 1010, y: 431 }, { x: 1070, y: 431 }], "sceneImage", "mapping2");
+}
 function buildMindmap(s) {
   addRect(s, "hub", 650, 350, 300, 160, "focus", { label: "FRAMEWORK" });
   const left = [220, 355, 490].map((y, i) => ({ id: `left${i + 1}`, x: 120, y }));
   const right = [190, 315, 440, 565].map((y, i) => ({ id: `right${i + 1}`, x: 1210, y }));
   left.forEach((p, i) => { addRect(s, p.id, p.x, p.y, 280, 74, i === 0 ? "soft-red" : "normal", { label: `LAYER ${i + 1}`, peerGroup: "mind-left" }); addLine(s, `cl${i}`, [{ x: 400, y: p.y + 37 }, { x: 520, y: p.y + 37 }, { x: 520, y: 430 }, { x: 650, y: 430 }], p.id, "hub"); });
   right.forEach((p, i) => { addRect(s, p.id, p.x, p.y, 280, 74, "normal", { label: `LAYER ${i + 4}`, peerGroup: "mind-right" }); addLine(s, `cr${i}`, [{ x: 1210, y: p.y + 37 }, { x: 1080, y: p.y + 37 }, { x: 1080, y: 430 }, { x: 950, y: 430 }], p.id, "hub"); });
+}
+function buildDualSensorFusion(s) {
+  addRect(s, "radarInput", 150, 245, 330, 100, "normal", { label: "RADAR / SPACE" });
+  addRect(s, "visionInput", 150, 515, 330, 100, "normal", { label: "VISION / SEMANTICS" });
+  addRect(s, "fusionCore", 635, 325, 330, 210, "focus", { label: "FUSION CORE" });
+  addRect(s, "coordinateOutput", 1120, 365, 330, 130, "navy", { label: "COORDINATE OUTPUT" });
+  addLine(s, "radarToFusion", [{ x: 480, y: 295 }, { x: 555, y: 295 }, { x: 555, y: 380 }, { x: 635, y: 380 }], "radarInput", "fusionCore");
+  addLine(s, "visionToFusion", [{ x: 480, y: 565 }, { x: 555, y: 565 }, { x: 555, y: 480 }, { x: 635, y: 480 }], "visionInput", "fusionCore");
+  addLine(s, "fusionToOutput", [{ x: 965, y: 430 }, { x: 1120, y: 430 }], "fusionCore", "coordinateOutput");
 }
 function buildSwimlane(s) {
   addRect(s, "humanLane", 120, 215, 1360, 190, "frame-navy", { role: "decor" });
@@ -123,6 +153,33 @@ function buildBeforeAfter(s) {
   const xs = [170, 430, 690, 950, 1210];
   xs.forEach((x, i) => addRect(s, `gate${i}`, x, 500, 180, 76, i === 4 ? "focus" : "normal", { label: i % 2 ? "GATE" : "STEP", peerGroup: "gates" }));
   for (let i = 0; i < xs.length - 1; i += 1) addLine(s, `g${i}`, [{ x: xs[i] + 180, y: 538 }, { x: xs[i + 1], y: 538 }], `gate${i}`, `gate${i + 1}`);
+}
+function buildFusionPipelineSpine(s) {
+  const groups = [150, 585, 1020];
+  groups.forEach((x, group) => {
+    addRect(s, `group${group}`, x, 245, 360, 230, group === 1 ? "frame-red" : "frame-navy", { role: "decor" });
+    [0, 1, 2].forEach(node => addRect(s, `g${group}n${node}`, x + 35 + node * 105, 320, 82, 70, group === 1 && node === 1 ? "soft-red" : "soft", { label: `${group + 1}.${node + 1}`, peerGroup: `pipeline-group-${group}` }));
+    if (group < 2) addLine(s, `groupFlow${group}`, [{ x: x + 360, y: 360 }, { x: groups[group + 1], y: 360 }], `group${group}`, `group${group + 1}`);
+  });
+  addRect(s, "evidenceRail", 330, 590, 940, 50, "line", { label: "TRACE / REPLAY EVIDENCE" });
+}
+function buildResponsibilityDivider(s) {
+  addRect(s, "leftResponsibility", 150, 235, 560, 92, "navy", { label: "SENSING RESPONSIBILITY" });
+  addRect(s, "rightResponsibility", 890, 235, 560, 92, "focus", { label: "NEAR-END RESPONSIBILITY" });
+  addRect(s, "boundaryLine", 790, 205, 20, 450, "focus", { role: "decor" });
+  [390, 515].forEach((y, i) => {
+    addRect(s, `leftDuty${i}`, 230, y, 400, 72, "soft", { label: `DUTY ${i + 1}`, peerGroup: "left-duties" });
+    addRect(s, `rightDuty${i}`, 970, y, 400, 72, i === 1 ? "soft-red" : "soft", { label: `DUTY ${i + 3}`, peerGroup: "right-duties" });
+  });
+}
+function buildStageGateRoadmap(s) {
+  const xs = [120, 470, 820, 1170];
+  xs.forEach((x, i) => {
+    addRect(s, `milestone${i}`, x, 260, 280, 170, i === 3 ? "soft-red" : "normal", { label: `MILESTONE ${i + 1}`, peerGroup: "roadmap-milestones" });
+    if (i < xs.length - 1) addLine(s, `milestoneFlow${i}`, [{ x: x + 280, y: 345 }, { x: xs[i + 1], y: 345 }], `milestone${i}`, `milestone${i + 1}`);
+  });
+  addLine(s, "roadmapToDecision", [{ x: 1310, y: 430 }, { x: 1310, y: 585 }, { x: 1090, y: 585 }], "milestone3", "roadmapDecision");
+  addRect(s, "roadmapDecision", 510, 555, 580, 72, "focus", { label: "ENGINEERING DECISION" });
 }
 function buildProgressive(s) {
   addRect(s, "skill", 140, 235, 470, 410, "frame-navy", { role: "decor" });
@@ -212,11 +269,27 @@ function buildTransfer(s) {
   addLine(s, "layersToTransfer", [{ x: 420, y: 410 }, { x: 610, y: 410 }], "layer3", "transfer");
   addLine(s, "transferToScenes", [{ x: 860, y: 410 }, { x: 1040, y: 410 }], "transfer", "scene2");
 }
+function buildCapabilityMigrationMap(s) {
+  addRect(s, "capabilityCore", 560, 300, 480, 210, "focus", { label: "TRANSFERABLE CAPABILITY" });
+  const scenes = [{ id: "scene1", x: 130, y: 215 }, { id: "scene2", x: 1170, y: 215 }, { id: "scene3", x: 130, y: 545 }, { id: "scene4", x: 1170, y: 545 }];
+  scenes.forEach((p, i) => addRect(s, p.id, p.x, p.y, 300, 82, i === 0 ? "soft-red" : "normal", { label: `SCENE ${i + 1}`, peerGroup: "migration-scenes" }));
+  addLine(s, "coreToScene1", [{ x: 560, y: 350 }, { x: 490, y: 350 }, { x: 490, y: 256 }, { x: 430, y: 256 }], "capabilityCore", "scene1");
+  addLine(s, "coreToScene2", [{ x: 1040, y: 350 }, { x: 1110, y: 350 }, { x: 1110, y: 256 }, { x: 1170, y: 256 }], "capabilityCore", "scene2");
+  addLine(s, "coreToScene3", [{ x: 560, y: 460 }, { x: 490, y: 460 }, { x: 490, y: 586 }, { x: 430, y: 586 }], "capabilityCore", "scene3");
+  addLine(s, "coreToScene4", [{ x: 1040, y: 460 }, { x: 1110, y: 460 }, { x: 1110, y: 586 }, { x: 1170, y: 586 }], "capabilityCore", "scene4");
+}
 function buildBenefit(s) {
   addRect(s, "before", 150, 280, 430, 240, "soft", { label: "BEFORE" });
   addRect(s, "after", 1010, 280, 430, 240, "soft-red", { label: "AFTER" });
   addRect(s, "gain", 640, 345, 320, 110, "focus", { label: "GAIN" });
   addRect(s, "memory", 450, 610, 700, 42, "navy", { label: "EXPERIENCE ACCUMULATES" });
+}
+function buildDecisionAskPoster(s) {
+  addRect(s, "mainAsk", 270, 205, 1060, 110, "focus", { label: "CURRENT ASK" });
+  [350, 445, 540, 635].forEach((y, i) => addRect(s, `support${i + 1}`, 160, y, 380, 62, i === 0 ? "soft-red" : "normal", { label: `SUPPORT ${i + 1}`, peerGroup: "support-asks" }));
+  addRect(s, "decisionOutlet", 900, 415, 500, 180, "frame-red", { label: "ONE DECISION OUTLET" });
+  [381, 476, 571, 666].forEach((y, i) => addLine(s, `supportToBus${i + 1}`, [{ x: 540, y }, { x: 680, y }, { x: 680, y: 505 }], `support${i + 1}`, "decisionOutlet"));
+  addLine(s, "busToDecision", [{ x: 680, y: 505 }, { x: 900, y: 505 }], "support2", "decisionOutlet");
 }
 function buildLearning(s) {
   [215, 330, 445, 560].forEach((y, i) => {
@@ -230,15 +303,22 @@ const BUILDERS = {
   "brand-closing": buildClosing,
   "section-divider": buildDivider,
   "tension-radial": buildPoster,
+  "decision-keyword-board": buildDecisionKeywordBoard,
   "keyword-diagnosis": buildDiagnosis,
   "big-typography-benefit": buildBenefit,
   "nested-concept": buildNested,
   "concept-boundary": buildCompare,
   "case-evidence": buildEvidence,
   "landscape-grid": buildLandscape,
+  "evidence-image-annotation": buildEvidenceImageAnnotation,
+  "image-scene-mapping": buildImageSceneMapping,
   "architecture-map": buildMindmap,
+  "dual-sensor-fusion-map": buildDualSensorFusion,
   "swimlane-flow": buildSwimlane,
   "before-after-orchestration": buildBeforeAfter,
+  "fusion-pipeline-spine": buildFusionPipelineSpine,
+  "responsibility-divider": buildResponsibilityDivider,
+  "stage-gate-roadmap": buildStageGateRoadmap,
   "screenshot-mechanism": buildProgressive,
   "folder-zoom": buildFolderZoom,
   "state-evidence": buildStateEvidence,
@@ -251,6 +331,8 @@ const BUILDERS = {
   "governance-lifecycle": buildLifecycle,
   "boundary-filter": buildBoundary,
   "method-transfer-map": buildTransfer,
+  "capability-migration-map": buildCapabilityMigrationMap,
+  "decision-ask-poster": buildDecisionAskPoster,
   "learning-path": buildLearning
 };
 
@@ -307,7 +389,9 @@ function contactSheetSvg(scenes, columns, cardW, includeReason = false) {
 
 function isRisk(contract) {
   return contract.complexityBudget === "high" || (contract.screenshotSlots || []).length > 0 ||
-    ["architecture-map", "tool-tree", "folder-zoom", "decision-funnel", "boundary-filter", "role-evidence", "feedback-loop"].includes(contract.skeletonFamily);
+    ["architecture-map", "tool-tree", "folder-zoom", "decision-funnel", "boundary-filter", "role-evidence", "feedback-loop",
+      "decision-keyword-board", "fusion-pipeline-spine", "responsibility-divider", "evidence-image-annotation",
+      "stage-gate-roadmap", "image-scene-mapping", "capability-migration-map", "decision-ask-poster"].includes(contract.skeletonFamily);
 }
 
 function geometrySignature(s) {

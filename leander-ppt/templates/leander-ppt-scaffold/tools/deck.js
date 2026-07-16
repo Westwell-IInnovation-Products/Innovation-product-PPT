@@ -12,32 +12,81 @@ const cfg = require("./../deck.config");
 const { newPptx, makeCtx } = require("./deck-ctx");
 const { getTheme } = require("../theme/tokens");
 const { requireToolchain, libreOfficeProfile } = require("./toolchain");
-const { verify: verifyQaResult, contractDigest, shaFile } = require("./verify-qa-result");
+const { verify: verifyQaResult, shaFile } = require("./verify-qa-result");
+const { digestPage, loadManifest, sharedRenderDigest, commitManifest } = require("./page-digests");
+const { inspect: inspectChanges } = require("./change-impact");
 
 const ROOT = path.join(__dirname, "..");
 const PAGES = path.join(ROOT, "pages");
 
-const theme = getTheme(cfg.theme);
-const mtime = f => { try { return fs.statSync(f).mtimeMs; } catch (e) { return 0; } };
-function newestIn(dir, test = () => true) {
-  if (!fs.existsSync(dir)) return 0;
-  let newest = 0;
-  const stack = [dir];
-  while (stack.length) {
-    const current = stack.pop();
-    fs.readdirSync(current, { withFileTypes: true }).forEach(entry => {
-      const abs = path.join(current, entry.name);
-      if (entry.isDirectory()) stack.push(abs);
-      else if (test(abs)) newest = Math.max(newest, mtime(abs));
-    });
+// Keep in sync with .leander-scaffold-version.json; regression blackbox fails on drift.
+const SCAFFOLD_VERSION = "0.6.0-beta.8";
+function verifyScaffoldVersion() {
+  const file = path.join(ROOT, ".leander-scaffold-version.json");
+  let version = "";
+  try { version = JSON.parse(fs.readFileSync(file, "utf8")).version || ""; } catch {}
+  if (version !== SCAFFOLD_VERSION) {
+    console.error(`LEANDER SCAFFOLD STALE: expected ${SCAFFOLD_VERSION}, got ${version || "missing"}.`);
+    console.error("Run <skill-root>/scripts/sync-scaffold-tools.js <project-root> before render/verify/build.");
+    process.exit(1);
   }
-  return newest;
 }
-const sharedSourceMtime = () => Math.max(
-  newestIn(path.join(ROOT, "theme"), f => /\.(js|json|png|jpg|jpeg|svg)$/i.test(f)),
-  newestIn(path.join(ROOT, "components"), f => /\.(js|json|svg|png|jpg|jpeg)$/i.test(f))
-);
+function verifyToolFreeze() {
+  try { cp.execFileSync(process.execPath, [path.join(__dirname, "tool-freeze.js"), "verify"], { stdio: "inherit" }); }
+  catch { process.exit(1); }
+}
+
+function verifyWorkflowEntry(target, gateLabel) {
+  try {
+    cp.execFileSync(process.execPath, [path.join(__dirname, "workflow-gate.js"), "verify", target], { stdio: "inherit" });
+  } catch (e) {
+    process.exit(1);
+  }
+  // Final verification can create a Gate-boundary rotation lock. Recheck it
+  // in the parent process so the same render/build command cannot continue.
+  try {
+    cp.execFileSync(process.execPath, [path.join(__dirname, "context-budget-gate.js"), "--enforce-budget", "--gate", gateLabel], { stdio: "inherit" });
+  } catch (e) {
+    process.exit(1);
+  }
+}
+
+function verifyQualityBaseline() {
+  try {
+    cp.execFileSync(process.execPath, [path.join(__dirname, "verify-quality-baseline.js")], { stdio: "inherit" });
+  } catch (e) {
+    process.exit(1);
+  }
+}
+function verifyPagePreflight() {
+  const pages = selectedPageNames();
+  try {
+    cp.execFileSync(process.execPath, [path.join(__dirname, "verify-page-preflight.js"), ...(pages.length ? ["--pages", pages.join(",")] : [])], { stdio: "inherit" });
+  } catch (e) { process.exit(1); }
+}
+
+function verifyRenderedQualityIfFinal() {
+  const wf = cfg.workflow || {};
+  if (wf.stage !== "production") return;
+  try {
+    cp.execFileSync(process.execPath, [path.join(__dirname, "render-quality-gate.js"), "verify"], { stdio: "inherit" });
+  } catch (error) {
+    process.exit(error.status || 1);
+  }
+}
+
+function workflowTarget(command) {
+  const stage = (cfg.workflow || {}).stage;
+  if (stage === "anchor-sample") return "anchor";
+  if (stage === "production-batch" || stage === "production") return command === "build" ? "final" : "production";
+  console.error(`LEANDER WORKFLOW BLOCKED: slide ${command} is not allowed while workflow.stage=${stage || "missing"}.`);
+  console.error("Complete and approve the current planning/blueprint checkpoint before producing slides.");
+  process.exit(1);
+}
+
+const theme = getTheme(cfg.theme);
 const loadPage = d => require(path.join(PAGES, d, "page.js"));
+let runtimePageSelection = null;
 function selectedPageNames() {
   const index = process.argv.indexOf("--pages");
   const cli = index >= 0 && process.argv[index + 1] ? process.argv[index + 1].split(",") : [];
@@ -46,7 +95,7 @@ function selectedPageNames() {
 }
 function pageDirs() {
   const dirs = fs.readdirSync(PAGES).filter(d => fs.existsSync(path.join(PAGES, d, "page.js"))).sort();
-  const selected = selectedPageNames();
+  const selected = runtimePageSelection || selectedPageNames();
   if (!selected.length) return dirs;
   const wanted = new Set(selected);
   const matches = dirs.filter(dir => wanted.has(dir) || wanted.has(loadPage(dir).id));
@@ -155,12 +204,13 @@ function validateQaProfile(meta) {
 }
 
 function gate() {
+  const manifest = loadManifest(ROOT), currentShared = sharedRenderDigest(ROOT);
   const rows = pageDirs().map(d => {
     const dir = path.join(PAGES, d), pj = path.join(dir, "page.js"), metaFile = path.join(dir, "page.json"), qa = path.join(dir, "qa.md");
     const p = loadPage(d);
     const png = path.join(dir, "out", p.id + ".png");
     const meta = loadPageJson(metaFile);
-    const sourceMtime = Math.max(mtime(pj), mtime(metaFile), sharedSourceMtime());
+    const digests = meta ? digestPage(dir, ROOT) : null;
     let status = "PASS", reason = "";
     if (!fs.existsSync(metaFile)) { status = "MISSING-CONTRACT"; reason = "no page.json"; }
     else if (!meta) { status = "BAD-CONTRACT"; reason = "page.json is not valid JSON"; }
@@ -177,7 +227,8 @@ function gate() {
       // Keep the first structural failure. Freshness checks below only run after the visual contract is sound.
     }
     else if (!fs.existsSync(png)) { status = "NO-RENDER"; reason = "out/" + p.id + ".png missing"; }
-    else if (mtime(png) < sourceMtime) { status = "STALE-RENDER"; reason = "render older than page/theme/component source - re-render"; }
+    else if (manifest.sharedRenderDigest !== currentShared) { status = "STALE-RENDER"; reason = "shared theme/component render digest changed - re-render full deck"; }
+    else if (!manifest.pages?.[d] || manifest.pages[d].renderDigest !== digests.renderDigest) { status = "STALE-RENDER"; reason = "page renderDigest changed - re-render this page"; }
     else {
       const qaEvidence = verifyQaResult(dir);
       if (!qaEvidence.ok) { status = "BAD-QA-EVIDENCE"; reason = qaEvidence.errors.slice(0, 3).join("; "); }
@@ -217,12 +268,23 @@ function renderPptxToPngs(pptxAbs, outDir) {
 }
 
 function cmdRender() {
+  verifyWorkflowEntry(workflowTarget("render"), "deck-render");
+  verifyQualityBaseline();
+  verifyPagePreflight();
   const wf = cfg.workflow || {};
   if (wf.stage === "outline-reset" || wf.stage === "layout-blueprint") {
     console.error(`REFUSING to render stale pages while workflow.stage=${wf.stage}. Regenerate and approve the layout blueprint first.`);
     process.exit(1);
   }
-  // Assemble active pages -> render whole -> split each slide back to its page's out/<id>.png.
+  const requested = selectedPageNames();
+  const impact = inspectChanges({ root: ROOT, pages: requested });
+  if (impact.kind === "no-render") {
+    console.log(`render skipped: no renderDigest changes (${Object.keys(impact.evidenceChanges || {}).length} evidence-only page changes)`);
+    return Promise.resolve();
+  }
+  if (impact.kind === "shared-render") runtimePageSelection = fs.readdirSync(PAGES).filter(d => fs.existsSync(path.join(PAGES, d, "page.js"))).sort();
+  else runtimePageSelection = impact.affectedPages;
+  // Assemble affected pages -> render once -> split each slide back to its page output.
   const { pptx, used, traces } = assemble(false);
   const tmp = path.join(ROOT, "output", "_render.pptx");
   fs.mkdirSync(path.dirname(tmp), { recursive: true });
@@ -239,12 +301,13 @@ function cmdRender() {
         const pageDir = path.join(PAGES, r.dir);
         const meta = loadPageJson(path.join(pageDir, "page.json")) || {};
         const selected = meta.visualSelection && meta.visualSelection.selectedRoute || {};
+        const digests = digestPage(pageDir, ROOT);
         const trace = {
-          version: "component-trace.v1",
+          version: "component-trace.v2",
           pageId: r.id,
           generatedAt: new Date().toISOString(),
           renderSha256: shaFile(renderFile),
-          contractSha256: contractDigest(pageDir),
+          digests: { renderDigest: digests.renderDigest, selectionOutcomeDigest: digests.selectionOutcomeDigest },
           selectedBinding: selected,
           calls: traces[r.id] || []
         };
@@ -253,6 +316,7 @@ function cmdRender() {
     });
     fs.rmSync(tmp, { force: true });
     fs.rmSync(tmpOut, { recursive: true, force: true });
+    commitManifest({ root: ROOT, pages: used.map(row => row.dir) });
     console.log(`rendered ${used.length} pages -> pages/<id>/out/<id>.png`);
   });
 }
@@ -264,8 +328,12 @@ function printGate(g) {
 }
 
 function cmdVerify(finalMode) {
+  verifyWorkflowEntry(workflowTarget(finalMode ? "build" : "verify"), finalMode ? "deck-verify-final" : "deck-verify");
+  verifyQualityBaseline();
+  verifyPagePreflight();
   if (finalMode) verifyPhaseCheckpointsIfNeeded();
   if (finalMode) verifyAgentCollaborationIfEnabled();
+  if (finalMode) verifyRenderedQualityIfFinal();
   verifyDesignGateIfNeeded();
   const g = gate();
   console.log("QA gate:");
@@ -275,8 +343,13 @@ function cmdVerify(finalMode) {
 }
 
 function cmdBuild(draft) {
+  // --draft relaxes page QA only. It never bypasses the workflow receipt or user checkpoints.
+  verifyWorkflowEntry(workflowTarget("build"), draft ? "deck-build-draft" : "deck-build");
+  verifyQualityBaseline();
+  verifyPagePreflight();
   if (!draft) verifyPhaseCheckpointsIfNeeded();
   if (!draft) verifyAgentCollaborationIfEnabled();
+  if (!draft) verifyRenderedQualityIfFinal();
   if (!draft) verifyDesignGateIfNeeded();
   const g = gate();
   console.log("QA gate:");
@@ -292,12 +365,18 @@ function cmdBuild(draft) {
     : stage === "production-batch" && cfg.batchFileName
       ? cfg.batchFileName
       : cfg.fileName;
+  if (/[<>]/.test(String(outputFile || ""))) {
+    console.error(`deck.config fileName still contains a template placeholder: ${outputFile}. Set a real output path before building.`);
+    process.exit(1);
+  }
   return pptx.writeFile({ fileName: outputFile }).then(f => {
     console.log(`wrote ${f}  (${used.length} pages${draft ? ", DRAFT incl. non-PASS" : ", all PASS"})`);
   });
 }
 
 const cmd = process.argv[2], draft = process.argv.includes("--draft"), finalMode = process.argv.includes("--final");
+verifyScaffoldVersion();
+verifyToolFreeze();
 if (cmd === "render") cmdRender();
 else if (cmd === "verify") cmdVerify(finalMode);
 else if (cmd === "build") cmdBuild(draft);

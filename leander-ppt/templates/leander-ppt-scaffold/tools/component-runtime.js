@@ -7,6 +7,7 @@ const { makeComponents } = require("../components/ppt-components");
 const { makeEditorial } = require("../components/editorial");
 const { makeBespoke } = require("../components/bespoke");
 const { makeToolSystemTree } = require("../components/tool-system-tree");
+const { loadExtensions } = require("../components/extensions");
 
 const NON_SELECTABLE_STATUSES = new Set([
   "planned",
@@ -26,12 +27,19 @@ function loadComponentRuntime(themeName = "leander-base") {
   pptx.defineLayout(theme.ppt.layout);
   pptx.layout = theme.ppt.layout.name;
   const ui = makeComponents(pptx, theme);
-  const components = {
+  const builtIns = {
     ...ui,
     ...makeEditorial({ ui, theme, pptx }),
     ...makeBespoke({ ui, theme, pptx }),
     ...makeToolSystemTree({ ui, theme, pptx })
   };
+  const extensions = loadExtensions({ ui, theme, pptx });
+  for (const name of Object.keys(extensions)) {
+    if (Object.prototype.hasOwnProperty.call(builtIns, name)) {
+      throw new Error(`Leander extension renderer collides with a built-in component: ${name}`);
+    }
+  }
+  const components = { ...builtIns, ...extensions };
   const rendererNames = new Set(
     Object.entries(components)
       .filter(([, value]) => typeof value === "function")

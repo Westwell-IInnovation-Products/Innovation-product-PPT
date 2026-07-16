@@ -1,5 +1,11 @@
 {
   "version": "qa-rules.zh.v2",
+  "automationPolicy": {
+    "humanJudgmentDefault": true,
+    "mechanicalGates": ["render-sha256", "render-digest", "selection-outcome-digest", "qa-digest", "source-digest", "component-trace", "route-binding", "required-slot-capacity", "image2-prompt-file"],
+    "ruleAutoPass": false,
+    "note": "机械门禁只预筛错误，不自动替代逐页视觉与事实判断。"
+  },
   "ruleSets": {
     "universal": [
       "u.geometry.overlap",
@@ -85,7 +91,7 @@
     "r.lifecycle.promotion": {"severity":"P1","label":"反馈、沉淀和提升位置明确","evidence":"render-location"},
     "r.cover.chrome": {"severity":"P1","label":"封面遵守主题 chrome","evidence":"render-location"},
     "r.cover.whitespace": {"severity":"P1","label":"封面标题层级清楚并保留足够留白","evidence":"render-location"},
-    "v.component.runtime": {"severity":"P0","label":"真实运行轨迹包含所选组件","evidence":"component-trace"},
+    "v.component.runtime": {"severity":"P2","label":"组件路线与页面构图一致：组件直出或作为主体区块被调用；有意手工构图需在 observation 说明","evidence":"component-trace"},
     "v.component.capacity": {"severity":"P1","label":"内容数量和槽位容量匹配，不靠缩字硬塞","evidence":"contract-compare"},
     "v.component.risk": {"severity":"P1","label":"组件风险和避免条件已检查","evidence":"render-location"},
     "v.external.source": {"severity":"P0","label":"外部图有真实来源","evidence":"source-reference"},

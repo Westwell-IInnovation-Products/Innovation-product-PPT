@@ -38,9 +38,14 @@ tools: Read, Glob, Grep
    - avoidSignatures
    - complexityBudget
    - colorIntent / accentTarget
+   - contentDensity：low / medium / high
+   - whitespaceIntent：none / focus / pause / tension / image-led / premium / chapter-breathing
+   - densityRationale：为什么这一页应该稀疏或密集
 3. 标出重复版式风险和高风险页。
 4. 检查低保真预览是否存在重叠、歪线、偏心、颜色语义混乱。
 5. 检查蓝图是否把 `role-briefs.md` 中的项目特定风险转成可执行页面合同。
+6. 每个项目从当前 brief、主题、素材和故事重新推导布局；不得复制上一套 PPT 的页序、视觉签名组合或版式配额。
+7. 区分“内容不足”和“有意留白”：前者补证据或机制，后者保留焦点并删除无意义容器。
 
 ## 不负责内容
 

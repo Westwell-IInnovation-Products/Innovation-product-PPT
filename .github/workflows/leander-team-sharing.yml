@@ -1,0 +1,64 @@
+name: Leander Team Sharing
+
+on:
+  pull_request:
+    paths:
+      - "leander-ppt/**"
+      - "team-sharing/**"
+      - "contributions/leander-ppt/**"
+      - ".github/workflows/leander-team-sharing.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: leander-ppt/templates/leander-ppt-scaffold/package-lock.json
+      - name: Candidate unit tests
+        run: node --test team-sharing/tests/candidate.test.js
+      - name: Validate contribution inbox
+        run: node team-sharing/scripts/validate-candidate.js contributions/leander-ppt/components
+      - name: Leander release hygiene
+        working-directory: leander-ppt
+        run: node scripts/release-hygiene.js
+      - name: Leander scope hygiene
+        working-directory: leander-ppt
+        run: node templates/leander-ppt-scaffold/tools/lint-scope-hygiene.js --skill-root .
+      - name: Install locked Leander dependencies
+        working-directory: leander-ppt/templates/leander-ppt-scaffold
+        run: npm ci --no-audit --no-fund
+      - name: Rebuild compact component index
+        working-directory: leander-ppt/templates/leander-ppt-scaffold
+        run: |
+          node tools/build-component-index.js
+          git diff --exit-code -- tools/component-index.min.json
+      - name: Strict component lint
+        working-directory: leander-ppt/templates/leander-ppt-scaffold
+        run: node tools/lint-component-library.js --strict
+      - name: Install render tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libreoffice poppler-utils
+      - name: Render both component themes
+        working-directory: leander-ppt/templates/leander-ppt-scaffold
+        run: |
+          node tools/render-component-library-preview.js --theme leander-base --out-dir "$RUNNER_TEMP/leander-base"
+          node tools/render-component-library-preview.js --theme leander-global --out-dir "$RUNNER_TEMP/leander-global"
+          node tools/verify-component-themes.js "$RUNNER_TEMP/leander-base/preview-manifest.json" "$RUNNER_TEMP/leander-global/preview-manifest.json"
+      - name: Upload component preview evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: leander-component-previews
+          path: |
+            ${{ runner.temp }}/leander-base
+            ${{ runner.temp }}/leander-global
+          retention-days: 14

@@ -75,7 +75,7 @@ function inspectSkill(skillRoot) {
 
 function selfTest() {
   const clean = "示例：P12 可以作为页面状态展开的一个历史案例。\nconst root = path.join(__dirname, '..');";
-  const leaking = "P12 必须改成当前项目的结构。\nconst exe = 'C:/Users/example/AppData/tool.exe';\nconst qa = 'layout-blueprint-preview-qa-v9.json';";
+  const leaking = "P12 必须改成当前项目的结构。\nconst exe = '" + "C:" + "/Users/example/AppData/tool.exe';\nconst qa = 'layout-blueprint-preview-qa-v9.json';";
   const cleanFindings = inspectText(clean, "clean.md");
   const leakFindings = inspectText(leaking, "leak.js");
   if (cleanFindings.length !== 0 || leakFindings.length !== 3) {

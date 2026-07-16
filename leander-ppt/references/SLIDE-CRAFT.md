@@ -159,10 +159,11 @@ Empty-space pages must be redesigned.
 
 The most common whitespace defect is a content block pinned to the top of the page with a large dead gap above the footer. This reads as AI-generated. A component must do one of:
 
-- **Fill the body safe area** (roughly `y≈210..950` below the header): size cards and spacing so content reaches the lower third. Enrich sparse pages with sub-points, a short example line, or a bottom takeaway/caveat band rather than leaving the bottom empty.
+- **Fill the body safe area** (roughly `y≈210..950` below the header) when the page is meant to be information-dense: size cards and spacing so the composition reaches the lower third. Add sub-points, evidence or a caveat only when they improve understanding; do not add content merely to occupy space.
 - **Or center the block vertically** so the top and bottom margins are roughly equal. Symmetric breathing room reads as designed; a big bottom-only gap reads as a bug.
+- **Or preserve intentional whitespace** around one strong word, number, image, quotation or visual relationship. Record the purpose as focus, pause, tension, premium restraint, image emphasis or chapter breathing room.
 
-When a page genuinely has only a few short items (e.g. a 4-item agenda), add real substance (sub-bullets, the chapter's contents) or center the block — do not stretch a thin row across the top and leave the rest blank. Never solve emptiness by enlarging fonts past the type scale.
+When a page genuinely has only a few short items, choose deliberately: add real substance if the audience needs it, center the group, or convert the page into a designed low-density composition. Do not stretch a thin row across the top and leave the rest blank. Never solve emptiness by enlarging fonts past the type scale.
 
 ## Anti AI Visual Fingerprints
 
@@ -198,7 +199,7 @@ Meaningless internal whitespace (half-empty card, dead band at the bottom) is th
 - Size a card/panel to its content; do not fix a tall height and let content float at the top.
 - Compute block height from item/row count, then vertically center the block in the body so leftover space becomes equal top/bottom breathing room.
 - Symmetric margins = designed whitespace (fine). Asymmetric dead space = defect (redesign).
-- If content is genuinely sparse, enrich it (sub-points, takeaway band, inline detail) rather than inflating empty boxes.
+- If content is genuinely sparse, first decide whether the page needs more evidence or whether it should remain a low-density focus page. Enrich only when it improves the message; otherwise remove empty containers and design the whitespace.
 - **Line frames are not a loophole.** Switching a white fill to a line-frame/outline does not fix fill-the-page — a frame stretched over little content (sparse top, dead bottom) reads just as AI-generated. The fit-content-then-center rule applies to frames exactly as to filled cards.
 - **Two sanctioned layouts for a light page:** (a) background ground + line-frame dividers, or (b) a text zone + a graphic zone split. Never stretch cards/frames to span the whole page. (See `editorial.js`.)
 
@@ -209,10 +210,11 @@ Meaningless internal whitespace (half-empty card, dead band at the bottom) is th
 - **Do NOT "fix small fonts" by bumping everything to one size** — that flattens the hierarchy and makes supporting text look oversized/ugly ("小字太大了实在太丑"). Detail labels are *meant* to be small (6.5–9pt); the reject is text that's unreadable for its role or disproportionate to its container, not smallness itself. When the user cites a reference for "fonts feel small/refined", open it and read the real `sz` values rather than guessing — big titles + lots of small fused detail is what reads as 精致.
 - A **subtitle is the page's one-line thesis** — it summarizes the core takeaway, never a colloquial restatement of the title.
 
-### Vary the visual form every page
+### Vary visual form according to the story
 
-- **Never reuse one component 3–4× in a deck.** Repeating the same template across pages is visual fatigue and reads as auto-generated. Give each page a different form and audit for repeats before shipping.
-- Avoid "every page = a box with text inside" (死板/lifeless). Mix three registers: **line-frame structure** (`editorial.js`), **large illustrative metaphor** (`bespoke.js`: dual-circle, hub-radial, journey path, pipeline, tier ladder, resource board, action tracks, bespoke scene line-art), and the occasional white-card. Budget **≥1 large pure-graphic page per ~3 pages**. Study the reference deck's actual artwork; draw per-domain glyphs from primitives rather than dropping in stock icons.
+- Repetition is allowed when it creates intentional rhythm, comparison or callback. Reusing a component becomes a defect only when pages have different narrative jobs but are forced into the same skeleton without `echoWith` and a rationale.
+- Avoid "every page = a box with text inside". Choose registers from the current project's needs: line-frame structure, large illustrative metaphor, evidence screenshot, image-led page, big typography, chart, diagram or restrained cards. There is no universal image/page quota.
+- Do not inherit the previous deck's page order, visual signatures or component mix. Start from the current brief, source assets, theme and approved blueprint every time.
 
 ### Every page establishes the theme ground
 

@@ -4,7 +4,7 @@
 //           pipelineFlow(流水线) · actionTracks(行动轨道) · sceneColumns(图片/插画分栏)。
 // 字号统一取 theme.type；配色=语义（同级一色，单点 accent 焦点）。
 // 项目/领域专属的定制图（fusionVenn 传感器双环 / sceneGlyph 港口线稿 / resourceBoard GitHub 卡）
-// 已移到 examples/livo-sense-bespoke.js —— 作为"如何写页面专属图形"的范例，需要时复制改用，不进通用核。
+// 页面专属图形应留在具体项目的 page.js 中；只有去项目化、可复用并通过回归测试后才进入通用核。
 const { icon } = require("./icons");
 const fs = require("fs");
 
@@ -176,8 +176,9 @@ function makeBespoke({ ui, theme, pptx }) {
   function pipelineFlow(slide, data) {
     ui.header(slide, data.title, data.subtitle);
     const steps = data.steps || [], phases = data.phases || [], n = steps.length || 1, slot = W / n;
+    const verticalShift = Math.max(-20, Math.min(70, Number(data.verticalShift || 0)));
     // 三段填充色块底（duotone ground，借 web-video 手法）——流程"写进"色块里，不再每个环节一个方框
-    const bandTop = 300, bandH = 318, lineY = bandTop + 168;
+    const bandTop = 300 + verticalShift, bandH = 318, lineY = bandTop + 168;
     let acc = 0;
     phases.forEach(ph => {
       const gx = X + acc * slot, gw = ph.span * slot, ink = ph.focus ? C.accent : C.primary;
@@ -196,7 +197,7 @@ function makeBespoke({ ui, theme, pptx }) {
       ui.addText(slide, cx - slot / 2 + 8, lineY + 44, slot - 16, 56, s.t, { size: T.bodySm, color: ink, bold: true, align: "center", lineSpacingMultiple: 1.08, fontFace: cjk(s.t) });
     });
     // 归纳：底部单条强调带（左红=难点 / 右蓝=自研空间），细竖线分隔，不再两个高方框
-    const sm = (data.summary || []).slice(0, 2), sy = 668, shh = 150, half = W / 2;
+    const sm = (data.summary || []).slice(0, 2), sy = 668 + verticalShift, shh = 150, half = W / 2;
     ui.rect(slide, X, sy, W, shh, { fill: C.surface2, round: true });
     ui.line(slide, X + half, sy + 22, X + half, sy + shh - 22, { color: C.line, width: 1.2 });
     sm.forEach((z, i) => {

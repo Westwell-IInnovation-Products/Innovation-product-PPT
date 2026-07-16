@@ -117,7 +117,7 @@ Two company themes ship with this skill. Both are real, distilled from approved 
 | Structure | navy `#07195A` | navy `#002060` + mid-blue `#0070C0` |
 | Title rule | solid red bar, title in red | dotted azure, title in navy |
 | Footer | red bar | thin azure line |
-| Cover | warm ground, right-aligned red title | dark port-skyline photo, or clean white-minimal |
+| Cover | warm ground, right-aligned red title | project-approved full-bleed image, or clean white-minimal |
 | Font | YaHei + Century Gothic | Century Gothic English-first + YaHei |
 | Source decks | 岸桥自动化系统产品介绍, cactus产品介绍 | ReeWell international, FMS Clarification, CTN Scheduler |
 
@@ -139,7 +139,7 @@ Ask: **"Internal report → Leander Base, or external/international → Leander 
 - **The two recurring rules are copied 1:1 from the CTN reference, not redrawn** (user instruction): (a) the title/sub rule is CTN's exact connector — **`#0070C0` mid-blue, `lgDash` large-dash, 0.25pt**, width tracking the title (`signature.headerRule: {style:"dash", color:"blue", dash:"lgDash", weight:0.25, track:true}`); (b) the page-bottom strip is **CTN's own footer PNG** (`theme/assets/footer-westwell.png` = grey WESTWELL wordmark + `FROM HUMAN TO HUMAN` + line baked in), placed full-width at the bottom (`signature.footer: {style:"image", img, x,y,w,h}`) — `footer()` just drops the image, it does not draw the line/wordmark.
 - `header()` returns its content-bottom Y; top-aligned components (`archLayered`, `archDualEngine`) start content below it, so the larger title never collides with the diagram.
 - Divider page = **white-underline** (`sectionDivider`, per the **FMS** reference): left-aligned (x≈120) navy bold title + solid navy underline + light-blue subtitle + wordmark footer.
-- Covers (both ship; pick per occasion): `cover` default = **white-minimal** (clean white, big navy title, dotted navy rule, light-blue subtitle, `Make a Well Change.` azure tagline, wordmark footer); `coverStyle: "photo-dark"` = full-bleed dark port-skyline line-art (`theme/assets/cover-port-dark.png`, supersampled; pass `data.image` to swap in a real photo). Back cover (`closing`) default = **white-minimal** (centered navy+azure slogan + dotted navy rule), matching the white cover; `closingStyle: "photo-dark"` for the dark variant.
+- Covers: `cover` defaults to **white-minimal** (clean white, big navy title, dotted navy rule, light-blue subtitle, `Make a Well Change.` azure tagline, wordmark footer). `coverStyle: "photo-dark"` is available only with a project-approved `data.image`; the shared Skill does not ship a domain scene. Back cover (`closing`) defaults to **white-minimal**; `closingStyle: "photo-dark"` follows the same project-image requirement.
 - The dark-cover image is a bundled placeholder — replace with a real port/logistics photo via `data.image` or by overwriting `theme.signature.coverPhoto`.
 
 ## One Shared Component Library + Per-Theme Signature

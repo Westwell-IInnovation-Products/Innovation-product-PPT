@@ -6,7 +6,7 @@ A scaffold is the reusable working structure that prevents each PPT task from be
 
 For Leander PPT, a real scaffold is not just instructions. It is a folder structure, theme tokens, component helpers, extraction utilities, and QA utilities that can be reused across decks.
 
-The executable scaffold ships under the skill at `templates/leander-ppt-scaffold/` (mirrored in both `.claude` and `.codex` skill dirs). It includes theme tokens, the component libraries, icon helpers, the per-page production tooling, and output dirs.
+The executable Codex scaffold ships under the skill at `templates/leander-ppt-scaffold/`. It includes theme tokens, the component libraries, icon helpers, the per-page production tooling, and output dirs.
 
 ## Per-page production model (current)
 
@@ -17,15 +17,15 @@ A deck is a set of **per-page folders** plus a config and tools. The build code 
 +-- source/                 original.docx / notes / extracted
 +-- brief.md
 +-- outline.md
-+-- artifact-manifest.md    human-readable output labels: what to confirm vs what feeds next step
-+-- artifact-manifest.json  machine-readable artifact labels
++-- artifact-manifest.md    generated human-readable output labels
++-- artifact-manifest.json  generated machine-readable handoff
 +-- deck.config.js          { name, theme, fileName }
 +-- checkpoint-status.json  phase checkpoint approvals before scaling
 +-- agent-collaboration.json machine-checkable role evidence
 +-- agent-collaboration.md   human-readable role notes and fallback reasons
 +-- theme/                  tokens.js (+ leander-global.js), assets/
 +-- components/             ppt-components.js · editorial.js · bespoke.js · icons.js
-+-- examples/               domain-specific bespoke graphics (copy & adapt; not core)
++-- state/                  compact run memory + project-local feedback log
 +-- pages/
 |   +-- p01-cover/
 |   |   +-- page.js         module.exports = { id, title, visualBinding, build(slide, ctx) }
@@ -37,6 +37,11 @@ A deck is a set of **per-page folders** plus a config and tools. The build code 
 |   +-- deck.js             render | verify (gate) | build (gated assemble)
 |   +-- deck-ctx.js         builds { ui, ed, bp, theme, pptx }
 |   +-- context-pack.js     compact project/page/agent state for low-token continuation
+|   +-- phase-handoff.js    hash-bound Gate continuation packet for a fresh task
+|   +-- token-ledger.js     rollout-backed Gate/role Token accounting and Chinese report
+|   +-- page-digests.js     split render/selection/QA/source dependency digests
+|   +-- verify-page-preflight.js  final route/capacity/slot/prompt/signature gate
+|   +-- qa-batch.js         preserve current QA and apply one reviewer evidence matrix
 |   +-- artifact-map.js     labels generated files by audience and next-step use
 |   +-- component-registry.json  machine-readable visual/tool capability index
 |   +-- component-index.min.json compact low-token component index generated from registry
@@ -45,12 +50,11 @@ A deck is a set of **per-page folders** plus a config and tools. The build code 
 |   +-- build-qa-profile.js      page intent + visual route -> Chinese dynamic QA checks
 |   +-- verify-agent-collaboration.js role evidence gate for multi-agent workflow
 |   +-- verify-checkpoints.js phase transition approval gate
-|   +-- stop-hook.js        optional Claude Code Stop-hook guard (runs the gate)
 +-- output/                 <deck>.pptx + preview/
 +-- qa.md                   deck-level QA summary (per-page table + reviewer verdict)
 ```
 
-Pipeline: for existing scaffold work, start with `node tools/context-pack.js --mode status` (or `--mode repair --pages p11,p12`) -> open only the recommended reads -> run `node tools/select-visual-route.js pages/<id>/page.json --write` -> inspect/override the ranked route if needed -> run `node tools/build-qa-profile.js pages/<id>/page.json --write` -> implement `page.js.visualBinding` to match the selected route -> update `agent-collaboration.json` role evidence or fallback -> `node tools/deck.js render` -> review each `pages/<id>/out/<id>.png` against the Chinese `qaProfile`, set its `qa.md` `Verdict: PASS` -> `node tools/deck.js verify` (page QA gate used during work) -> `node tools/deck.js verify --final` (page QA + collaboration gate) -> `node tools/deck.js build` (assembles only fresh+PASS pages and refuses final build if collaboration evidence is incomplete) -> `node tools/artifact-map.js --write` (labels what the user should confirm versus what the next phase consumes). The gate compares mtimes, so editing a `page.js` or `page.json` without re-review is caught automatically. Optionally wire `tools/stop-hook.js` into `.claude/settings.json` `hooks.Stop` to run the page QA gate at completion.
+Pipeline: for existing work, verify `state/phase-handoff.json`, run `node tools/context-pack.js --mode status`, and open only recommended reads. For a page slice use `node tools/run-phase.js page-cycle --pages <ids>`: route selection -> dynamic QA -> preflight -> deterministic lint -> incremental render -> contact sheet -> affected-page QA init -> split digest capture. Reviewer evidence is applied in one `qa-review-batch.v1`. Then run page verify, final collaboration/render-quality verify, gated build, and artifact mapping. Rendering freshness uses purpose-specific digests rather than whole-file mtimes: QA/source metadata never invalidates PNGs, selected render changes invalidate the page, and shared theme/component changes invalidate the full deck.
 
 Before Phase 4, run `node tools/verify-checkpoints.js phase4`. The file `checkpoint-status.json` must record explicit approval or explicit bypass for plan, layout blueprint, theme, anchor sample, and production mode. If `deck.config.js.workflow.stage = "production"`, final verify/build runs this checkpoint gate automatically.
 
@@ -84,9 +88,8 @@ When creating a new scaffold, copy or mirror:
 -- theme/
 -- components/
 -- pages/            (one folder per page: page.js · page.json · qa.md · out/)
--- tools/            (deck.js · deck-ctx.js · context-pack.js · artifact-map.js · component-registry.json · select-visual-route.js · stop-hook.js)
+-- tools/            (deck.js · deck-ctx.js · context-pack.js · artifact-map.js · component-registry.json · select-visual-route.js)
 -- deck.config.js
--- artifact-manifest.md / artifact-manifest.json
 -- checkpoint-status.json
 -- agent-collaboration.json
 -- agent-collaboration.md
@@ -94,6 +97,8 @@ When creating a new scaffold, copy or mirror:
 |   +-- preview/
 -- qa.md
 ```
+
+Generate `artifact-manifest.md/json` with `node tools/artifact-map.js --write` after the first phase output; do not ship a stale manifest in the clean template.
 
 The scaffold must be the working source of truth for generation. Any temporary renderer, screenshot script, chart render, or asset extraction should live inside the scaffold under `source/`, `components/external-renders/`, or a page's own folder.
 

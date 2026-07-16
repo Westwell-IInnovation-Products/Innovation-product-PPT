@@ -2,6 +2,7 @@
 // Usage: node tools/select-visual-route.js pages/<id>/page.json [--write]
 const fs = require("fs");
 const path = require("path");
+const assert = require("assert");
 const { loadComponentRuntime, rendererStatus } = require("./component-runtime");
 const ROOT = path.join(__dirname, "..");
 const REGISTRY = JSON.parse(fs.readFileSync(path.join(__dirname, "component-registry.json"), "utf8").replace(/^\uFEFF/, ""));
@@ -41,7 +42,10 @@ function contentShape(page) {
   visit(page);
   return { maxItems: arrays.reduce((max, item) => Math.max(max, item.count), 0), arrays: arrays.slice(0, 4) };
 }
-function requiredSlots(page, blueprint, relationship) { return [...new Set([...(page.requiredSlots || []), ...(blueprint?.requiredSlots || []), ...(RELATION_SLOTS[relationship] || [])])]; }
+function requiredSlots(page, blueprint, relationship) {
+  const explicit = [...(page.requiredSlots || []), ...(blueprint?.requiredSlots || [])];
+  return [...new Set(explicit.length ? explicit : (RELATION_SLOTS[relationship] || []))];
+}
 function componentFamilyText(component) { return [component.name, component.family, component.relationPrimitive, ...(component.tags || [])].join(" "); }
 function scoreComponent(component, context) {
   const breakdown = { relationship: 0, blueprint: 0, slots: 0, capacity: 0, evidence: 0, theme: 0, keyword: 0, risk: 0 };
@@ -51,7 +55,14 @@ function scoreComponent(component, context) {
   else rejections.push("relationship.mismatch");
 
   const familyText = componentFamilyText(component);
-  if ((context.candidateFamilies || []).some(family => norm(familyText).includes(norm(family)))) { breakdown.blueprint = 18; reasons.push("contract.family"); }
+  const exactFamilyIndex = (context.candidateFamilies || []).findIndex(family => norm(component.name) === norm(family));
+  if (exactFamilyIndex >= 0) {
+    breakdown.blueprint = Math.max(12, 30 - exactFamilyIndex * 5);
+    reasons.push(`contract.family-rank.${exactFamilyIndex + 1}`);
+  } else if ((context.candidateFamilies || []).some(family => norm(familyText).includes(norm(family)))) {
+    breakdown.blueprint = 18;
+    reasons.push("contract.family");
+  }
   if ((context.blueprint?.avoidSignatures || []).some(item => norm(familyText).includes(norm(item)))) { breakdown.risk -= 40; rejections.push("blueprint.avoid"); }
   if (context.blueprint?.complexityBudget === "low" && component.density === "high") { breakdown.risk -= 24; rejections.push("capacity.too-dense"); }
 
@@ -83,13 +94,23 @@ function scoreComponent(component, context) {
 }
 function nonComponentRoutes(context) {
   const mode = String(context.expressionMode || "").toLowerCase();
-  const external = /screenshot|evidence|case-evidence|artifact/.test(mode) || context.relationship === "scene" ? 76 : context.needsEvidence ? 58 : 28;
-  const image2 = /simple-image2|illustration/.test(mode) ? 74 : context.relationship === "scene" ? 64 : 22;
-  const custom = /big-typography|brand|section-divider/.test(mode) ? 72 : 18;
+  const external = context.hasSourceGraphic || /screenshot|case-evidence|artifact|source-graphic/.test(mode)
+    ? 92
+    : context.relationship === "scene" ? 86 : context.needsEvidence ? 78 : 34;
+  const image2 = /simple-image2|illustration|concept-scene|metaphor/.test(mode)
+    ? 94
+    : context.relationship === "scene" && !context.hasSourceGraphic ? 74 : 30;
+  // Custom composition is a first-class route for content pages, not a last
+  // resort: high-quality decks win on bespoke per-page composition, with
+  // library components used as blocks inside it. Components should only win
+  // when they genuinely fit the relationship, slots, and blueprint contract.
+  const custom = /big-typography|brand|section-divider|poster|custom-composition/.test(mode)
+    ? 94
+    : 62;
   return [
     { route: "external-graphic", name: "source-evidence", score: external, reasons: [external >= 58 ? "evidence.strong" : "evidence.not-required"], rejections: [] },
     { route: "image2", name: "imageSlot", score: image2, reasons: [image2 >= 64 ? "image.simple-illustration" : "image.not-primary"], rejections: [] },
-    { route: "page-specific-custom", name: "custom-composition", score: custom, reasons: [custom >= 60 ? "expression.custom-fit" : "last-resort"], rejections: [] }
+    { route: "page-specific-custom", name: "custom-composition", score: custom, reasons: [custom >= 90 ? "expression.custom-fit" : "composition.first-class"], rejections: [] }
   ];
 }
 function compactCandidate(item) {
@@ -120,10 +141,16 @@ function select(page) {
     };
   }
   const context = {
-    blueprint, text, relationship, relationshipAliases: relationship === "ecosystem" ? ["system-map", "evidence"] : [],
+    blueprint, text, relationship,
+    relationshipAliases: relationship === "ecosystem"
+      ? ["system-map", "evidence"]
+      : relationship === "lifecycle" && /roadmap|milestone|stage-gate/.test(expressionMode)
+        ? ["sequence"]
+        : [],
     expressionMode, requiredSlots: requiredSlots(page, blueprint, relationship), shape: contentShape(page),
     candidateFamilies: [...new Set([...(page.candidateFamilies || []), ...(blueprint?.candidateFamilies || [])])],
     needsEvidence: /evidence|screenshot|artifact|case/.test(expressionMode) || relationship === "evidence",
+    hasSourceGraphic: [page.screenshotSlots, page.evidenceSlots, page.imageSlots, page.sourceGraphics].some(value => Array.isArray(value) && value.length > 0) || !!page.sourceGraphic,
     theme: require(path.join(ROOT, "deck.config.js")).theme || "leander-base"
   };
   const components = REGISTRY.components
@@ -132,15 +159,47 @@ function select(page) {
     .map(component => scoreComponent(component, context))
     .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
   const viable = components.filter(item => !item.hardRejected).slice(0, 4);
-  const candidates = [...viable, ...nonComponentRoutes(context)].sort((a, b) => b.score - a.score);
-  const selected = candidates[0] || { route: "page-specific-custom", name: "custom-composition", score: 10, reasons: ["no-viable-candidate"], rejections: [] };
-  const second = candidates[1] || { score: 0 }, margin = selected.score - second.score;
-  const confidence = Math.max(0, Math.min(selected.confidenceCap || 0.99, selected.score / 100 * (margin < 8 ? 0.82 : 1)));
+  const preferredRoutes = Array.isArray(blueprint?.routePreference) ? blueprint.routePreference : [];
+  const allCandidates = [...viable, ...nonComponentRoutes(context)];
+  // Blueprint preference constrains selection, but must not erase route
+  // evaluation evidence. Final QA requires all four production routes to be
+  // scored even when only a subset is eligible for the current page.
+  const evaluatedCandidates = allCandidates.map(item => {
+    const rank = preferredRoutes.indexOf(item.route);
+    const preferenceBonus = rank < 0 ? 0 : Math.max(0, 8 - rank * 4);
+    return { ...item, score: Math.min(100, item.score + preferenceBonus), reasons: [...(item.reasons || []), ...(rank >= 0 ? [`blueprint.route-rank.${rank + 1}`] : [])] };
+  });
+  const allowedCandidates = preferredRoutes.length
+    ? evaluatedCandidates.filter(item => preferredRoutes.includes(item.route))
+    : evaluatedCandidates;
+  const candidates = allowedCandidates.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    const ai = context.candidateFamilies.findIndex(family => norm(family) === norm(a.name));
+    const bi = context.candidateFamilies.findIndex(family => norm(family) === norm(b.name));
+    return (ai < 0 ? 999 : ai) - (bi < 0 ? 999 : bi);
+  });
+  const routeLocked = blueprint?.routeLock ? candidates.find(item => item.route === blueprint.routeLock) : null;
+  const customFirstWithoutFit = preferredRoutes[0] === "page-specific-custom" && !viable.some(item => (item.breakdown?.blueprint || 0) > 0);
+  const customFallback = customFirstWithoutFit ? candidates.find(item => item.route === "page-specific-custom") : null;
+  const selected = routeLocked
+    ? { ...routeLocked, score: Math.min(100, Math.max(96, routeLocked.score)), reasons: [...(routeLocked.reasons || []), "blueprint.route-lock"] }
+    : customFallback || candidates[0] || { route: "page-specific-custom", name: "custom-composition", score: 10, reasons: ["no-viable-candidate"], rejections: [] };
+  const second = candidates.find(item => item.route !== selected.route || item.name !== selected.name) || { score: 0 };
+  const contractExact = (selected.reasons || []).includes("contract.family-rank.1");
+  const customAsAllowedFallback = selected.route === "page-specific-custom" && !viable.length && preferredRoutes.includes("page-specific-custom");
+  // Choosing bespoke composition must not trigger extra review by itself;
+  // curator attention is for genuinely ambiguous component picks.
+  const customFirstClass = selected.route === "page-specific-custom" && selected.score >= 60;
+  const contractApproved = !!routeLocked || !!customFallback || contractExact || customAsAllowedFallback || customFirstClass;
+  const margin = contractApproved ? Math.max(8, selected.score - second.score) : selected.score - second.score;
+  const confidence = routeLocked ? 0.96 : customFallback ? 0.9 : customAsAllowedFallback ? 0.85 : contractExact ? 0.86 : Math.max(0, Math.min(selected.confidenceCap || 0.99, selected.score / 100 * (margin < 8 ? 0.82 : 1)));
   // Every route must leave evidence. If no component is viable, retain the
   // highest-scoring rejected component with its rejection reasons instead of
   // silently omitting the component-library route.
   const componentEvidence = viable.length ? viable.slice(0, 3) : components.slice(0, 1);
-  const routeCoverage = ROUTES.map(route => candidates.find(item => item.route === route)).filter(Boolean);
+  const routeCoverage = ROUTES.map(route => evaluatedCandidates
+    .filter(item => item.route === route)
+    .sort((a, b) => b.score - a.score)[0]).filter(Boolean);
   const candidateRoutes = [...componentEvidence, ...routeCoverage.filter(item => item.route !== "component-library")]
     .filter((item, index, list) => list.findIndex(other => other.route === item.route && other.name === item.name) === index)
     .sort((a, b) => b.score - a.score);
@@ -151,15 +210,36 @@ function select(page) {
     requiredSlots: context.requiredSlots, contentShape: context.shape, candidateRoutes: candidateRoutes.map(compactCandidate),
     selectedRoute: { route: selected.route, name: selected.name, score: selected.score, confidence: Number(confidence.toFixed(2)), margin },
     selectionEvidence: { breakdown: selected.breakdown || null, reasons: selected.reasons || [] },
-    requiresCuratorReview: confidence < 0.68 || margin < 8,
+    requiresCuratorReview: !contractApproved && (confidence < 0.68 || margin < 8),
     rejectedRoutes: components.filter(item => item.hardRejected).slice(0, 3).map(item => ({ route: item.route, name: item.name, score: item.score, reasons: item.rejections })),
-    implementation: { expectedBinding: { route: selected.route, name: selected.name }, pageJsMustExport: "visualBinding" },
+    implementation: {
+      expectedBinding: { route: selected.route, name: selected.name },
+      pageJsMustExport: "visualBinding",
+      compositionContract: selected.route === "component-library"
+        ? "组件只承担主体区块：页面仍需标题带、结论带和至少一个自定义区（图例/标注/对比/证据）；单组件直出仅限封面与章节页。"
+        : "按蓝图视觉签名手工构图：标题带 + 2-3 个信息区 + 结论带；组件可作为局部积木调用。"
+    },
     reviewFocus: ["所选路线是否保持蓝图视觉签名？", "必需槽位和内容容量是否匹配？", "低置信或小分差是否已由组件管理员复核？"]
   };
-  if (selected.route === "image2") result.promptSpec = { file: `${page.id || "page"}-image2-prompt.md`, constraints: ["一个核心意象", "不画小字", "不画复杂流程", "说明背景融合方式"] };
+  if (selected.route === "image2") result.promptSpec = { file: `assets/${page.id || "page"}-image2-prompt.md`, constraints: ["一个核心意象", "不画小字", "不画复杂流程", "说明背景融合方式"] };
+  if (selected.route === "page-specific-custom") result.customJustification = `页面专属构图为一等路线：按蓝图视觉签名（${expressionMode}）手工构图，组件可作为局部积木参与。`;
   return result;
 }
 function main() {
+  if (process.argv.includes("--self-test")) {
+    const source = nonComponentRoutes({ expressionMode: "screenshot-evidence", relationship: "evidence", needsEvidence: true, hasSourceGraphic: true, shape: { maxItems: 2 } });
+    const image = nonComponentRoutes({ expressionMode: "simple-image2", relationship: "scene", needsEvidence: false, hasSourceGraphic: false, shape: { maxItems: 1 } });
+    const custom = nonComponentRoutes({ expressionMode: "big-typography", relationship: "decision", needsEvidence: false, hasSourceGraphic: false, shape: { maxItems: 2 } });
+    assert.equal(source.sort((a, b) => b.score - a.score)[0].route, "external-graphic");
+    assert.equal(image.sort((a, b) => b.score - a.score)[0].route, "image2");
+    assert.equal(custom.sort((a, b) => b.score - a.score)[0].route, "page-specific-custom");
+    const mechanism = nonComponentRoutes({ expressionMode: "mechanism-diagram", relationship: "system-map", needsEvidence: false, hasSourceGraphic: false, shape: { maxItems: 6 } });
+    const mechCustom = mechanism.find(item => item.route === "page-specific-custom");
+    assert(mechCustom.score >= 60, "custom composition must stay first-class for content pages");
+    assert(!(mechCustom.reasons || []).includes("last-resort"), "custom composition must not be labeled last-resort");
+    console.log("PASS visual route competition self-test");
+    return;
+  }
   const file = process.argv[2];
   if (!file) { console.error("usage: node tools/select-visual-route.js <page.json> [--write]"); process.exit(1); }
   const abs = path.resolve(process.cwd(), file);
@@ -177,4 +257,4 @@ function main() {
   else console.log(JSON.stringify(page.visualSelection, null, 2));
 }
 if (require.main === module) main();
-module.exports = { select, scoreComponent, contentShape, requiredSlots };
+module.exports = { select, scoreComponent, nonComponentRoutes, contentShape, requiredSlots };

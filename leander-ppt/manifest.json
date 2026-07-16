@@ -1,10 +1,9 @@
 {
   "name": "leander-ppt",
-  "version": "0.2.0",
+  "version": "0.6.0-beta.8",
   "category": "Presentation / Internal Reporting",
-  "description": "Turn source material (PPTX, Word, outlines, scripts, notes) into a formal editable PPTX deck through the Leander PPT workflow for internal sharing, management reports, product introductions, presales/customer demos, training, and project reviews. Pipeline: brief -> outline -> theme/template -> anchor sample PPTX -> full deck -> rendered visual QA. Uses progressive disclosure through references/, reusable themes/components, and strict self-check gates. No audio, no recording, no React, no automatic HTML-to-PPT conversion.",
+  "description": "Turn source material into a formal editable PPTX through the mandatory Leander gated workflow. Includes fail-closed active-root Token observability, pre-command and phase-boundary context rotation, deterministic phase runners, competitive visual routes, rule-specific QA evidence, render-level diversity checks, risk-tiered review, and fresh independent final roles.",
   "compat": [
-    "codex",
-    "claude-code"
+    "codex"
   ]
 }

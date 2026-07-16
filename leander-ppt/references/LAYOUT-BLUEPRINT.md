@@ -8,6 +8,8 @@ It answers: "Will the deck's page structure and visual rhythm work before we spe
 
 Use after the user approves the page-by-page outline and before anchor sample or full production.
 
+Generate the blueprint from the current deck's brief, audience, story, theme, source assets and evidence. Previous decks and component previews are pattern references only; never copy their page order, signature mix or layout allocation as a default.
+
 Required for:
 - decks longer than 8 pages
 - decks with many mechanism/architecture/process slides
@@ -35,6 +37,15 @@ Add a story rhythm table for decks longer than 8 pages:
 - pages that must visually echo or contrast each other
 
 Then produce a **Blueprint-to-Production contract**. The preview stage may overlap with component selection, but it must overlap deliberately: it defines the search boundary for later component selection, not the final component implementation.
+
+### Blueprint Size Budget (hard limit)
+
+The blueprint is a contract, not a deliverable the user reads line by line. Keep it compact:
+
+- Per-page contract: at most 12 lines of JSON, limited to `page`, `purpose`, `relationship` (+subtype), `visualSignature`, `expressionMode`, `previewPattern`, `candidateFamilies`/`routePreference`, and `densityRationale` when sparse. No prose paragraphs, no repeated theme rules, no copy of the outline text.
+- Deck-level sections (rhythm matrix, color semantics, echo pairs): 80 lines total.
+- A 24-page deck's `layout-blueprint.json` should stay under ~350 lines. If it grows past that, you are duplicating information that belongs in `outline.md`, `DESIGN.md`, or the theme.
+- The low-fi SVG preview is **optional**: generate it only for high-risk pages (dense mechanism/architecture pages, unusual signatures) or when the user asks to see the blueprint visually. `lint-blueprint-preview.js` records a skip when no preview exists; it still fails on stale preview evidence.
 
 ### 1. Story Rhythm Matrix
 
@@ -83,6 +94,9 @@ The matrix must include:
 - `candidateFamilies`
 - `avoidSignatures`
 - `complexityBudget`: low / medium / high
+- `contentDensity`: low / medium / high
+- `whitespaceIntent`: none / focus / pause / tension / image-led / premium / chapter-breathing
+- `densityRationale`: why this page should be sparse or dense; low density is allowed when it creates focus or pacing
 - `expressionMode`: mechanism-diagram, screenshot-evidence, big-typography, case-evidence, human-ai-swimlane, artifact-map, simple-image2-illustration, or component-composite
 - `screenshotSlots`: explicit slots with source, crop rule, explanation anchor, and redaction status
 - `implementationStatus`: implemented, partial, proposed, public-reference, or unknown
@@ -193,7 +207,9 @@ For decks longer than 8 pages, produce at least two preview views:
 
 If time allows, also produce a story-strip preview showing how chapters connect.
 
-## Low-Fi Preview QA
+## Low-Fi Preview QA (only when a preview is generated)
+
+Previews are opt-in (see the size budget above). Skipping the preview skips this whole section; the blueprint gate then relies on `lint-layout-blueprint.js`, `verify-design-gates.js blueprint`, and the main agent's checklist self-review.
 
 Low fidelity does not mean geometry can be wrong. Before showing a layout preview, run a quick geometry pass:
 
@@ -221,34 +237,35 @@ Gate 1.5 must check not only "is every page valid alone" but also "does the whol
 Before asking the user to approve a blueprint, run both hard gates:
 
 ```bash
-node tools/render-layout-blueprint.js
 node tools/verify-design-gates.js blueprint
 node tools/lint-layout-blueprint.js
 node tools/lint-blueprint-preview.js
+# optional, only for high-risk pages or on user request:
+node tools/render-layout-blueprint.js
 ```
 
-The renderer must produce stable artifacts: `layout-blueprint-preview.svg`, `layout-blueprint-risk-preview.svg`, `layout-blueprint-geometry.json`, and `layout-blueprint-preview-qa.json/md`. A PASS is valid only when the recorded source hash matches the current blueprint.
+When the renderer runs, it must produce stable artifacts: `layout-blueprint-preview.svg`, `layout-blueprint-risk-preview.svg`, `layout-blueprint-geometry.json`, and `layout-blueprint-preview-qa.json/md`. A PASS is valid only when the recorded source hash matches the current blueprint. When no preview is generated, `lint-blueprint-preview.js` records a skip warning and passes.
 
 `verify-design-gates.js blueprint` checks whether project design rules are present in the blueprint contract: expression mode, story role, color intent, screenshot slots, body area, and bottom-summary rationale. `lint-layout-blueprint.js` checks deck rhythm and preview-pattern repetition. `lint-blueprint-preview.js` checks whether the user-facing preview is safe to use as a production contract: poster pages must not become radial wiring, concept-boundary pages must not become a fake middle component, filter pages must have input/filter/output structure, loop pages must avoid wiring through the center, and preview QA must have machine-readable evidence. If any returns `FIX-FIRST` / non-zero exit, do not show the blueprint as approval evidence.
 
 Before showing a blueprint preview, audit these items:
 
-- **Adjacent repetition**: neighboring pages must not use the same `layoutArchetype` unless the blueprint marks the second page as an intentional echo with `echoWith`.
-- **Run repetition**: a 3-page run must not share the same coarse skeleton family, for example three consecutive horizontal process rows or three consecutive left/right compare pages.
-- **Deck repetition**: the same `visualSignature` should normally appear once. If repeated, it must be explicitly justified as an echo, recurrence, or before/after callback.
+- **Adjacent repetition**: neighboring pages that use the same `layoutArchetype` should normally explain whether this is a comparison series, callback, or intentional rhythm. Repetition is not automatically a defect.
+- **Run repetition**: a 3-page run sharing one coarse skeleton family requires review. It may be valid for a deliberate case series or comparison sequence; otherwise change the register or record the series rationale.
+- **Deck repetition**: repeated `visualSignature` or `previewPattern` is allowed for a real series, comparison, recurrence, or callback. Audit whether the repetition serves the story instead of imposing a universal one-use rule.
 - **Renderer repetition**: if two different signatures render to the same low-fi geometry, split the renderer preview pattern or simplify one page to a distinct skeleton before approval.
-- **Preview-pattern repetition**: every content page must explicitly declare `previewPattern`. The same preview pattern should not appear multiple times across the deck unless the pages are intentional echoes with a written rationale.
+- **Preview-pattern repetition**: every content page must explicitly declare `previewPattern`. Repetition becomes blocking when it creates a long mechanical run, dominates the deck, or ignores different narrative jobs.
 - **Mechanism-section rhythm**: for long mechanism chapters, alternate registers deliberately: overview -> flow -> contrast -> state -> toolbox -> decision -> evidence -> role/evidence -> lifecycle -> synthesis. Do not allow every mechanism page to become boxes plus arrows.
 
 Suggested threshold:
 
 | Check | Fails Gate 1.5 when |
 |---|---|
-| Same `layoutArchetype` on adjacent pages | no `echoWith` or explicit rationale |
-| Same `visualSignature` repeated | no echo/callback rationale |
+| Same `layoutArchetype` on adjacent pages | normally warning; block when it creates an unplanned 3-page run or contradicts different narrative jobs |
+| Same `visualSignature` repeated | normally warning; block when repeated pages should express different relationships and no rationale exists |
 | Same coarse skeleton family appears 3 times in a row | no intentional rhythm note |
-| One skeleton family exceeds about 25% of content pages | not balanced by visual register changes |
-| Same `previewPattern` appears multiple times | no echo/callback rationale |
+| One skeleton family exceeds about 25% of content pages | warning for review; block only when it creates mechanical repetition without a story reason |
+| Same `previewPattern` appears multiple times | normally warning; block when it dominates the deck or creates a mechanical run without rationale |
 | Any content page has no `previewPattern` | always |
 | Renderer fallback/generic pattern appears | any occurrence in user-facing preview |
 
@@ -302,13 +319,13 @@ Before detailed slide production, confirm:
 - page order still works
 - each page has a clear narrative job and handoff to the next page
 - each page has a visual signature more specific than the coarse relationship
-- same-signature pages are intentional echoes, not accidental template reuse
+- same-signature pages are an intentional series, comparison or echo, not accidental template reuse
 - blueprint-to-component contracts exist for content pages and are specific enough to narrow component search
 - expression mode, screenshot slots, and implementation status exist for pages that need them
 - the layout rhythm changes when the story changes, and visually echoes when the story intentionally refers back
 - neighboring pages do not repeat the same layout too often
 - repeated skeletons across the whole deck are counted and justified
-- repeated skeletons are either intentionally echoed or redesigned before approval
+- repeated skeletons are either justified by the current story/series or redesigned before approval
 - dense pages are split or simplified
 - image2/external graphic needs are identified early
 - high-risk pages are selected as anchor samples
