@@ -1,4 +1,6 @@
 node_modules/
+output/
+pages/*/out/
 output/_*/
 output/*.pdf
 output/*.tmp

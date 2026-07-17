@@ -1260,7 +1260,8 @@
         "container",
         "stages",
         "connectors",
-        "stageLabels"
+        "stageLabels",
+        "supportingEvidence"
       ],
       "variants": [
         "base",
@@ -1288,7 +1289,7 @@
       "designStatus": "usable",
       "designReviewPriority": "P1",
       "contentCapacity": {
-        "maxItems": 6,
+        "maxItems": 9,
         "maxLabelChars": 18,
         "maxBodyChars": 48
       },
@@ -2780,7 +2781,8 @@
       "route": "component-library",
       "relationships": [
         "hierarchy",
-        "sequence"
+        "sequence",
+        "decision"
       ],
       "tags": [
         "funnel",
@@ -2802,7 +2804,11 @@
         "root",
         "children",
         "levels",
-        "annotations"
+        "annotations",
+        "options",
+        "criteria",
+        "recommendation",
+        "tradeoff"
       ],
       "variants": [
         "base",

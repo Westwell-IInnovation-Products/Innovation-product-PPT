@@ -22,7 +22,7 @@ node tools/build-qa-profile.js pages/<id>/page.json --write
 1. `component-library`：优先用于可编辑的机制图、流程、层级、状态和工具系统。
 2. `external-graphic`：用于真实截图、已有 PPT 图形、地图、产品图、三维渲染和来源证据。
 3. `image2`：用于一个简单意象或场景；预留 `imageSlot` 并保存提示词，不画小字和复杂流程。
-4. `page-specific-custom`：用于大字海报、品牌页或现有路线都不适配的结构；必须记录原因。
+4. `page-specific-custom`：内容页的一等构图路线：按蓝图视觉签名手工构图，组件可作为局部积木；大字海报、品牌页天然适用。
 
 ## 组件评分顺序
 
@@ -40,6 +40,10 @@ node tools/build-qa-profile.js pages/<id>/page.json --write
 | 关键词 | 只作为弱信号 | 最多贡献少量分数 |
 
 严禁重复加分。候选族和路线偏好只能在一个评分阶段生效。
+
+四类路线使用同一 0-100 分区间，最终分数不得超过 100。截图/来源证据主导页应让 `external-graphic` 具有真实胜出机会；简单意象页应让 `image2` 竞争；大字、品牌或独特结构页应让 `page-specific-custom` 竞争。四类路线全部出现但长期固定由组件路线获胜，视为形式评估失败。
+
+长 PPT 的内容页如果 100% 选择 `component-library`，质量基线默认阻断。只有项目配置显式开启整套豁免，并且每个组件页分别记录充分的 `dominanceJustification`，才允许进入最终视觉复核。
 
 ## V2 输出
 
@@ -74,6 +78,7 @@ node tools/build-qa-profile.js pages/<id>/page.json --write
 
 - `confidence < 0.68`：触发组件管理员。
 - 第一、第二候选分差 `< 8`：触发组件管理员。
+- 选中 `page-specific-custom` 且得分 ≥ 60：视为合同内一等路线，不因此触发组件管理员。
 - 选中路线超出蓝图候选族：必须记录 override 并触发组件管理员。
 - 同一 override 反复出现：修组件元数据或拆分组件，不在每页重复手工例外。
 
@@ -102,7 +107,7 @@ visualBinding: { route: "component-library", name: "toolSystemTree" }
 - 真实运行轨迹。
 - 当前 PNG 哈希。
 
-组件库路线没有真实调用证据时，页面必须失败。
+组件库路线没有真实调用证据时，产生评审警告：渲染评审必须确认该页是有意手工构图且构图完整，而不是绑定错误。
 
 ## Reviewer 判断
 

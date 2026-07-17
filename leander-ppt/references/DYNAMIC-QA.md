@@ -201,11 +201,15 @@ QA 结论必须先写入机器可读的 `qa-result.json`，再由工具生成中
   "pageId": "pXX",
   "verdict": "PASS",
   "renderSha256": "...",
-  "contractSha256": "...",
-  "profileSha256": "...",
+  "digests": {
+    "renderDigest": "...",
+    "selectionOutcomeDigest": "...",
+    "qaDigest": "...",
+    "sourceDigest": "..."
+  },
   "reviewer": {"role": "reviewer-zh", "runId": "...", "mode": "independent-render-review"},
   "checks": [
-    {"ruleId": "u.geometry.overlap", "status": "PASS", "evidence": {"artifact": "out/pXX.png", "location": "主体区", "note": "无非意图重叠"}}
+    {"ruleId": "u.geometry.overlap", "status": "PASS", "evidence": {"ruleId": "u.geometry.overlap", "artifact": "out/pXX.png", "location": "主体图左侧连接区", "method": "visual-full-size", "observation": "节点与连线之间保留可见间距，无非意图重叠"}}
   ]
 }
 ```
@@ -215,13 +219,15 @@ QA 结论必须先写入机器可读的 `qa-result.json`，再由工具生成中
 ```bash
 node tools/build-qa-profile.js pages/<id>/page.json --write
 node tools/deck.js render
-node tools/verify-qa-result.js pages/<id> --init
-# reviewer 根据真实 PNG 填写逐条状态、位置和证据
-node tools/verify-qa-result.js pages/<id> --write-md
+node tools/qa-batch.js init --pages <ids>
+# reviewer 一次输出 qa-review-batch.v1，按真实 PNG 填写逐条状态、位置和证据
+node tools/qa-batch.js apply --file output/qa-review-batch.json --pages <ids>
 node tools/deck.js verify
 ```
 
-门禁会核对当前 PNG、页面合同、QA Profile 和组件运行轨迹的哈希。页面、主题或共享组件变化后，旧 PASS 自动失效。
+门禁会分别核对当前 PNG、渲染输入、选中路线结果、QA Profile、来源边界和组件运行轨迹。修改 QA 元数据不触发重渲染；候选路线证据变化但选中结果不变时不触发重渲染；主题或共享组件变化触发整套重渲染。旧项目可用 `migrate-evidence-v2.js` 迁移仍然新鲜的 PASS 证据，脚本拒绝迁移陈旧证据。
+
+每条 PASS 证据必须包含匹配的 `ruleId`、具体 artifact/source、位置、检查方法和观察结果或数值。不同规则可以引用同一张 PNG，但不能用完全相同的一句话和“full-slide”位置证明几何、字体、颜色、事实与组件容量。跨规则族重复通用证据、或整页大量渲染规则只有一个通用位置时，`qa-batch.js apply` 和最终 QA 门禁都必须拒绝。
 
 每页 `qa.md` 建议使用中文：
 

@@ -39,14 +39,16 @@ Use these starter subtypes:
 
 If no subtype fits, create a new one in the page contract and later consider whether it should become a reusable component tag.
 
-## 2. Choose The Route With A Four-Way Gate
+## 2. Choose The Route — Composition First
 
 For every content page, evaluate the four production routes in this order:
 
-1. **Component library**: best for editable structure and repeated relationships.
-2. **External graphic**: best for real evidence, screenshots, maps, existing PPT assets, product renders.
-3. **image2 / imageSlot**: best for realistic scenes or simple metaphors that look crude as vector.
-4. **Page-specific custom**: last resort, only after the first three are considered.
+1. **Page-specific composition** (default): hand-compose the page to its visual signature; library components participate as blocks inside the composition.
+2. **External graphic**: prefer whenever real evidence exists — screenshots, maps, existing PPT assets, product renders. A real asset beats a drawn diagram.
+3. **Component library**: use a component as the whole body block only when the relationship is highly standard and the component genuinely fits slots and capacity — and still wrap it in the page skeleton (title band, takeaway band, custom zone).
+4. **image2 / imageSlot**: realistic scenes or simple metaphors that look crude as vector.
+
+Whichever route wins, a content page rendered as one bare component call is a quality-floor violation; only covers and section dividers may be single-component pages.
 
 When using image2, keep the image simple. Prefer one subject, 3-5 objects, one clear direction, and no text. A busy image with many cables/documents/details weakens a PPT page even if it is technically good art.
 
@@ -78,6 +80,22 @@ blueprint visualSignature -> candidateFamilies -> selected component/layout bloc
 ```
 
 Do not reset the page to a generic component just because the component has a high score. The component must serve the approved visual signature, or the override must be recorded.
+
+## 4.5 Composition Skeleton Floor
+
+Every content page starts from this skeleton, then earns its variations:
+
+- **Title band**: title + red underline + a one-sentence claim (the page's takeaway, not a column name).
+- **Body**: 2-3 structurally different information zones — never one component filling the body. Mix a primary structure (flow / tree / contrast / matrix / annotated screenshot) with a secondary zone (evidence strip, metric rail, detail callouts).
+- **Takeaway band**: one of — an accent-background conclusion strip at the bottom, a legend rail naming the color semantics, or a next-step pointer.
+- **Annotation layer** on focus pages: gate highlights, colored legend dots, numbered anchors, zone labels.
+
+Deck-level rhythm quota for decks of 20+ pages:
+
+- At least 2 big-typography statement pages (section numerals, one-line claims).
+- At least 3 evidence pages using real assets (screenshots, product photos, full-bleed images) whenever the brief lists available assets.
+- At least 1 dark or inverted treatment (cover, section divider, or closing).
+- No three adjacent content pages may share the same skeleton.
 
 ## 5. Assign Color Roles Before Styling
 

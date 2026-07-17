@@ -154,7 +154,7 @@ Before implementing or repairing a content page:
 
 If the page has `expressionMode = screenshot-evidence`, do not start with a generic component. First decide the screenshot frame, crop, explanation anchor, and redaction boundary. If the page has `expressionMode = big-typography`, do not force a chart or card grid.
 
-Page-specific custom composition is a last-resort route, not the default. If a close component exists (`stateFlow`, `workflowConfig`, `pipelineFlow`, `featureGrid`, `hubSpokeCapability`, etc.), either use it, adapt it, or record why it cannot express the page.
+Page-specific composition is the default for content pages. If a close component exists (`stateFlow`, `workflowConfig`, `pipelineFlow`, `featureGrid`, `hubSpokeCapability`, etc.), use it as the body block inside the composed page; using a component verbatim as the whole page is a quality-floor violation outside covers and section dividers.
 
 ## Anchor Before Scale
 
@@ -182,9 +182,9 @@ Anchor samples must be produced from the same scaffold, theme tokens, and compon
 
 Choose one mode at Checkpoint Plan or before Phase 4.
 
-Mode A/B/C only decide how pages are produced. They do not decide which specialist roles are active. Roles are triggered by `workflow.events`; full-deck render always triggers reviewer, while visual/component/presenter roles depend on visual risk, component confidence, shared changes, deck type, and rehearsal needs.
+Mode A/B/C only decide how pages are produced. They do not decide which specialist roles are active. Roles are triggered by `workflow.events`; anchor and full-deck render require visual-designer and reviewer evidence, while component/presenter roles depend on component confidence, shared changes, deck type, and rehearsal needs.
 
-### Mode A - Default - Chapter/Batch Confirmation
+### Mode A - Chapter/Batch Confirmation
 
 Use this when quality and alignment matter most.
 
@@ -197,13 +197,13 @@ Batch or chapter 2 -> render -> self-check -> user review
 Full integration -> full render -> event-triggered role review -> final user review
 ```
 
-This is the default if the user does not choose another mode. It has the lowest rework risk.
+Use it when the user explicitly wants to inspect each chapter or when narrative/visual uncertainty remains high. It has the lowest rework risk but the highest repeated-context cost.
 
 For each Mode A batch, use `workflow.stage = "production-batch"`, set `workflow.activePages` to only the current page folders, and set `batchFileName` to a stable batch output. Generate `output/current-batch-contact-sheet.svg` and stop for user review. Switch to `workflow.stage = "production"` only after all batches are integrated; this is when full-deck role gates and final delivery apply.
 
 ### Mode B - Sequential Full Deck
 
-Use this when the user values speed and the deck has a stable outline and approved anchor style.
+This is the recommended default after the user has approved a stable outline, blueprint, theme, and anchor style. It preserves the same final quality lock while avoiding repeated batch context and QA.
 
 Flow:
 

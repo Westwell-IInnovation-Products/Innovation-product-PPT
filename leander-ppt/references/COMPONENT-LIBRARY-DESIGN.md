@@ -216,7 +216,7 @@ A new drawing should enter the shared component library only when:
 - it is not tied to one confidential project
 - it has at least one realistic example and a QA risk list
 
-If it is a one-off but useful, keep it in the deck project's `components/` or `examples/`.
+If it is a one-off but useful, keep it in the deck project's page implementation or project-local `components/`.
 
 ## Stability And Ease-Of-Use
 

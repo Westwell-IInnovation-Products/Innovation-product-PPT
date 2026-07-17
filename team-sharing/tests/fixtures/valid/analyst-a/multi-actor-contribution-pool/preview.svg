@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540">
+  <rect width="960" height="540" fill="#F6F3EE"/>
+  <g fill="#FFFFFF" stroke="#9AA5B1"><rect x="80" y="120" width="180" height="90" rx="12"/><rect x="390" y="120" width="180" height="90" rx="12"/><rect x="700" y="120" width="180" height="90" rx="12"/></g>
+  <g stroke="#9AA5B1" stroke-width="3"><path d="M170 210L390 350"/><path d="M480 210L480 350"/><path d="M790 210L570 350"/></g>
+  <rect x="320" y="350" width="320" height="110" rx="14" fill="#FCE8E8" stroke="#D71920"/>
+  <text x="480" y="415" text-anchor="middle" font-family="Arial" font-size="25" fill="#D71920">Reviewed Shared Pool</text>
+</svg>

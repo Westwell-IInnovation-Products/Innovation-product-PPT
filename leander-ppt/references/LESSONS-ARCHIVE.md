@@ -2,12 +2,12 @@
 
 The distilled, deduplicated working set of everything this skill has been corrected on. **Read this every run** before anchor samples, before full production, and during QA — it is the pre-flight list of past mistakes so they are not repeated. The skill gets sharper with use precisely because this list grows.
 
-- Full raw history: [`feedback/LOG.md`](feedback/LOG.md).
+- Raw feedback stays inside each deck project at `state/feedback-log.md`; the shared archive contains only de-identified, reusable lessons.
 - True theme-independent universals graduate into [`SLIDE-CRAFT.md`](SLIDE-CRAFT.md) → Universal Output Rules. Items here marked `[graduated]` are also enforced there; the rest are the live working set.
 
 ## How this list grows
 
-After each round of user feedback: append the raw item to `feedback/LOG.md`, then if its `Category` has recurred (≥2×) or is clearly general, add/sharpen a one-line rule here. Keep each lesson **general** (a reusable rule), never a project-specific symptom. Promote anything that is a true universal into `SLIDE-CRAFT.md` and tag it `[graduated]` here.
+After each round of user feedback: append the raw item to the active deck project's `state/feedback-log.md`, then if its `Category` has recurred (≥2×) or is clearly general, add or sharpen a de-identified one-line rule here. Keep each shared lesson reusable, never a project-specific symptom. Promote anything that is a true universal into `SLIDE-CRAFT.md` and tag it `[graduated]` here.
 
 ## Pre-flight checklist (verify the deck against each)
 

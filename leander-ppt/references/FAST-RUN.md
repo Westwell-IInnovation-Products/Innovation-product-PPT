@@ -4,13 +4,32 @@ Use this file when the task is a repair, iteration, QA pass, or small extension.
 
 ## First Move In Existing Projects
 
-When a scaffold already exists, do not start by rereading every reference file. Build a compact state packet first:
+When a scaffold already exists, do not start by rereading every reference file. Run the compact status phase first:
 
 ```bash
+node <skill-root>/scripts/sync-scaffold-tools.js <project-root>
+node tools/run-phase.js status
+node tools/phase-handoff.js verify
 node tools/context-pack.js --mode status
 node tools/context-pack.js --mode repair --pages p11,p12
 node tools/context-pack.js --mode agent --role reviewer-zh --pages p09,p11
 ```
+
+`run-phase.js` writes the context packet and artifact map while keeping successful mechanical logs out of the model response. Use direct `context-pack.js` commands for a targeted repair or role packet.
+
+## Heavy History Boundary
+
+- Use one new Codex task per new deck. Do not run a Token A/B deck inside the task used to modify the Skill.
+- Gate 0 checks pre-existing root-task usage before creating its baseline. It refuses an already-heavy, compacted, or unobservable task instead of hiding old history behind a new baseline.
+- At every approved Gate and successful mutating `run-phase` boundary, refresh `state/phase-handoff.json` after recording the Token checkpoint and context-budget decision.
+- Compute rotation only from chronologically ordered calls of the active root task; subagent and inactive historical-root calls remain in the Token report but cannot mask or trigger the active task's budget.
+- Re-evaluate the current budget before every protected `run-phase` and `deck.js render|verify|build` command. Direct deck entrypoints are not a bypass.
+- If the currently active root rollout is unreadable or its Gate 0 baseline cannot be reconstructed, block protected commands instead of treating missing usage as zero.
+- If the active root's recent-call average reaches 120k input tokens, one call reaches 180k, or the active root compacts, write a pending `state/context-rotation-lock.json`. The old task cannot render, verify, build, approve another checkpoint, or run another production phase.
+- Open a fresh task, run `node tools/token-ledger.js attach-thread`, then read only `state/phase-handoff.json` and its `recommendedReads`. The attached rollout must be the current `CODEX_THREAD_ID` and must have been created after the lock. Historical real IDs, fabricated IDs, and the previous root are rejected. After attachment, the old task remains blocked because every production command must match the ledger's active root task.
+- Do not paste or summarize the entire old conversation into the new task. The project artifacts and their hashes are the continuation contract.
+- Do not treat `context-pack.js` as host-history deletion. It limits project-file reads; only a fresh task removes repeated host conversation history.
+- A task rotation never carries approval by prose: the same workflow receipt and checkpoint hashes remain mandatory.
 
 Use the packet to decide which files to open. Treat `recommendedReads` as the default context boundary; expand only when the packet shows a stale route, missing QA, changed story, changed theme, or shared component impact.
 
@@ -104,6 +123,7 @@ Check the full contact sheet and full-size key pages. Run the complete QA checkl
 
 - Default to compact continuation mode after Gate 1.5, unless the user asks to rebuild the whole story or theme.
 - Use `tools/context-pack.js` as the first read surface for existing scaffold projects.
+- Keep status reads near 3k estimated text tokens, repair packets near 10k, and role packets near 16k; exceed them only for a named missing decision.
 - Prefer `component-index.min.json` over `COMPONENT-CATALOG.md` for routine selection.
 - Read full component docs only after a candidate component is shortlisted.
 - Read `LESSONS.md` by active category, not as a memory dump. If no category is known, read only the top active section or use the reviewer agent to check rendered artifacts.
@@ -121,3 +141,5 @@ map feedback -> locate page/component/token -> patch -> render affected pages ->
 ```
 
 If the fix touches `theme/` or `components/`, switch to Gate 7: render and review the full deck.
+
+Use `node tools/change-impact.js inspect` before repairs. QA/source/route-candidate evidence can change without a PNG render; selected route outcome or render inputs invalidate only that page; theme/component changes invalidate all pages. Use `node tools/qa-batch.js init --pages <ids>` so still-current QA work is preserved.

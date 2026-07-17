@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540">
+  <rect width="960" height="540" fill="#FFFFFF"/>
+  <g fill="#F7F8FA" stroke="#CDD3DA"><rect x="90" y="170" width="230" height="180" rx="12"/><rect x="365" y="170" width="230" height="180" rx="12"/><rect x="640" y="170" width="230" height="180" rx="12"/></g>
+  <g text-anchor="middle" font-family="Arial"><text x="205" y="250" font-size="44" fill="#D71920">24</text><text x="480" y="250" font-size="44" fill="#061D58">18</text><text x="755" y="250" font-size="44" fill="#061D58">2</text></g>
+</svg>

@@ -1,28 +1,28 @@
 # Leander Skills
 
-这个仓库用于维护 Leander 相关的 Codex skills，并通过本机定时任务从本地 skills 目录自动同步到 GitHub。
+这个仓库是 Leander 相关 Codex Skills 的团队正式源。`main` 和 `leander-ppt-v*` Release 保存经过审核、自动检查和可回滚的稳定版本；个人本地 Skill 不再整目录直接覆盖 `main`。
 
-## 自动同步
+## Leander PPT 团队共享试点
 
-同步脚本位于本机：
-
-```text
-C:\西井\06AI\sync-codex-skills-to-leander.ps1
-```
-
-同步日志位于本机：
+个人成果先整理为候选组件包，再由本地定时任务创建独立分支和 Draft PR：
 
 ```text
-C:\西井\06AI\sync-codex-skills-to-leander.log
+%USERPROFILE%\.codex\leander-contributions\<component-id>\
 ```
 
-计划任务：
+候选进入：
 
 ```text
-Sync Leander Skills To GitHub
+contributions/leander-ppt/components/<github-user>/<candidate-id>/
 ```
 
-当前设置为每周五 18:00 自动同步。电脑需要开机且网络可用，PowerShell 窗口不需要一直打开。
+候选通过组件负责人评审、双主题渲染和严格 lint 后，才会晋升到正式扩展组件库。完整制度和操作命令见：
+
+```text
+docs/governance/leander-team-sharing.md
+```
+
+本机兼容入口仍为 `C:\西井\06AI\sync-codex-skills-to-leander.ps1`，但它只扫描候选目录、创建贡献 PR，不再镜像完整 Skill 或直接推送 `main`。计划任务名称仍为 `Sync Leander Skills To GitHub`。
 
 ## Skills
 
@@ -39,4 +39,4 @@ Sync Leander Skills To GitHub
 
 ## 目录说明
 
-每个目录对应一个独立 skill。自动同步时会以本地目录为准，镜像更新到仓库根目录下的同名目录。
+每个顶层 Skill 目录对应一个独立 Skill。当前团队共享试点只覆盖 `leander-ppt`；其他 Skill 在试点通过前保持原有人工维护方式。

@@ -64,7 +64,7 @@ const globalTheme = {
     divider: "white-underline",
     cover: "white-minimal",
     closing: "white-minimal",
-    coverPhoto: "theme/assets/cover-port-dark.png",
+    coverPhoto: "",
     coverInk: "0A0E14"
   },
   grid: {

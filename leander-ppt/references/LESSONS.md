@@ -1,6 +1,6 @@
 # Lessons - Active Defect Checklist
 
-This is the short active checklist for pre-flight and QA. Keep it readable in one screen. Full historical lessons are archived in `LESSONS-ARCHIVE.md`; raw feedback remains append-only in `feedback/LOG.md`.
+This is the short active checklist for pre-flight and QA. Keep it readable in one screen. Full de-identified lessons are archived in `LESSONS-ARCHIVE.md`; raw feedback remains project-local in `state/feedback-log.md`.
 
 Read this file before anchor samples, production, and rendered QA. Read the archive only when a defect category is unclear or a recurring issue needs consolidation.
 
@@ -40,7 +40,7 @@ Read this file before anchor samples, production, and rendered QA. Read the arch
 
 - Every content page needs a `visualSelection` contract before drawing.
 - Select by relationship primitive and expression capability, not by keyword. Components should be reusable across different semantic topics.
-- Check `component-index.min.json` before opening the full catalog. Page-specific custom is last resort.
+- Check `component-index.min.json` before opening the full catalog. Components are blocks inside a composed page, not page templates.
 - Prefer variants/slots on existing components over near-duplicate components.
 
 ### Image Use
@@ -63,4 +63,4 @@ Read this file before anchor samples, production, and rendered QA. Read the arch
 
 ## Consolidation Rule
 
-When `feedback/LOG.md` grows or a category repeats, distill only the reusable rule here. Move obsolete or overly specific items to `LESSONS-ARCHIVE.md`. The active list should stay short enough to read every run.
+When a project-local `state/feedback-log.md` grows or a category repeats, distill only the reusable, de-identified rule here. Keep obsolete or project-specific items in the project; move only reusable but inactive rules to `LESSONS-ARCHIVE.md`. The active list should stay short enough to read every run.

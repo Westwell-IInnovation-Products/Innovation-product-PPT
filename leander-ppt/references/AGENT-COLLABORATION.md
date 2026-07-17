@@ -8,7 +8,7 @@ Leander-PPT 把 Agent 作为 Harness 门禁中的专业角色，而不是让多�
 - 生产模式 A/B/C 只决定页面如何生产，不决定哪些角色有效。
 - 角色由事件触发，不是每一轮全员重跑。
 - 可由脚本确定的错误先跑脚本；Agent 处理需要判断的故事、表达、设计和汇报问题。
-- 每个真实角色运行都要有输入摘要哈希、运行 ID、输出文件和输出哈希。
+- 每个真实角色运行都要有任务 `threadId`、计划动作、阶段、上下文策略、事件摘要、输入摘要哈希、运行 ID、输出文件和输出哈希。事件摘要未变化且仍处于同一阶段时复用同一任务和结论，不因状态字段变化创建新角色。
 
 ## 角色与事件
 
@@ -56,7 +56,9 @@ Brief / source
   -> 汇报人：最终演练和补充知识
 ```
 
-内部分享在最终阶段默认触发汇报人；所有最终交付默认触发质检员。视觉设计师和组件管理员只在对应事件出现时重跑，不因 Mode A/B/C 改变。
+锚点样张强制触发视觉设计师；最终交付强制触发质检员；汇报人只在用户明确要求演练时触发。组件管理员只在共享组件变化或明确存疑的选择时触发，不因 Mode A/B/C 改变。
+
+标准 Mode B 的默认评审预算是两次：锚点阶段视觉设计师一次，最终阶段质检员一次（contact sheet + 风险页全尺寸）。蓝图由主 Agent 按 `LAYOUT-BLUEPRINT.md` 清单自查，默认不派子代理评审。组件管理员只在共享组件变更或明确存疑的选择时运行；汇报人只在明确演练请求时运行。增量修复只为当前受影响页面追加评审事件；未变化页面沿用与当前渲染哈希匹配的证据。
 
 ## Token 安全输入
 
@@ -74,27 +76,48 @@ node tools/context-pack.js --mode agent --role reviewer-zh --pages pXX,pYY --wri
 - 受影响页面的合同和 PNG。
 - 本次需要做出的明确判断。
 
-不要默认传完整大纲、完整组件目录、所有页面代码、全部历史 QA 和所有角色报告。角色无法判断时再按 `recommendedReads` 扩展。
+不要默认传完整大纲、完整组件目录、所有页面代码、全部历史 QA 和所有角色报告。Contact sheet 和 PNG 必须通过视觉工具查看，禁止按文本读取 SVG/base64。角色无法判断时再按 `recommendedReads` 扩展。
+
+## 模型与推理预算
+
+按判断难度路由，不要让所有角色默认使用极高推理：
+
+| 工作 | 建议能力 | 说明 |
+|---|---|---|
+| 故事、大纲、蓝图、锚点视觉、最终视觉审查 | 高能力 / high | 少量关键判断，允许更深推理 |
+| 普通页面实现、局部修复、组件适配 | 平衡型 / medium-high | 受页面合同和锚点约束 |
+| 哈希、文件、格式、渲染、机械 QA | 脚本 | 禁止用 Agent 重复解释成功项 |
+| 最终汇报演练 | 平衡型 / medium | 只读取大纲、讲稿和 Contact sheet |
+
+若宿主无法显式路由模型，仍要遵守上下文和角色触发边界；不要通过增加并行角色弥补模型差异。
 
 ## 证据合同
 
-`agent-collaboration.json` 使用 V2 结构：
+`agent-collaboration.json` 使用 V3 结构：
+
+旧项目先运行共享 Skill 的 `scripts/sync-scaffold-tools.js <project-root>`。同步器会备份旧文件到 `state/migrations/` 并迁移结构，但不会把旧记录伪装成满足 V3 的新鲜独立审查；缺失的事件摘要、锚点审查或最终审查仍必须真实补跑。
 
 ```json
 {
-  "version": "agent-collaboration.v2",
-  "policy": "event-driven.v2",
+  "version": "agent-collaboration.v3",
+  "policy": "event-driven.v3",
   "roles": {
     "reviewer-zh": {
       "status": "completed",
+      "action": "run-fresh-once",
       "event": "fullDeckRendered",
-      "phase": "post-production",
+      "phase": "production-final",
+      "threadId": "<codex-thread-id>",
+      "forkTurns": "none",
+      "contextPolicy": "compact-pack",
       "runId": "review-20260710-01",
+      "eventDigest": "<agent event sha256>",
       "inputDigest": "<context-pack sha256>",
       "outputDigest": "<artifact sha256>",
       "artifact": "agent-reviews/reviewer-zh.md",
       "verdict": "SHIP",
-      "summary": "..."
+      "summary": "...",
+      "runs": [{"phase":"anchor-sample","status":"completed","threadId":"<anchor-thread-id>","artifact":"output/review-events/<anchor-review>.md","outputDigest":"<sha256>","verdict":"PASS"}]
     }
   }
 }
@@ -104,7 +127,7 @@ node tools/context-pack.js --mode agent --role reviewer-zh --pages pXX,pYY --wri
 
 - 事件未触发时可以保持 `pending`，不算机制失效。
 - 事件已触发的必需角色不能保持 `pending`。
-- 最终阶段的视觉设计师、组件管理员、质检员和汇报人一旦被触发，必须是真实独立运行，不能用主 Agent fallback 冒充。
+- 最终阶段强制的视觉设计师、质检员和内部分享汇报人必须真实独立运行，不能用主 Agent fallback 冒充。组件管理员未触发时保持 pending 是正常状态。
 - 小任务允许 fallback 时，要写明原因、产物和结论。
 - `bypassed` 只在配置明确允许且有理由时使用。
 
@@ -114,7 +137,9 @@ node tools/context-pack.js --mode agent --role reviewer-zh --pages pXX,pYY --wri
 node tools/verify-agent-collaboration.js
 ```
 
-门禁会核对角色是否由当前事件触发、输入哈希是否存在、产物是否存在、输出哈希是否匹配。它不能判断意见本身是否高质量，因此质检员和主 Agent仍需阅读真实报告。
+运行角色前先执行 `node tools/plan-agent-events.js --write`。`run-fresh-once` 创建 `forkTurns=none` 的新线程，`run-once` 执行一次受限角色任务，`reuse-existing-run` 只复用同阶段且摘要未变化的原 `threadId`，`not-triggered` 保持 pending。
+
+门禁会比较 `state/agent-event-plan.json` 与实际角色的 action、phase、threadId、eventDigest、fork 策略和产物哈希，并拒绝跨角色线程复用。它不能判断意见本身是否高质量，因此质检员和主 Agent仍需阅读真实报告。
 
 ## 与生产模式的关系
 

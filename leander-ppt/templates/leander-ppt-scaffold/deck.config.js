@@ -7,7 +7,7 @@ module.exports = {
   anchorFileName: "output/anchor-samples.pptx",
   batchFileName: "output/current-batch.pptx",
   workflow: {
-    stage: "anchor-sample", // outline-reset | layout-blueprint | anchor-sample | production-batch | production
+    stage: "outline-reset", // outline-reset | layout-blueprint | anchor-sample | production-batch | production
     activePages: [], // page-folder names; anchor/batch mode should list only current pages
     events: {
       storyChanged: false,
@@ -24,7 +24,7 @@ module.exports = {
   },
   agentCollaboration: {
     enabled: true,
-    policy: "event-driven.v2",
+    policy: "event-driven.v3",
     requireRoleBriefs: true,
     roleTriggers: {
       "planner-zh": ["storyChanged"],
@@ -34,9 +34,14 @@ module.exports = {
       "reviewer-zh": ["renderedPagesReady", "fullDeckRendered"],
       "presenter-zh": ["rehearsalRequested"]
     },
+    // Final quality is judged from the integrated render, not only page contracts.
+    // Standard budget: one visual review at anchor, one reviewer run at final.
     finalAlwaysRequiredRoles: ["reviewer-zh"],
-    internalSharingRequiredRoles: ["presenter-zh"],
-    independentAtFinal: ["visual-designer-zh", "component-curator-zh", "reviewer-zh", "presenter-zh"],
+    internalSharingRequiredRoles: [],
+    independentAtFinal: ["reviewer-zh"],
+    standardModeBReviewRuns: ["anchor:visual-designer-zh", "final:reviewer-zh"],
+    requireFreshFinalForkNone: true,
+    maxRunsPerRolePerPhase: 1,
     allowMainAgentFallback: true,
     allowRequiredBypass: false
   }

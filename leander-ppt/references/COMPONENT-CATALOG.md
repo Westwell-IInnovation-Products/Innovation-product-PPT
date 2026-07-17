@@ -2,7 +2,7 @@
 
 This catalog is the first reusable component batch extracted from two internal decks:
 
-- A quay-crane automation product introduction deck.
+- An industrial automation product introduction deck.
 - A Cactus product introduction deck.
 
 Use this catalog as a component selection menu before creating anchor samples. Source decks are references, not case-specific rules.
@@ -106,7 +106,7 @@ A line-frame counterpart to the white-card library, for "背景色 + 线框分�
 | `lineTable` | Tabular data as **background + hairline rows** (no filled grid), header underline, focus row = faint accent wash. Use instead of the filled `capabilityMatrix` when a table "太丑/太重". |
 | `imageSlot` | Reserve a rectangle for a **complex/scene image** (better generated than vector-drawn). Transparent PNG **blends on the theme ground — no white card**; vector `fallback` until the image arrives. Pair with a `<deck>-images.gpt-image-2.md` prompt-spec. See [`IMAGE-ASSETS.md`](IMAGE-ASSETS.md). |
 
-These were extracted from the Livo Sense internal deck (2026-06-25). They are the preferred answer when the user rejects white-card density or asks for line-frame / editorial styling.
+These are reusable editorial alternatives when the current deck rejects white-card density or needs line-frame styling. Select them by relationship and capacity, not because they appeared in a prior deck.
 
 ## Bespoke / Large-Graphic Components (`components/bespoke.js`)
 
@@ -121,7 +121,7 @@ Big, airy, *pure-graphic* metaphors — the antidote to "every page is a box wit
 | `pipelineFlow` | N step nodes in a row, grouped under phase bands (one focus), + a bottom 归纳 summary band. (process that also needs grouping/judgement) |
 | `actionTracks` | Horizontal lanes, each: icon + track name + action + owner/time/status chips. (next-steps with accountability — concrete, not vague) |
 
-**Domain-specific examples** (`examples/livo-sense-bespoke.js` — NOT in the core; copy & adapt per project): `fusionVenn` (two-sensor overlap → fused core, LiDAR/camera glyphs), `sceneGlyph` (port line-art: quay/bridge/vehicle/monitor), `resourceBoard` (GitHub repo card + media tiles). These were over-fit to one deck; build new page-specific graphics the same way rather than bloating the core. For scene/realistic imagery prefer image2 + `imageSlot` (see `IMAGE-ASSETS.md`).
+**Page-specific graphics** belong in the active project, not the reusable component core. Build them from the current page relationship, evidence, theme, and required slots; promote only de-identified, reusable patterns after regression testing. For scene or realistic imagery prefer image2 + `imageSlot` (see `IMAGE-ASSETS.md`).
 
 ## Before adding a component: check this canonical map (avoid forking)
 

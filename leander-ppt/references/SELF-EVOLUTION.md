@@ -27,7 +27,7 @@
 new -> active -> promoted -> stable -> archived
 ```
 
-- `new`：刚出现，先记录在 `feedback/LOG.md`。
+- `new`：刚出现，先记录在当前项目的 `state/feedback-log.md`。
 - `active`：出现 2 次以上，或一次就明显通用，进入当前检查集。
 - `promoted`：已经写入 `QA.md`、`PAGE-DESIGN-METHOD.md`、组件规则或工具脚本。
 - `stable`：连续多个项目或多轮 QA 未再出现，保留但不放在高频检查区。

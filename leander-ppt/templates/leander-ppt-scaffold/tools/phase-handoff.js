@@ -1,0 +1,71 @@
+// Compact, hash-bound handoff for continuing a Leander run in a fresh task.
+const fs = require("fs");
+const path = require("path");
+const crypto = require("crypto");
+const ROOT = path.join(__dirname, "..");
+const FILE = path.join(ROOT, "state", "phase-handoff.json");
+function readJson(file, fallback = null) { try { return JSON.parse(fs.readFileSync(file, "utf8").replace(/^\uFEFF/, "")); } catch { return fallback; } }
+function sha(file) { return fs.existsSync(file) ? crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex") : ""; }
+function rel(file) { return path.relative(ROOT, file).replace(/\\/g, "/"); }
+function build() {
+  const receipt = readJson(path.join(ROOT, "workflow-receipt.json"), {});
+  const checkpoints = readJson(path.join(ROOT, "checkpoint-status.json"), {});
+  const runState = readJson(path.join(ROOT, "state", "run-state.json"), {});
+  const context = readJson(path.join(ROOT, "state", "context-pack.json"), {});
+  const contextBudget = readJson(path.join(ROOT, "state", "context-budget.json"), {});
+  const rotationLock = readJson(path.join(ROOT, "state", "context-rotation-lock.json"), {});
+  const cfg = fs.existsSync(path.join(ROOT, "deck.config.js")) ? require(path.join(ROOT, "deck.config.js")) : {};
+  const candidates = ["brief.md", "outline.md", "DESIGN.md", "visual-direction.md", "theme-contract.md", "layout-blueprint.json", "checkpoint-status.json", "agent-collaboration.json", "output/render-quality-evidence.json"];
+  const artifactDigests = Object.fromEntries(candidates.map(item => [item, sha(path.join(ROOT, item))]).filter(([, digest]) => digest));
+  const approvedDecisions = Object.entries(checkpoints.checkpoints || {}).filter(([, item]) => item.status === "approved").map(([name, item]) => ({ name, mode: item.mode || "", approvedAt: item.approvedAt || "" }));
+  const handoff = {
+    version: "leander-phase-handoff.v1",
+    generatedAt: new Date().toISOString(),
+    runId: receipt.runId || "",
+    currentGate: runState.currentGate || cfg.workflow?.stage || "",
+    currentStage: cfg.workflow?.stage || "",
+    approvedDecisions,
+    artifactDigests,
+    changedPages: (context.selectedPages || []).map(page => page.id),
+    openIssues: runState.openIssues || [],
+    nextAction: runState.nextAction || "Run context-pack status and continue from the current approved gate.",
+    resumeCommand: "node tools/token-ledger.js attach-thread && node tools/run-phase.js status",
+    recommendedReads: context.recommendedReads || ["checkpoint-status.json", "state/run-state.json", "artifact-manifest.md"],
+    contextRotation: {
+      budgetStatus: contextBudget.status || "unknown",
+      lockStatus: rotationLock.status || "clear",
+      reason: rotationLock.reason || contextBudget.reason || "",
+      blockedRootThreadIds: rotationLock.status === "pending" ? (rotationLock.blockedRootThreadIds || []) : []
+    },
+    continuationPolicy: { replayConversationHistory: false, attachFreshTaskToTokenLedger: true, preserveWorkflowReceipt: true, expandReadsOnlyForNamedGap: true, maxEstimatedTokens: 3000 }
+  };
+  const serialized = JSON.stringify(handoff);
+  handoff.packet = { sha256: crypto.createHash("sha256").update(serialized).digest("hex"), bytes: Buffer.byteLength(serialized), estimatedTokens: Math.ceil(Buffer.byteLength(serialized) / 4) };
+  return handoff;
+}
+function write() {
+  const handoff = build();
+  if (handoff.packet.estimatedTokens > 3000) throw new Error(`phase handoff exceeds 3000 estimated tokens: ${handoff.packet.estimatedTokens}`);
+  fs.mkdirSync(path.dirname(FILE), { recursive: true });
+  fs.writeFileSync(FILE, JSON.stringify(handoff, null, 2) + "\n", "utf8");
+  return handoff;
+}
+function verify() {
+  const current = readJson(FILE), expected = build(), errors = [];
+  if (!current || current.version !== "leander-phase-handoff.v1") errors.push("missing leander-phase-handoff.v1");
+  if (current && current.runId !== expected.runId) errors.push("handoff runId does not match workflow receipt");
+  for (const [file, digest] of Object.entries(current?.artifactDigests || {})) if (sha(path.join(ROOT, file)) !== digest) errors.push(`handoff artifact changed: ${file}`);
+  if (errors.length) throw new Error(errors.join("; "));
+  return current;
+}
+function summary(value) {
+  return [`Handoff ${value.runId || "unbound"}`, `stage=${value.currentStage || "unknown"}`, `approved=${value.approvedDecisions.length}`, `next=${value.nextAction}`, `packet=${value.packet?.estimatedTokens || "?"} tokens`].join(" | ");
+}
+const command = process.argv[2] || "summary";
+try {
+  if (command === "write") console.log(summary(write()));
+  else if (command === "verify") console.log(summary(verify()));
+  else if (command === "summary") console.log(summary(readJson(FILE) || build()));
+  else throw new Error("usage: phase-handoff.js write|verify|summary");
+} catch (error) { console.error(error.message); process.exit(1); }
+module.exports = { build, write, verify };

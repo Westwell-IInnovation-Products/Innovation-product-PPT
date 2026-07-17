@@ -38,7 +38,12 @@ Read this file in Phase 1 before writing `outline.md`.
 - Must use:
 - Must avoid:
 - Data boundary: achieved / planned / estimate / public reference
-- Asset boundary: available images / missing images / placeholders allowed
+- Asset boundary (required; answer each item "available <path>" or "none" — never leave blank):
+  - Company logo:
+  - Product photos / renders:
+  - Real system screenshots:
+  - Brand PPT template:
+  - Reference deck the user likes:
 ```
 
 ## Scenario Guidance
@@ -62,4 +67,5 @@ Run this check before writing `outline.md`.
 - [ ] The deck type determines evidence priority.
 - [ ] Achieved, planned, estimate, and public-reference claims are distinguishable.
 - [ ] Missing assets are named instead of silently replaced with unrelated visuals.
+- [ ] Real assets (logo, product photos, screenshots, brand template) were explicitly requested from the user; pages with available assets must route them as evidence.
 - [ ] If required information is missing and cannot be inferred from materials, ask the user before proceeding.

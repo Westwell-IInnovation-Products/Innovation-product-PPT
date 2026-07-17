@@ -3,27 +3,44 @@
   "checkpoints": {
     "plan": {
       "status": "pending",
-      "evidence": ["brief.md", "outline.md"],
+      "evidence": [
+        "brief.md",
+        "outline.md"
+      ],
       "notes": "Set to approved only after the user confirms the page-by-page outline."
     },
     "designTermsState": {
       "status": "pending",
-      "evidence": ["DESIGN.md", "visual-direction.md", "state/run-state.json"],
+      "evidence": [
+        "DESIGN.md",
+        "visual-direction.md",
+        "state/run-state.json"
+      ],
       "notes": "Approve after design intent, terminology boundary, and continuation state are established."
     },
     "theme": {
       "status": "pending",
-      "evidence": ["deck.config.js", "theme/", "theme-contract.md"],
+      "evidence": [
+        "deck.config.js",
+        "theme/",
+        "theme-contract.md"
+      ],
       "notes": "Choose theme and color semantics before the layout blueprint."
     },
     "layoutBlueprint": {
       "status": "pending",
-      "evidence": ["layout-blueprint.md", "layout-blueprint.json"],
+      "evidence": [
+        "layout-blueprint.md",
+        "layout-blueprint.json"
+      ],
       "notes": "Required for decks over 8 pages or visually complex decks."
     },
     "anchorSample": {
       "status": "pending",
-      "evidence": ["pages/*/out/*.png", "output/<deck>.pptx"],
+      "evidence": [
+        "pages/*/out/*.png",
+        "output/<deck>.pptx"
+      ],
       "notes": "Set to approved only after the user approves the anchor sample style."
     },
     "productionMode": {

@@ -166,6 +166,25 @@ function inspectOutline(findings) {
       add(findings, "error", "outline", file, `outline.md 缺少${label}。`, "大纲阶段就要声明表达模式、截图槽位和数据边界，不能等页面生产时再临时判断。");
     }
   }
+  if (rows.length >= 10) {
+    if (!/素材充足度|evidence capacity|source capacity|可支撑页数|资料缺口/i.test(text)) {
+      add(findings, "error", "outline", file, "长 PPT 的 outline.md 缺少素材充足度说明。", "说明来源可支撑页数、现有图片/截图和资料缺口处理策略。" );
+    }
+    const inventoryFile = path.join(ROOT, "source-evidence-index.json");
+    const inventory = readJson(inventoryFile);
+    if (!inventory || inventory.version !== "source-evidence-index.v1") {
+      add(findings, "error", "outline", inventoryFile, "长 PPT 缺少 source-evidence-index.v1。", "先记录来源事实、可用素材、可支撑页数和缺口处理策略，避免稀释内容扩页。");
+    } else {
+      const capacity = Number(inventory.evidenceCapacityPages || 0);
+      const target = Number(inventory.targetPages || rows.length);
+      const policy = norm(inventory.expansionPolicy);
+      if (target !== rows.length) add(findings, "error", "outline", inventoryFile, `source-evidence-index targetPages=${target} 与大纲页数 ${rows.length} 不一致。`, "更新素材索引或大纲。" );
+      if (capacity < target && !["research-added", "merge-pages", "user-approved-low-evidence"].includes(policy)) {
+        add(findings, "error", "outline", inventoryFile, `素材估计只支撑 ${capacity} 页，但目标为 ${target} 页。`, "补充研究/素材、合并页面，或记录用户明确接受的低证据边界。" );
+      }
+      if (!Array.isArray(inventory.sources) || !inventory.sources.length) add(findings, "error", "outline", inventoryFile, "素材索引没有来源记录。", "至少记录原始文档、截图、公开资料或用户输入的路径/边界。" );
+    }
+  }
 }
 
 function inspectBlueprint(findings, warnings) {
@@ -194,6 +213,11 @@ function inspectBlueprint(findings, warnings) {
     }
     if (isContent(c) && !hasAny(c, ["colorPlan", "colorIntent", "accentTarget"])) {
       add(findings, "error", "blueprint", file, `${page} 缺少颜色意图。`, "红色/蓝色/灰色必须服务逻辑，蓝图阶段要写明强调对象。");
+    }
+    if (isContent(c) && lower(c.contentDensity) === "low") {
+      if (!hasAny(c, ["whitespaceIntent"]) || !hasAny(c, ["densityRationale", "whitespaceRationale"])) {
+        add(findings, "error", "blueprint", file, `${page} 声明为低密度页但没有留白意图或密度理由。`, "说明留白用于焦点、停顿、张力、图片强调或章节换气；否则应补充内容或重新布局。");
+      }
     }
     const summaryLike = c.bottomSummary || c.takeawayBand || c.summaryBand || c.footerConclusion;
     if (summaryLike && !hasRationale(summaryLike)) {
@@ -265,6 +289,14 @@ function inspectPages(findings, warnings) {
     }
     if (!hasAny(meta, ["colorPlan", "colorIntent", "accentTarget"]) && !hasAny(blueprint, ["colorPlan", "colorIntent", "accentTarget"])) {
       add(findings, "error", "pages", pageJson, `${page} 缺少颜色意图。`, "每页要说明红色或强调色为什么出现。");
+    }
+    const density = lower(meta.contentDensity || blueprint.contentDensity);
+    if (density === "low") {
+      const whitespaceIntent = meta.whitespaceIntent || blueprint.whitespaceIntent;
+      const densityRationale = meta.densityRationale || meta.whitespaceRationale || blueprint.densityRationale || blueprint.whitespaceRationale;
+      if (!norm(whitespaceIntent) || norm(densityRationale).length < 8) {
+        add(findings, "error", "pages", pageJson, `${page} 是低密度页但没有可执行的留白说明。`, "保留留白可以，但必须说明焦点和节奏作用；不能用空白掩盖内容不足。");
+      }
     }
     const summaryLike = meta.bottomSummary || meta.takeawayBand || meta.summaryBand || meta.footerConclusion;
     if (summaryLike && !hasRationale(summaryLike)) {

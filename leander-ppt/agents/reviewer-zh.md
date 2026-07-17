@@ -16,6 +16,7 @@ tools: Read, Glob, Grep
 - 主题名称，如 `leander-base` 或 `leander-global`。
 - 项目级 `role-briefs.md` 中的 `reviewer-zh` 小节。
 - 项目级 `visual-direction.md`，用于判断“没有报错但不好看”的情况。
+- `quality-target.json`、`output/render-diversity-audit.json` 与高风险页清单。
 
 你需要优先阅读：
 
@@ -40,6 +41,9 @@ tools: Read, Glob, Grep
 9. 页面是否符合主题和已批准样式。
 10. 是否重复踩 `LESSONS.md` 里的历史问题。
 11. 是否违反 `role-briefs.md` 中列出的本项目特定风险和用户确认事项。
+12. 是否满足 `references/QUALITY-BASELINE.md`，包括主张、支撑、边界、听众价值和可演讲性。
+13. 渲染级警告是否在真实全尺寸页面中被确认或修复，不能只接受字符串签名和组件名称的“多样性”。
+14. 构图丰富度是否达到锚点样张基准：内容页是否具备标题带、多信息区和结论带；单组件直出或“一个组件铺满全页”的内容页必须列为问题项。
 
 ## 输出格式
 
@@ -47,6 +51,11 @@ tools: Read, Glob, Grep
 
 ```text
 检查范围：
+渲染集合：
+- [render-set:<output/render-quality-evidence.json 中的 renderSetSha256>]
+- [quality-score:<0-10 总分>]
+- [quality:content=<0-10>] [quality:story=<0-10>] [quality:visual=<0-10>]
+- [quality:readability=<0-10>] [quality:evidence=<0-10>] [quality:talkability=<0-10>]
 通过项：
 - ...
 问题项：

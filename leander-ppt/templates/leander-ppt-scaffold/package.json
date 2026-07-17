@@ -1,10 +1,20 @@
 {
   "name": "leander-ppt-scaffold",
-  "version": "1.0.0",
+  "version": "0.6.0-beta.8",
   "private": true,
   "scripts": {
+    "doctor": "node tools/environment-doctor.js",
+    "gate:init": "node tools/workflow-gate.js init create",
+    "gate:status": "node tools/workflow-gate.js status",
+    "phase:page-cycle": "node tools/run-phase.js page-cycle",
+    "token:report": "node tools/token-ledger.js report",
+    "test:regression": "node tools/regression-tests.js",
+    "context:handoff": "node tools/phase-handoff.js write",
+    "preflight:pages": "node tools/verify-page-preflight.js",
+    "qa:init": "node tools/qa-batch.js init",
+    "verify:quality": "node tools/verify-quality-baseline.js",
     "select-visual": "node tools/select-visual-route.js",
-    "lint:scope": "node tools/lint-scope-hygiene.js --skill-root ../../..",
+    "lint:scope": "node tools/lint-scope-hygiene.js --skill-root ../..",
     "render:blueprint": "node tools/render-layout-blueprint.js",
     "compact:page": "node tools/compact-page-contract.js",
     "test:themes": "node tools/render-component-library-preview.js --theme leander-base && node tools/render-component-library-preview.js --theme leander-global",
@@ -15,6 +25,7 @@
     "build": "node tools/deck.js build"
   },
   "dependencies": {
+    "pngjs": "7.0.0",
     "pptxgenjs": "^4.0.1"
   }
 }

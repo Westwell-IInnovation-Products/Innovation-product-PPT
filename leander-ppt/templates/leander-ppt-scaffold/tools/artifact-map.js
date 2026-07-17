@@ -61,19 +61,24 @@ function build() {
     add(items, "user-confirm", "当前批次可编辑 PPTX", cfg.batchFileName || "output/current-batch.pptx", "确认当前批次的内容、视觉和节奏。", true);
     add(items, "user-confirm", "当前批次联系表", "output/current-batch-contact-sheet.svg", "并排检查当前活动页面，不代表整套最终预览。", true);
   }
-  const contact = newest(list("output", file => /contact.*\.(png|svg)$/i.test(file)));
-  if (!["outline-reset", "layout-blueprint", "anchor-sample", "production-batch"].includes(stage) && contact) add(items, "user-confirm", "整套视觉预览", contact, "检查节奏和一致性。", true);
-  const pptx = newest(list("output", file => /\.pptx$/i.test(file) && !/(^|\/)_[^/]+/.test(file) && !/~\$/.test(file)));
-  if (stage === "production" && pptx) add(items, "final-output", "可编辑 PPTX", pptx, "当前最终交付物。", true);
+  const fullContact = exists("output/full-deck-contact-sheet.png")
+    ? "output/full-deck-contact-sheet.png"
+    : exists("output/full-deck-contact-sheet.svg") ? "output/full-deck-contact-sheet.svg" : "";
+  if (stage === "production" && fullContact) add(items, "user-confirm", "整套视觉预览", fullContact, "检查节奏和一致性。", true);
+  if (stage === "production" && exists("output/render-quality-evidence.json")) add(items, "internal-evidence", "渲染质量锁", "output/render-quality-evidence.json", "绑定当前页面、锚点和独立视觉评审。", true);
+  const finalPptx = cfg.fileName && exists(cfg.fileName) ? cfg.fileName : "";
+  if (stage === "production" && finalPptx) add(items, "final-output", "可编辑 PPTX", finalPptx, "当前最终交付物。", true);
+  if (stage === "production") add(items, "final-output", "中文 Token 报告", "output/token-report.zh.md", "标明实际或估算，并按 Gate、主任务和子智能体拆分。", false);
 
   [
     ["checkpoint-status.json", "阶段状态"], ["layout-blueprint.json", "蓝图合同"], ["deck.config.js", "运行配置"],
     ["theme-contract.md", "主题合同"], ["terminology.json", "术语合同"], ["state/run-state.json", "运行状态"],
-    ["state/conversation-summary.md", "会话摘要"], ["agent-collaboration.json", "角色状态"]
+    ["state/phase-handoff.json", "跨任务阶段交接"], ["quality-target.json", "质量目标"], ["agent-collaboration.json", "角色状态"]
   ].forEach(([file, purpose]) => add(items, "next-input", purpose, file, "下一阶段按需读取。", false));
   [
     ["output/layout-blueprint-preview-qa.json", "蓝图机器 QA"], ["output/layout-blueprint-geometry.json", "蓝图几何证据"],
     ["output/layout-blueprint-preview-lint.json", "蓝图预览 lint"], ["output/layout-blueprint-diversity-audit.json", "布局多样性审计"]
+    , ["output/render-diversity-audit.json", "渲染级多样性审计"], ["state/render-dependency-manifest.json", "渲染依赖清单"], ["state/token-ledger.json", "Token 账本"], ["state/context-rotation-lock.json", "上下文轮换锁"]
   ].forEach(([file, purpose]) => add(items, "internal-evidence", purpose, file, "内部门禁证据，通常无需逐项确认。", false));
 
   const collaboration = exists("agent-collaboration.json") ? JSON.parse(fs.readFileSync(abs("agent-collaboration.json"), "utf8").replace(/^\uFEFF/, "")) : {};
@@ -83,17 +88,20 @@ function build() {
     .map(role => role.artifact)
     .filter(exists))];
   currentRoleArtifacts.forEach(file => add(items, "internal-evidence", "当前角色证据", file, "由当前 agent-collaboration.json 引用。", false));
+  if (stage === "production" && collaboration.roles?.["presenter-zh"]?.status === "completed" && openEvents.rehearsalRequested === true) {
+    add(items, "final-output", "中文汇报讲稿", "speaker-notes.md", "汇报人基于最终页面彩排生成的逐页讲述、转场和节奏建议。", false);
+  }
 
   const stale = ["outline-reset", "layout-blueprint"].includes(stage);
   const pageContracts = list("pages", file => /\/page\.json$/i.test(file));
   const pageImplementations = list("pages", file => /\/page\.js$/i.test(file));
   const pageEvidence = list("pages", file => /\/out\/|\/qa-result\.json$|\/qa\.md$/i.test(file));
-  const limitedStage = ["anchor-sample", "production-batch"].includes(stage);
-  const currentOnly = files => limitedStage ? files.filter(file => activePagePath(file, activePages)) : files;
+  const scopedByActivePages = activePages.size > 0;
+  const currentOnly = files => scopedByActivePages ? files.filter(file => activePagePath(file, activePages)) : files;
   group(groups, stale ? "archive-reference" : "next-input", stale ? "旧页面合同" : "页面合同", currentOnly(pageContracts), stale ? "当前阶段禁止用于生产。" : "按受影响页面读取。" );
   group(groups, stale ? "archive-reference" : "internal-evidence", stale ? "旧页面实现" : "页面实现", currentOnly(pageImplementations), stale ? "保留用于对比。" : "只在实现或修复时读取。" );
   group(groups, stale ? "archive-reference" : "internal-evidence", stale ? "旧页面渲染与 QA" : "页面渲染与 QA", currentOnly(pageEvidence), "重复证据按组统计，不逐文件写入 JSON。" );
-  if (limitedStage && activePages.size) {
+  if (scopedByActivePages) {
     group(groups, "archive-reference", "非活动页面目录", pageContracts.filter(file => !activePagePath(file, activePages)), "当前活动范围之外的页面不读取、不渲染，也不参与本阶段门禁。" );
   }
   const roleReports = list("agent-reviews", file => /\.md$/i.test(file) && !currentRoleArtifacts.includes(file));

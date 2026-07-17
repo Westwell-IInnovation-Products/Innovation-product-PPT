@@ -18,6 +18,12 @@ typography:
     fontWeight: 700
     lineHeight: 1.15
     letterSpacing: 0px
+  title-en:
+    fontFamily: Century Gothic
+    fontSize: 24px
+    fontWeight: 700
+    lineHeight: 1.2
+    letterSpacing: 0px
   body:
     fontFamily: Microsoft YaHei
     fontSize: 21px
@@ -34,7 +40,9 @@ spacing:
   safe-x: 96px
   safe-top: 80px
   safe-bottom: 100px
+  gap-sm: 16px
   gap-md: 24px
+  gap-lg: 40px
 rounded:
   sm: 4px
   md: 8px
@@ -63,6 +71,12 @@ Leander-PPT 默认服务于结构化的内部工程沟通。页面应该克制�
 
 中文使用 Microsoft YaHei。英文标签和数字优先使用 Century Gothic。整套 PPT 不应混用多个英文字体。
 
+正文不能靠缩小字号硬塞。文字放不进图形时，应精简文案、增加空间或改变表达形式；不允许贴边、溢出或压框。
+
+## 内容完成度
+
+每个内容页必须满足 `references/QUALITY-BASELINE.md`：有可讲述主张、充分支撑、来源或实现边界，以及明确听众价值。信息不足时补机制、证据或例子，不能通过放大空框和字号制造“丰富感”。
+
 ## 布局与节奏
 
 主体内容应落在页面正文区的视觉中心附近，不能贴着标题。故事发生变化时，相邻页面应切换视觉寄存器。截图必须有明确槽位、来源、裁剪规则和解释锚点。
@@ -89,5 +103,6 @@ Leander-PPT 默认服务于结构化的内部工程沟通。页面应该克制�
 - 红色必须有明确语义，不能作为装饰。
 - 文件、系统、Agent、QA、状态类内容优先使用真实截图。
 - 禁止默认添加底部总结条。
+- 禁止添加没有分组、状态、选择、对比或证据作用的方框。
 - 禁止让重叠、裁切、字体混用或无意歪线通过 QA。
 - image2 不用于密集流程或小字内容，只用于简单示意图。

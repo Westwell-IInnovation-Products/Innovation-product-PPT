@@ -56,9 +56,16 @@ function collectThemeHex() {
 
 function listComponentFiles() {
   const dir = path.join(ROOT, "components");
-  return fs.readdirSync(dir)
-    .filter(f => /\.js$/i.test(f))
-    .map(f => path.join(dir, f));
+  const files = [];
+  function walk(current) {
+    fs.readdirSync(current, { withFileTypes: true }).forEach(entry => {
+      const absolute = path.join(current, entry.name);
+      if (entry.isDirectory()) walk(absolute);
+      else if (/\.js$/i.test(entry.name)) files.push(absolute);
+    });
+  }
+  walk(dir);
+  return files.sort((a, b) => a.localeCompare(b));
 }
 
 function scanHardcodedColors(themeHex) {

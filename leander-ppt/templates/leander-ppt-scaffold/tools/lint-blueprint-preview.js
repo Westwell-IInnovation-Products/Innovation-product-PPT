@@ -146,7 +146,11 @@ function inspectPreviewQa(findings, warnings) {
   const geometry = readJson(GEOMETRY_JSON);
   const md = readText(QA_MD);
   if (!qa) {
-    add(findings, "error", "preview", "missing-preview-qa-json", "缺少机器可读预览 QA JSON。", "先运行 node tools/render-layout-blueprint.js，生成稳定名称的预览证据。");
+    // Preview generation is optional (cost control): generate it only for
+    // high-risk pages or on explicit user request. Without preview evidence
+    // this lint records a skip instead of blocking the blueprint gate; stale
+    // evidence, when present, still fails.
+    add(warnings, "warning", "preview", "preview-skipped", "未生成蓝图预览证据（预览为可选产物）。", "如需低保真预览，运行 node tools/render-layout-blueprint.js；默认只对高风险页或用户要求时生成。");
     return;
   }
   if (qa.version !== "layout-blueprint-preview-qa.v2") {

@@ -1,13 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const cp = require("child_process");
-const pptxgen = require("pptxgenjs");
-const { getTheme } = require("../theme/tokens");
-const { makeComponents } = require("../components/ppt-components");
-const { makeEditorial } = require("../components/editorial");
-const { makeBespoke } = require("../components/bespoke");
-const { makeToolSystemTree } = require("../components/tool-system-tree");
-const { rendererStatus } = require("./component-runtime");
+const { loadComponentRuntime, rendererStatus } = require("./component-runtime");
 const { resolveToolchain, libreOfficeProfile } = require("./toolchain");
 
 const ROOT = path.join(__dirname, "..");
@@ -265,29 +259,18 @@ async function main() {
   fs.mkdirSync(RENDERED, { recursive: true });
 
   const registry = JSON.parse(fs.readFileSync(path.join(__dirname, "component-registry.json"), "utf8"));
-  const theme = getTheme(THEME_NAME);
-  const pptx = new pptxgen();
+  const runtime = loadComponentRuntime(THEME_NAME);
+  const { theme, pptx, ui, components } = runtime;
   pptx.author = "Leander PPT";
   pptx.company = "Westwell";
   pptx.subject = "Real component library preview";
   pptx.title = "Leander PPT Real Component Preview";
   pptx.lang = "en-US";
-  pptx.defineLayout(theme.ppt.layout);
-  pptx.layout = theme.ppt.layout.name;
-
-  const ui = makeComponents(pptx, theme);
-  const components = {
-    ...ui,
-    ...makeEditorial({ ui, theme, pptx }),
-    ...makeBespoke({ ui, theme, pptx }),
-    ...makeToolSystemTree({ ui, theme, pptx }),
-  };
-
   const manifest = [];
   registry.components.forEach((c, index) => {
     const slide = pptx.addSlide();
     slide.addNotes(`${String(index + 1).padStart(2, "0")} ${c.name}`);
-    const runtimeStatus = rendererStatus(c, { rendererNames: new Set(Object.keys(components).filter(k => typeof components[k] === "function")) });
+    const runtimeStatus = rendererStatus(c, runtime);
     const fn = components[c.name];
     if (typeof fn !== "function") {
       statusSlide(slide, ui, c, "NO RENDERER", runtimeStatus.reason);
