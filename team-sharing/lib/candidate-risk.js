@@ -71,7 +71,9 @@ function assessCandidate(candidateDir, options = {}) {
     similar,
     automation: {
       createDraftPullRequest: lane !== "blocked",
-      candidateAreaMayAutoMerge: lane === "auto-intake",
+      // Retain the legacy field for consumers, but never authorize AI-driven merges.
+      candidateAreaMayAutoMerge: false,
+      candidateAreaRequiresHumanMerge: true,
       productionPromotionRequiresHuman: true
     }
   };

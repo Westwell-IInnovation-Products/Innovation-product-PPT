@@ -80,6 +80,8 @@ test("risk triage allows isolated reviewed candidates into automatic intake", ()
   fs.writeFileSync(registry, JSON.stringify({ components: [] }));
   const result = assessCandidate(temp, { registry });
   assert.equal(result.lane, "auto-intake");
+  assert.equal(result.automation.candidateAreaMayAutoMerge, false);
+  assert.equal(result.automation.candidateAreaRequiresHumanMerge, true);
   assert.equal(result.automation.productionPromotionRequiresHuman, true);
 });
 
