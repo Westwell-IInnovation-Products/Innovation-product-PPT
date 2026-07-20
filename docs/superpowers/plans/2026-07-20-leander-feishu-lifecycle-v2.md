@@ -228,4 +228,3 @@ Create a Draft PR titled `Add trusted Feishu lifecycle notifications`. The PR mu
 - [ ] **Step 4: Validate after human merge**
 
 Run the new `workflow_dispatch` smoke test, create one sanitized `repository_dispatch` test, and confirm two corresponding Feishu cards. Do not delete branches automatically.
-
