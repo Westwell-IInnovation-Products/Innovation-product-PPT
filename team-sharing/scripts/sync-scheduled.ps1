@@ -9,7 +9,11 @@ param(
 
 $ErrorActionPreference = "Stop"
 function Write-Audit([string]$Event, [string]$Status, [string]$Subject = '', [string]$Details = '', [string]$Branch = '') {
-  & node $auditScript --log $AuditLog --event $Event --status $Status --subject $Subject --details $Details --branch $Branch | Out-Null
+  $auditArguments = @($auditScript, '--log', $AuditLog, '--event', $Event, '--status', $Status)
+  if (-not [string]::IsNullOrWhiteSpace($Subject)) { $auditArguments += @('--subject', $Subject) }
+  if (-not [string]::IsNullOrWhiteSpace($Details)) { $auditArguments += @('--details', $Details) }
+  if (-not [string]::IsNullOrWhiteSpace($Branch)) { $auditArguments += @('--branch', $Branch) }
+  & node @auditArguments | Out-Null
   if ($LASTEXITCODE -ne 0) { throw "Unable to record team-sharing audit event: $Event" }
 }
 

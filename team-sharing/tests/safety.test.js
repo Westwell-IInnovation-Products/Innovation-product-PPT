@@ -3,6 +3,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
+const { value: auditValue } = require("../scripts/audit-event");
 const {
   evaluatePushUpdates,
   hasIndependentReview,
@@ -62,4 +63,10 @@ test("confines staged files to the selected candidate directory", () => {
   const result = validateStagedPaths([`${root}/candidate.json`, "leander-ppt/SKILL.md"], root);
   assert.equal(result.ok, false);
   assert.ok(result.findings.some(item => item.rule === "staged-path-outside-allowlist"));
+});
+
+test("audit argument parsing does not consume the next option as an empty value", () => {
+  const argv = ["node", "audit-event.js", "--subject", "--details", "Candidates=1"];
+  assert.equal(auditValue(argv, "subject", ""), "");
+  assert.equal(auditValue(argv, "details", ""), "Candidates=1");
 });
