@@ -43,6 +43,36 @@ tools: Read, Glob, Grep
 6. 给出组件标签、适用关系、跨场景语义绑定、禁用场景和 QA 风险。
 7. 对照 `role-briefs.md` 判断本项目哪些图形只能本地使用，哪些可以抽象进公共组件库。
 8. 检查路线分布是否长期被组件评分垄断；内容页 100% 选择组件路线时必须要求重新竞争或逐页说明豁免理由。
+9. 在生产完成后的“候选提取模式”中读取 `output/candidate-harvest.json`，对每个信号做 `submit / skip / observe` 决策；不新增角色。
+10. 对 `submit` 项完成脱敏、关系抽象、通用槽位设计和相似组件对比，把独立复核后的结构化提案写入 `state/component-candidate-proposals.json`。
+
+## 候选提取模式
+
+当 `candidate-harvest.json` 有信号时：
+
+1. 将可复用渲染器抽到项目本地 `components/promotion-candidates/<name>.js`，导出 `{ name, create }`；不得直接复制页面级 `page.js`。
+2. 删除项目名、客户名、页码、业务数字、截图路径、本地绝对路径和当前故事线；固定文字改成通用输入槽位。
+3. 与 `tools/component-index.min.json` 中关系、槽位和表达能力最接近的 3 个组件比较，优先选择扩展 variant 或 layout block，避免新增近重复 page pattern。
+4. 独立复核必须记录 `review.status=pass` 和非空 `review.evidenceDigest`；生成者不能用同一次自评代替复核。
+5. `candidate` 元数据始终保持 `review-required`、`pending` 和不高于 `0.5` 的置信上限；正式晋升仍由人工 Curator 批准。
+
+最小提案结构：
+
+```json
+{
+  "schemaVersion": "leander-component-proposals.v1",
+  "proposals": [{
+    "decision": "submit",
+    "componentSource": "components/promotion-candidates/<name>.js",
+    "previewSource": "output/candidate-previews/<name>.svg",
+    "candidate": { "id": "kebab-case-id", "name": "camelCaseName", "contributor": "github-login", "version": "0.1.0" },
+    "evidence": ["至少一条去项目化的复用证据"],
+    "review": { "status": "pass", "evidenceDigest": "sha256:<digest>" }
+  }]
+}
+```
+
+`candidate` 还必须包含组件标准要求的关系、层级、槽位、容量、主题、风险和避免条件；候选物化脚本会拒绝缺字段提案。
 
 ## 硬规则：关系优先，不按当前 PPT 语义抽象
 

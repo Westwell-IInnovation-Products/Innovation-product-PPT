@@ -125,6 +125,10 @@ node tools/issue-registry.js proposals
 
 `proposals` 只生成稳定名称的 `output/learning-proposals.json/md`。它不会自动修改共享 Skill。
 
+完整 PPT 在 `run-phase.js render-review` 后还会运行 `candidate-harvest.js --write`。它只收集三类可复用信号：页面专属自定义路线、需要 Curator 复核的低置信选型、以及重复出现的组件问题。现有 `component-curator-zh` 负责把信号转为 `submit / skip / observe`，不创建新的常驻 Agent。
+
+只有写入 `state/component-candidate-proposals.json`、完成脱敏抽象、具备独立复核摘要并提供真实 `{ name, create }` 渲染器的 `submit` 提案，才会在 `final-verify` 时物化到个人候选收件箱。物化仍只产生 `review-required` 候选；自动化不得修改正式注册表或把状态改成 `usable`。
+
 人工提升必须满足：
 
 1. 已去掉项目名、页码、客户、截图路径和当前故事线。

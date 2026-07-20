@@ -95,6 +95,20 @@ node team-sharing/scripts/promote-candidate.js <仓库候选目录> `
   --approve-production
 ```
 
+推荐使用单命令准备晋升分支、版本更新和 Draft PR：
+
+```powershell
+node team-sharing/scripts/prepare-promotion.js `
+  --repo <Leander仓库> `
+  --candidate <仓库内候选目录> `
+  --curator caijiahui0426 `
+  --release-type prerelease `
+  --preid beta `
+  --create-draft-pr
+```
+
+该命令自动准备所有变更，但不会批准或合并 PR；人工只需查看预览、风险摘要和差异后确认正式晋升。
+
 安装正式版本工作树：
 
 ```powershell
@@ -107,3 +121,57 @@ powershell -ExecutionPolicy Bypass -File team-sharing/scripts/install-leander.ps
 每名 Contributor 只设置一个任务，扫描 `%USERPROFILE%\.codex\leander-contributions`。任务调用 `team-sharing/scripts/sync-scheduled.ps1`，不会镜像完整 Skill，也不会直接推送 `main`。
 
 正式启用前必须先在 GitHub 中保护 `main`，要求 PR、CI、对话解决和 CODEOWNERS 审批。私有仓库套餐无法强制保护时，只有维护者保留写权限，其他成员通过候选分支提交。
+
+## 10. Agent 自动候选提取
+
+PPT 项目在最终渲染复核时运行 `candidate-harvest.js --write`，从页面专属自定义路线、低置信组件选型、项目本地候选渲染器和重复组件问题中收集信号。现有 `component-curator-zh` 使用候选提取模式完成：
+
+1. 判断 `submit / skip / observe`。
+2. 把页面代码抽为通用 `{ name, create }` 组件。
+3. 去掉项目、客户、页码、数据、截图和本地路径。
+4. 与正式组件索引做关系、槽位和表达能力对比。
+5. 写入 `state/component-candidate-proposals.json`，并取得独立复核摘要。
+
+`final-verify` 会把通过独立复核的 `submit` 提案自动物化到 `%USERPROFILE%\.codex\leander-contributions`。自动化只生成 `review-required / pending` 候选，不得直接修改正式注册表。
+
+## 11. 风险分流与低人力审核
+
+候选上传前自动生成 `automation-review.json`：
+
+| Lane | 处理 |
+|---|---|
+| `auto-intake` | 自动建立分支和 Draft PR；只允许进入候选区 |
+| `curator-review` | 自动建立 Draft PR并标出近似正式组件，等待 Curator 判断 |
+| `blocked` | 同 ID、同候选名、冲突正式组件名或规范失败；建分支前停止 |
+
+候选区的自动入库不等于正式可用。正式组件仍需人工批准一次晋升 PR；批准后 CI 通过可配置 GitHub Auto-merge，减少重复点击。
+
+## 12. 飞书通知
+
+在仓库 Actions Secret 中配置 `FEISHU_WEBHOOK_URL` 后，PR 检查成功或失败会发送飞书卡片，包含 PR、Actions 和审核入口。不配置该 Secret 时通知步骤安全跳过，不影响 GitHub CI。
+
+Webhook 只能提供链接按钮；如需在飞书内直接执行“批准/拒绝”，还需要单独部署带回调验签的飞书应用，不能仅靠自定义机器人 Webhook 完成。
+
+## 13. 自动发布与消费端更新
+
+批准的晋升 PR 使用下面的命令统一提升版本：
+
+```powershell
+node team-sharing/scripts/bump-leander-version.js --root leander-ppt --type minor --note "Promote reviewed components"
+```
+
+Beta 试点的连续修订使用 `--type prerelease --preid beta`；正式新增组件通常使用 `minor`，兼容性修复使用 `patch`。
+
+版本变更合并到 `main` 后，`leander-tag-approved-version.yml` 自动创建缺失的 `leander-ppt-v<version>` Tag；现有 Release 工作流生成压缩包和 SHA-256 文件。
+
+每台电脑的统一周期入口为：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File team-sharing/scripts/team-cycle.ps1 `
+  -RepositoryRoot <Leander仓库> `
+  -ContributionRoot "$env:USERPROFILE\.codex\leander-contributions" `
+  -CreateDraftPullRequest `
+  -UpdateChannel stable
+```
+
+`stable` 只安装正式版本；试点成员可使用 `beta`。更新器通过现有 Git 获取 Tag、核对 Tag 与 `manifest.json`、在临时 worktree 调用安全安装器，并保留旧版本回滚备份；不会降级已经安装的较新版本。

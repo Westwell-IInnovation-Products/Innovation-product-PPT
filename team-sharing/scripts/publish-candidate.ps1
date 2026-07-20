@@ -32,6 +32,16 @@ $validator = Join-Path $repo 'team-sharing\scripts\validate-candidate.js'
 & node $validator $candidate
 if ($LASTEXITCODE -ne 0) { throw "Candidate validation failed." }
 
+$registry = Join-Path $repo 'leander-ppt\templates\leander-ppt-scaffold\tools\component-registry.json'
+$contributions = Join-Path $repo 'contributions\leander-ppt\components'
+$assessmentFile = Join-Path $candidate 'automation-review.json'
+$assessmentJson = & node (Join-Path $repo 'team-sharing\scripts\assess-candidate.js') $candidate --registry $registry --contributions $contributions --write $assessmentFile
+$assessmentExit = $LASTEXITCODE
+$assessment = $assessmentJson | ConvertFrom-Json
+if ($assessmentExit -eq 3 -or $assessment.lane -eq 'blocked') { throw "Candidate risk assessment blocked publishing: $($assessment.reasons -join ', ')" }
+if ($assessmentExit -ne 0) { throw "Candidate risk assessment failed." }
+Write-Output "CANDIDATE_RISK_LANE=$($assessment.lane)"
+
 Invoke-Git @('fetch', $Remote, $BaseBranch)
 Invoke-Git @('switch', $BaseBranch)
 Invoke-Git @('pull', '--ff-only', $Remote, $BaseBranch)

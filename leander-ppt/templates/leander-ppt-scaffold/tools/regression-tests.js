@@ -21,7 +21,7 @@ const behaviors = [
   ["QA batch specificity", "qa-batch.js"], ["visual route competition", "select-visual-route.js"], ["render risk", "render-risk.js"],
   ["render diversity", "render-diversity.js"], ["agent independence", "verify-agent-collaboration.js"],
   ["agent collaboration migration", "migrate-agent-collaboration-v3.js"], ["hard Gate contract", "hard-gate-contract.js"],
-  ["hard Gate adversarial black-box", "hard-gate-blackbox.js"]
+  ["hard Gate adversarial black-box", "hard-gate-blackbox.js"], ["candidate harvest", "candidate-harvest.js"]
 ];
 behaviors.forEach(([label, file]) => run(label, [path.join(TOOLS, file), "--self-test"]));
 console.log(`PASS Leander regression suite: ${scripts.length} syntax checks, ${behaviors.length} behavior tests.`);
