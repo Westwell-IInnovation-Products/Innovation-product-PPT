@@ -23,11 +23,19 @@ jobs:
           node scripts/release-hygiene.js
           node templates/leander-ppt-scaffold/tools/lint-scope-hygiene.js --skill-root .
       - name: Build clean archive
-        run: tar -czf "leander-ppt-${GITHUB_REF_NAME}.tar.gz" leander-ppt
+        run: |
+          tar -czf "leander-ppt-${GITHUB_REF_NAME}.tar.gz" leander-ppt
+          sha256sum "leander-ppt-${GITHUB_REF_NAME}.tar.gz" > "leander-ppt-${GITHUB_REF_NAME}.tar.gz.sha256"
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           args=(--generate-notes)
           if [[ "$GITHUB_REF_NAME" == *beta* || "$GITHUB_REF_NAME" == *rc* ]]; then args+=(--prerelease); fi
-          gh release create "$GITHUB_REF_NAME" "leander-ppt-${GITHUB_REF_NAME}.tar.gz" "${args[@]}"
+          archive="leander-ppt-${GITHUB_REF_NAME}.tar.gz"
+          checksum="${archive}.sha256"
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "$archive" "$checksum" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "$archive" "$checksum" "${args[@]}"
+          fi

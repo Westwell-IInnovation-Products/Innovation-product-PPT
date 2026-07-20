@@ -218,6 +218,17 @@ A new drawing should enter the shared component library only when:
 
 If it is a one-off but useful, keep it in the deck project's page implementation or project-local `components/`.
 
+### Agent-assisted candidate intake
+
+项目完成后的候选提取由现有 `component-curator-zh` 承担。确定性工具发现信号、物化四文件候选包和计算重复风险；Agent 负责语义脱敏、关系抽象、通用槽位和近似组件解释。候选入库可以自动，正式晋升必须保留一次人工批准。
+
+自动物化要求：
+
+- 渲染器已经从页面实现抽到 `components/promotion-candidates/`，并导出 `{ name, create }`。
+- 提案包含完整 V3 元数据、复用证据和独立复核摘要。
+- 固定状态仍为 `review-required / pending`，自动流程不能声称双主题视觉已经人工通过。
+- 完全同 ID、同候选名或与不同来源正式组件同名时必须阻断；关系/槽位高度相似时转入 Curator 复核。
+
 ## Stability And Ease-Of-Use
 
 - Prefer fewer stable components with good slots over many near-duplicates.

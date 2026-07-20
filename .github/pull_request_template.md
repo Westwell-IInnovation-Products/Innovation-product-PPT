@@ -22,6 +22,8 @@ Describe the reusable problem, the affected paths, and why the change belongs in
 - [ ] Leander release hygiene and scope hygiene passed.
 - [ ] Component registry/index and strict lint passed, if applicable.
 - [ ] Both Leander themes rendered for a promoted component.
+- [ ] Candidate automation assessment is attached; `auto-intake` only applies to the candidate area, never production promotion.
+- [ ] Agent-generated candidates include independent-review evidence and no project-local facts.
 
 ## Rollback
 

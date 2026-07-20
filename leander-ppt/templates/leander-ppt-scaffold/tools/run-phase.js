@@ -107,9 +107,11 @@ try {
     run("contact sheet", "render-contact-sheet.js");
     run("render-level diversity and whitespace audit", "render-diversity.js");
     if (["anchor-sample", "production"].includes(cfg.workflow?.stage)) run("capture render-quality evidence", "render-quality-gate.js", ["capture"]);
+    run("candidate harvest scan", "candidate-harvest.js", ["--write"]);
     run("agent event plan", "plan-agent-events.js", ["--write"]);
   } else if (command === "final-verify") {
     run("final gated verification", "deck.js", ["verify", "--final"]);
+    run("candidate harvest", "candidate-harvest.js", ["--write", "--materialize"]);
     run("artifact map", "artifact-map.js", ["--write"]);
   } else {
     throw new Error("usage: run-phase.js status|prepare-pages|page-cycle|render-review|final-verify [--pages p01,p02] [--force-route]");
