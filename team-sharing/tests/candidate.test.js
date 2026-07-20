@@ -6,6 +6,7 @@ const test = require("node:test");
 const { validateCandidate, candidateRegistryEntry } = require("../lib/candidate");
 const { assessCandidate } = require("../lib/candidate-risk");
 const { buildReviewCard } = require("../lib/feishu");
+const { classifyPullRequest, buildLifecycleNotification } = require("../lib/feishu-events");
 const { parseVersion, compareVersions, selectLatest, bumpVersion } = require("../lib/semver");
 
 const fixtures = path.join(__dirname, "fixtures", "valid");
@@ -112,6 +113,47 @@ test("Feishu review cards contain status and safe GitHub actions", () => {
   assert.equal(card.msg_type, "interactive");
   assert.equal(card.card.header.template, "green");
   assert.equal(card.card.elements[1].actions[0].url, "https://github.com/acme/repo/pull/7");
+});
+
+test("Feishu cards use distinct templates for blocked and closed states", () => {
+  assert.equal(buildReviewCard({ status: "blocked" }).card.header.template, "red");
+  assert.equal(buildReviewCard({ status: "closed" }).card.header.template, "grey");
+});
+
+test("classifies pull requests by governed branch and path", () => {
+  assert.equal(classifyPullRequest({ head: { ref: "contrib/alice/card" } }, []), "candidate-intake");
+  assert.equal(classifyPullRequest({ head: { ref: "promote/alice/card" } }, []), "component-promotion");
+  assert.equal(classifyPullRequest({ head: { ref: "agent/core" } }, [{ filename: "leander-ppt/SKILL.md" }]), "core-change");
+  assert.equal(classifyPullRequest({ head: { ref: "agent/docs" } }, [{ filename: "docs/readme.md" }]), "governance-change");
+});
+
+test("builds a curator-specific candidate approval notification", () => {
+  const result = buildLifecycleNotification({
+    eventName: "workflow_run",
+    workflowName: "Leander Team Sharing",
+    conclusion: "success",
+    pullRequest: { number: 8, html_url: "https://github.com/acme/repo/pull/8", user: { login: "alice" }, head: { ref: "contrib/alice/card" } },
+    assessment: { lane: "curator-review", score: 58, reasons: ["possible-semantic-overlap:metricBand"] }
+  });
+  assert.equal(result.status, "review-required");
+  assert.match(result.title, /候选入库/);
+  assert.match(result.details, /curator-review/);
+  assert.match(result.details, /metricBand/);
+  assert.equal(result.actionUrl, "https://github.com/acme/repo/pull/8/files");
+});
+
+test("builds typed review, merge, release, and local-alert notifications", () => {
+  const approved = buildLifecycleNotification({ eventName: "pull_request_review", reviewState: "approved", pullRequest: { number: 9, html_url: "https://github.com/acme/repo/pull/9" } });
+  assert.equal(approved.status, "approved");
+  const merged = buildLifecycleNotification({ eventName: "pull_request_target", action: "closed", pullRequest: { number: 9, merged: true, html_url: "https://github.com/acme/repo/pull/9" } });
+  assert.equal(merged.status, "merged");
+  const release = buildLifecycleNotification({ eventName: "workflow_run", workflowName: "Tag Approved Leander Version", conclusion: "failure", runUrl: "https://github.com/acme/repo/actions/runs/3", version: "0.7.0" });
+  assert.equal(release.status, "failed");
+  assert.equal(buildLifecycleNotification({ eventName: "workflow_run", workflowName: "Tag Approved Leander Version", conclusion: "success" }), null);
+  const local = buildLifecycleNotification({ eventName: "repository_dispatch", localAlert: { kind: "consumer-update-failed", title: "更新失败", details: "请检查本机日志", url: "https://github.com/acme/repo/actions" } });
+  assert.match(local.title, /更新失败/);
+  assert.equal(buildLifecycleNotification({ eventName: "repository_dispatch", localAlert: { kind: "arbitrary-event", url: "https://example.com/phishing" } }), null);
+  assert.equal(buildLifecycleNotification({ eventName: "pull_request_review", reviewState: "commented", pullRequest: { number: 9 } }), null);
 });
 
 test("release versions respect stable and beta channels", () => {

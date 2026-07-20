@@ -59,25 +59,3 @@ jobs:
             ${{ runner.temp }}/leander-base
             ${{ runner.temp }}/leander-global
           retention-days: 14
-      - name: Notify Feishu that checks passed
-        if: success() && github.event_name == 'pull_request'
-        env:
-          FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
-        run: >-
-          node team-sharing/scripts/notify-feishu.js
-          --status success
-          --title "Leander PR #${{ github.event.pull_request.number }} 检查通过"
-          --details "自动规范、风险、组件 lint 与双主题渲染已经通过；正式晋升仍需人工确认。"
-          --url "${{ github.event.pull_request.html_url }}"
-          --action-url "${{ github.event.pull_request.html_url }}/files"
-      - name: Notify Feishu that checks failed
-        if: failure() && github.event_name == 'pull_request'
-        env:
-          FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
-        run: >-
-          node team-sharing/scripts/notify-feishu.js
-          --status failed
-          --title "Leander PR #${{ github.event.pull_request.number }} 检查失败"
-          --details "候选规范、风险或渲染检查失败，请查看 Actions 日志。"
-          --url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          --action-url "${{ github.event.pull_request.html_url }}"
