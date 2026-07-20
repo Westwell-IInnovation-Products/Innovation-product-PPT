@@ -2,11 +2,6 @@ name: Leander Team Sharing
 
 on:
   pull_request:
-    paths:
-      - "leander-ppt/**"
-      - "team-sharing/**"
-      - "contributions/leander-ppt/**"
-      - ".github/workflows/leander-team-sharing.yml"
   workflow_dispatch:
 
 permissions:
@@ -24,7 +19,7 @@ jobs:
           cache: npm
           cache-dependency-path: leander-ppt/templates/leander-ppt-scaffold/package-lock.json
       - name: Candidate unit tests
-        run: node --test team-sharing/tests/candidate.test.js
+        run: node --test team-sharing/tests/*.test.js
       - name: Validate contribution inbox
         run: node team-sharing/scripts/validate-candidate.js contributions/leander-ppt/components
       - name: Assess candidate risk and duplicates

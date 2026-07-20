@@ -31,6 +31,9 @@ if ($metadata.contributor -ne $Contributor) { throw "candidate.json contributor 
 $validator = Join-Path $repo 'team-sharing\scripts\validate-candidate.js'
 & node $validator $candidate
 if ($LASTEXITCODE -ne 0) { throw "Candidate validation failed." }
+$batchGuard = Join-Path $repo 'team-sharing\scripts\check-automation-batch.js'
+& node $batchGuard --root $candidate --max 1 --include-published
+if ($LASTEXITCODE -ne 0) { throw "Independent Agent review evidence is required before publishing." }
 
 $registry = Join-Path $repo 'leander-ppt\templates\leander-ppt-scaffold\tools\component-registry.json'
 $contributions = Join-Path $repo 'contributions\leander-ppt\components'
@@ -58,6 +61,9 @@ Copy-Item -LiteralPath $candidate -Destination $target -Recurse
 & node $validator $target
 if ($LASTEXITCODE -ne 0) { throw "Copied candidate validation failed." }
 Invoke-Git @('add', '--', $relativeTarget)
+$scopeGuard = Join-Path $repo 'team-sharing\scripts\check-publish-scope.js'
+& node $scopeGuard --repo $repo --allowed-root $relativeTarget --expected-branch-prefix "contrib/$Contributor/$($metadata.id)-"
+if ($LASTEXITCODE -ne 0) { throw "Candidate publish scope validation failed." }
 Invoke-Git @('commit', '-m', "Contribute Leander component $($metadata.id)")
 Invoke-Git @('push', '-u', $Remote, $branch)
 

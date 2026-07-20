@@ -24,6 +24,8 @@ docs/governance/leander-team-sharing.md
 
 本机兼容入口仍为 `C:\西井\06AI\sync-codex-skills-to-leander.ps1`。它运行统一团队周期：上传未发布候选、创建贡献 PR，并按允许通道检查和安全安装更新；它不镜像完整 Skill，也不直接推送 `main`。计划任务名称仍为 `Sync Leander Skills To GitHub`。
 
+GitHub Free 私有仓库使用本地安全阀：自动化只允许推送 `agent/*`、`contrib/*`、`promote/*`，一次最多处理 3 个独立复核候选，默认只更新 `stable`。首次使用运行 `team-sharing/scripts/install-safety-guard.ps1`；紧急停止文件为 `%USERPROFILE%\.codex\leander-automation.disabled`，审计日志位于 `%USERPROFILE%\.codex\leander-logs\team-sharing-audit.jsonl`。AI 不合并 PR，`main` 只由人工在 GitHub 页面合并。
+
 ## Skills
 
 | Skill | 用途 |
