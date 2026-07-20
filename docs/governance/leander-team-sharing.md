@@ -148,7 +148,22 @@ PPT 项目在最终渲染复核时运行 `candidate-harvest.js --write`，从页
 
 ## 12. 飞书通知
 
-在仓库 Actions Secret 中配置 `FEISHU_WEBHOOK_URL` 后，PR 检查成功或失败会发送飞书卡片，包含 PR、Actions 和审核入口。不配置该 Secret 时通知步骤安全跳过，不影响 GitHub CI。
+在仓库 Actions Secret 中配置 `FEISHU_WEBHOOK_URL` 后，由 `Leander Feishu Notifications` 可信工作流统一发送飞书卡片。PR 验证工作流本身不读取飞书 Secret；可信通知工作流固定检出 `main`，不得检出或执行 PR Head 中的脚本。
+
+| 事件 | 飞书卡片 | 人工动作 |
+|---|---|---|
+| 候选 PR 检查通过 | 候选入库审批；显示风险通道、评分和最多三项关注原因 | 查看差异后合并或退回 |
+| 正式晋升 PR 检查通过 | 正式组件晋升审批 | Curator 与 Owner 确认后合并 |
+| 核心/治理 PR 检查通过 | Skill 核心变更或治理变更审批 | 核心变更按版本制度审批；Major 仍需 RFC/会议 |
+| PR 检查失败 | 红色检查失败卡片 | 查看 Actions 日志并修复 |
+| Review approved / changes requested | 审批结果或要求修改卡片 | 维护者合并，或作者修订 |
+| PR merged / closed | 绿色合并闭环或灰色关闭卡片 | 确认后续发布或停止处理 |
+| Tag/Release 工作流完成 | 发布成功或失败卡片 | Release Owner 检查 Release 和回滚点 |
+| 本地候选安全阻断 | 红色本地自动化卡片 | 检查对应电脑的审计日志 |
+| 本地稳定版更新失败 | 红色更新失败卡片 | 检查对应电脑的计划任务日志 |
+| 本地紧急停止开关生效 | 橙色自动化停止卡片 | 确认风险解除后人工恢复 |
+
+正常的空候选周期、已是最新稳定版等无需动作的成功事件不通知，避免群消息噪音。本地电脑不保存飞书 Webhook；本地脚本只使用现有 Git 凭据发送 `repository_dispatch`，且仅允许固定事件类型和固定说明，不上传原始异常、候选内容、本地路径或凭据。
 
 Webhook 只能提供链接按钮；如需在飞书内直接执行“批准/拒绝”，还需要单独部署带回调验签的飞书应用，不能仅靠自定义机器人 Webhook 完成。
 

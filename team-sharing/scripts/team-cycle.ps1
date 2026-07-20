@@ -9,16 +9,26 @@ param(
   [string]$AuditLog = "$env:USERPROFILE\.codex\leander-logs\team-sharing-audit.jsonl",
   [switch]$CreateDraftPullRequest,
   [switch]$SkipUpload,
-  [switch]$DryRun
+  [switch]$DryRun,
+  [switch]$AlertDryRun
 )
 
 $ErrorActionPreference = 'Stop'
 $repo = (Resolve-Path -LiteralPath $RepositoryRoot).Path
 $auditScript = Join-Path $repo 'team-sharing\scripts\audit-event.js'
+$alertScript = Join-Path $repo 'team-sharing\scripts\send-github-alert.js'
+function Send-TeamAlert([string]$Kind, [string]$Title, [string]$Details) {
+  if (-not (Test-Path -LiteralPath $alertScript)) { Write-Warning "Local alert sender not found: $alertScript"; return }
+  $arguments = @($alertScript, '--repo-root', $repo, '--kind', $Kind, '--title', $Title, '--details', $Details)
+  if ($AlertDryRun) { $arguments += '--dry-run' }
+  & node @arguments | Write-Output
+  if ($LASTEXITCODE -ne 0) { Write-Warning "Unable to forward local alert through GitHub: $Kind" }
+}
 if (Test-Path -LiteralPath $KillSwitchFile) {
   if (Test-Path -LiteralPath $auditScript) {
     & node $auditScript --log $AuditLog --event 'team-cycle' --status 'disabled' --details "Kill switch is present: $KillSwitchFile" | Out-Null
   }
+  Send-TeamAlert 'automation-disabled' 'Automation disabled' 'The local Leander kill switch prevented the team cycle.'
   Write-Output 'AUTOMATION_STATUS=disabled'
   Write-Output "KILL_SWITCH_FILE=$KillSwitchFile"
   exit 0
@@ -37,11 +47,21 @@ if ($DryRun) {
   $sync = Join-Path $repo 'team-sharing\scripts\sync-scheduled.ps1'
   $arguments = @{ RepositoryRoot = $repo; ContributionRoot = $ContributionRoot; MaxCandidates = $MaxCandidates; AuditLog = $AuditLog }
   if ($CreateDraftPullRequest) { $arguments.CreateDraftPullRequest = $true }
-  & $sync @arguments
-  if ($LASTEXITCODE -ne 0) { throw 'Candidate upload cycle failed.' }
+  try {
+    & $sync @arguments
+    if ($LASTEXITCODE -ne 0) { throw 'Candidate upload cycle failed.' }
+  } catch {
+    Send-TeamAlert 'candidate-cycle-blocked' 'Candidate cycle blocked' 'Candidate upload or safety validation did not complete; inspect the local Leander audit log.'
+    throw
+  }
 }
 
 $updater = Join-Path $repo 'team-sharing\scripts\update-leander.ps1'
-if ($DryRun) { & $updater -RepositoryRoot $repo -Destination $Destination -Channel $UpdateChannel -DryRun }
-else { & $updater -RepositoryRoot $repo -Destination $Destination -Channel $UpdateChannel }
-if ($LASTEXITCODE -ne 0) { throw 'Consumer update cycle failed.' }
+try {
+  if ($DryRun) { & $updater -RepositoryRoot $repo -Destination $Destination -Channel $UpdateChannel -DryRun }
+  else { & $updater -RepositoryRoot $repo -Destination $Destination -Channel $UpdateChannel }
+  if ($LASTEXITCODE -ne 0) { throw 'Consumer update cycle failed.' }
+} catch {
+  Send-TeamAlert 'consumer-update-failed' 'Stable update failed' 'The local Leander release check or installation failed; inspect the scheduled-task log.'
+  throw
+}

@@ -4,6 +4,7 @@ const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 const { value: auditValue } = require("../scripts/audit-event");
+const { sanitizeAlert, buildDispatch } = require("../scripts/send-github-alert");
 const {
   evaluatePushUpdates,
   hasIndependentReview,
@@ -69,4 +70,14 @@ test("audit argument parsing does not consume the next option as an empty value"
   const argv = ["node", "audit-event.js", "--subject", "--details", "Candidates=1"];
   assert.equal(auditValue(argv, "subject", ""), "");
   assert.equal(auditValue(argv, "details", ""), "Candidates=1");
+});
+
+test("local alert dispatches redact paths and tokens", () => {
+  const safe = sanitizeAlert("C:\\private\\deck.pptx ghp_12345678901234567890 /Users/alice/private.txt");
+  assert.doesNotMatch(safe, /private|ghp_|alice/i);
+  const dispatch = buildDispatch("candidate-cycle-blocked", "候选处理被阻断", safe, "https://github.com/acme/repo/actions", "alice");
+  assert.equal(dispatch.event_type, "leander_local_alert");
+  assert.equal(dispatch.client_payload.kind, "candidate-cycle-blocked");
+  assert.equal(dispatch.client_payload.source, "alice");
+  assert.throws(() => buildDispatch("arbitrary-event", "x", "y", "https://github.com"));
 });
