@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540">
+  <rect width="960" height="540" fill="#F6F3EE"/>
+  <text x="72" y="90" font-family="Arial" font-size="30" font-weight="700" fill="#1F3A5F">Controlled Validation</text>
+  <g fill="#FFFFFF" stroke="#9AA5B1" stroke-width="2">
+    <rect x="72" y="210" width="160" height="92" rx="14"/>
+    <rect x="292" y="210" width="160" height="92" rx="14" stroke="#D71920"/>
+    <rect x="512" y="210" width="160" height="92" rx="14"/>
+    <rect x="732" y="210" width="156" height="92" rx="14"/>
+  </g>
+  <g stroke="#9AA5B1" stroke-width="3"><path d="M232 256H292"/><path d="M452 256H512"/><path d="M672 256H732"/></g>
+  <g text-anchor="middle" font-family="Arial" font-size="20" font-weight="700" fill="#1F3A5F">
+    <text x="152" y="265">Attempt</text><text x="372" y="265" fill="#D71920">Guard</text><text x="592" y="265">Review</text><text x="810" y="265">Outcome</text>
+  </g>
+  <text x="72" y="410" font-family="Arial" font-size="18" fill="#52606D">Controlled pilot fixture — do not promote to the formal component library.</text>
+</svg>

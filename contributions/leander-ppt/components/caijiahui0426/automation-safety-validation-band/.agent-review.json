@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "leander-candidate-agent-review.v1",
+  "extractionMode": "controlled-pilot-fixture",
+  "status": "pass",
+  "evidenceDigest": "sha256:dfae110d51f7dbd5cf92e498ff2a627eaec56a0ec0c05c6202578dd7b993bc38",
+  "riskHint": "auto-intake",
+  "purpose": "Validate automation safety only; never approve for production."
+}
