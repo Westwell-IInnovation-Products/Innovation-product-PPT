@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "leander-candidate-agent-review.v1",
+  "extractionMode": "component-curator",
+  "status": "pass",
+  "evidenceDigest": "sha256:2b13a3a9ca2d692c47f873adb97d259fdb52912d3267f9796c60f0793396d28e",
+  "riskHint": "curator-review"
+}

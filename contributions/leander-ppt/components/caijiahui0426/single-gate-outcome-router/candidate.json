@@ -1,0 +1,76 @@
+{
+  "id": "single-gate-outcome-router",
+  "name": "singleGateOutcomeRouter",
+  "contributor": "caijiahui0426",
+  "version": "0.1.0",
+  "level": "page-pattern",
+  "relationships": [
+    "selection-routing",
+    "decision",
+    "boundary-filter"
+  ],
+  "tags": [
+    "single-gate",
+    "mutually-exclusive-outcomes",
+    "governed-routing"
+  ],
+  "density": "medium",
+  "editable": "yes",
+  "composable": "yes",
+  "relationPrimitive": "selection-routing",
+  "expressionCapability": "route multiple evidence inputs through one decision boundary into three mutually exclusive outcomes",
+  "semanticBindings": [
+    "change risk routing",
+    "content review disposition",
+    "data quality admission",
+    "release decision preparation"
+  ],
+  "slots": [
+    "inputs",
+    "gateLabel",
+    "gateDetail",
+    "outcomes",
+    "boundaryNote"
+  ],
+  "variants": [
+    "base",
+    "compact"
+  ],
+  "avoidWhen": [
+    "outcomes are sequential states rather than mutually exclusive routes",
+    "more than one decision gate is required",
+    "the page is a conversion funnel"
+  ],
+  "qaRisks": [
+    "crossing connectors",
+    "outcomes misread as a lifecycle",
+    "warning color used for a non-blocking route",
+    "boundary note too small for projection"
+  ],
+  "themeTokensUsed": [
+    "colors.surface",
+    "colors.primary",
+    "colors.accent",
+    "colors.accentSoft",
+    "colors.line",
+    "fonts.cn",
+    "fonts.en"
+  ],
+  "contentCapacity": {
+    "maxInputs": 4,
+    "maxOutcomes": 3,
+    "maxLabelChars": 24,
+    "maxDetailChars": 52
+  },
+  "themeCompatibility": [
+    "leander-base",
+    "leander-global"
+  ],
+  "designReviewPriority": "P1",
+  "status": "candidate",
+  "route": "component-library",
+  "metadataSource": "agent-proposed",
+  "metadataReviewStatus": "pending",
+  "selectionConfidenceCap": 0.4,
+  "designStatus": "review-required"
+}

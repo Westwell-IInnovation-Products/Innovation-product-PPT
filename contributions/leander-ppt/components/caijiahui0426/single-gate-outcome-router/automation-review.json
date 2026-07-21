@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "leander-candidate-assessment.v1",
+  "assessedAt": "2026-07-21T06:33:57.391Z",
+  "candidate": {
+    "id": "single-gate-outcome-router",
+    "name": "singleGateOutcomeRouter",
+    "contributor": "caijiahui0426",
+    "version": "0.1.0"
+  },
+  "lane": "auto-intake",
+  "score": 0,
+  "reasons": [],
+  "similar": [],
+  "automation": {
+    "createDraftPullRequest": true,
+    "candidateAreaMayAutoMerge": false,
+    "candidateAreaRequiresHumanMerge": true,
+    "productionPromotionRequiresHuman": true
+  }
+}
