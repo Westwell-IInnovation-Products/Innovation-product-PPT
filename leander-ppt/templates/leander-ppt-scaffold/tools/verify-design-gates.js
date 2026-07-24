@@ -1,4 +1,4 @@
-// Leander-PPT 设计硬门禁。
+// Leander-PPT 设计硬关卡。
 // 用法：
 //   node tools/verify-design-gates.js outline
 //   node tools/verify-design-gates.js blueprint
@@ -9,6 +9,7 @@
 // 渲染后的重叠、线条歪斜、微小字号仍需要 rendered QA / 视觉设计师复核。
 const fs = require("fs");
 const path = require("path");
+const { inspectBlueprintComponentContracts } = require("./component-contract");
 
 const ROOT = path.join(__dirname, "..");
 const PAGES = path.join(ROOT, "pages");
@@ -172,8 +173,8 @@ function inspectOutline(findings) {
     }
     const inventoryFile = path.join(ROOT, "source-evidence-index.json");
     const inventory = readJson(inventoryFile);
-    if (!inventory || inventory.version !== "source-evidence-index.v1") {
-      add(findings, "error", "outline", inventoryFile, "长 PPT 缺少 source-evidence-index.v1。", "先记录来源事实、可用素材、可支撑页数和缺口处理策略，避免稀释内容扩页。");
+    if (!inventory || inventory.version !== "source-evidence-index.v2") {
+      add(findings, "error", "outline", inventoryFile, "长 PPT 缺少 source-evidence-index.v2。", "先记录带内容哈希的来源、事实主张、可支撑页数和缺口处理策略，避免稀释内容扩页。");
     } else {
       const capacity = Number(inventory.evidenceCapacityPages || 0);
       const target = Number(inventory.targetPages || rows.length);
@@ -182,7 +183,7 @@ function inspectOutline(findings) {
       if (capacity < target && !["research-added", "merge-pages", "user-approved-low-evidence"].includes(policy)) {
         add(findings, "error", "outline", inventoryFile, `素材估计只支撑 ${capacity} 页，但目标为 ${target} 页。`, "补充研究/素材、合并页面，或记录用户明确接受的低证据边界。" );
       }
-      if (!Array.isArray(inventory.sources) || !inventory.sources.length) add(findings, "error", "outline", inventoryFile, "素材索引没有来源记录。", "至少记录原始文档、截图、公开资料或用户输入的路径/边界。" );
+      if (!Array.isArray(inventory.sources) || !inventory.sources.length) add(findings, "error", "outline", inventoryFile, "素材索引没有来源记录。", "至少记录原始文档、截图、公开资料或用户输入快照的路径、哈希和边界。" );
     }
   }
 }
@@ -191,7 +192,7 @@ function inspectBlueprint(findings, warnings) {
   const cfg = exists(path.join(ROOT, "deck.config.js")) ? require(path.join(ROOT, "deck.config.js")) : {};
   const file = path.join(ROOT, "layout-blueprint.json");
   if (cfg.workflow && cfg.workflow.stage === "outline-reset") {
-    add(warnings, "warning", "blueprint", file, "当前处于 outline-reset，旧 layout-blueprint.json 应视为 stale。", "确认大纲后重新生成蓝图，再运行 blueprint 门禁。");
+    add(warnings, "warning", "blueprint", file, "当前处于 outline-reset，旧 layout-blueprint.json 应视为 stale。", "确认大纲后重新生成蓝图，再运行 blueprint 关卡。");
     return;
   }
   if (!exists(file)) {
@@ -203,6 +204,9 @@ function inspectBlueprint(findings, warnings) {
     add(findings, "error", "blueprint", file, "layout-blueprint.json 没有 contracts/pages。", "蓝图必须逐页写出视觉合同。");
     return;
   }
+  const componentAudit = inspectBlueprintComponentContracts(contracts);
+  componentAudit.errors.forEach(item => add(findings, "error", "blueprint", file, item.message, "使用精确 candidateComponents；将自由布局意图移入 patternHints。"));
+  componentAudit.warnings.forEach(item => add(warnings, "warning", "blueprint", file, item.message, "candidateFamilies 已弃用，请迁移后再提交 Gate 1.5。"));
   for (const c of contracts) {
     const page = c.page || c.id || "unknown";
     if (!hasAny(c, ["expressionMode", "visualSignature"])) {
@@ -260,7 +264,7 @@ function pageDirs(activePages = []) {
 function inspectPages(findings, warnings) {
   const cfg = exists(path.join(ROOT, "deck.config.js")) ? require(path.join(ROOT, "deck.config.js")) : {};
   if (cfg.workflow && cfg.workflow.stage === "outline-reset") {
-    add(warnings, "warning", "pages", path.join(ROOT, "pages"), "当前处于 outline-reset，旧 pages/* 只作为 stale archive。", "确认新蓝图后重新生成页面合同，再运行 pages 门禁。");
+    add(warnings, "warning", "pages", path.join(ROOT, "pages"), "当前处于 outline-reset，旧 pages/* 只作为 stale archive。", "确认新蓝图后重新生成页面合同，再运行 pages 关卡。");
     return;
   }
   const activePages = Array.isArray(cfg.workflow?.activePages) ? cfg.workflow.activePages : [];
@@ -320,7 +324,7 @@ function inspectPages(findings, warnings) {
         add(findings, "error", "pages", pageJson, `${page} qaProfile 缺少 render-sha256 证据要求。`, "QA 必须绑定当前渲染哈希。" );
       }
     } else {
-      add(findings, "error", "pages", pageJson, `${page} 尚无 qa-profile.zh.v2。`, "页面生产前运行 build-qa-profile；旧 V1 不能继续通过门禁。" );
+      add(findings, "error", "pages", pageJson, `${page} 尚无 qa-profile.zh.v2。`, "页面生产前运行 build-qa-profile；旧 V1 不能继续通过关卡。" );
     }
     const code = readText(pageJs);
     if (/fontFace\s*:\s*["']Microsoft YaHei["'][\s\S]{0,80}[A-Za-z0-9]/.test(code)) {
@@ -346,19 +350,19 @@ function writeReport(findings, warnings) {
   fs.writeFileSync(jsonOut, JSON.stringify(report, null, 2), "utf8");
 
   const lines = [
-    "# 设计硬门禁审计",
+    "# 设计硬关卡审计",
     "",
     `- 模式：${cmd}`,
     `- 结论：${verdict}`,
     `- 硬性问题：${findings.length}`,
     `- 提醒项：${warnings.length}`,
     "",
-    "## 这个门禁检查什么",
+    "## 这个关卡检查什么",
     "- 规则是否进入 DESIGN.md、outline、layout-blueprint、page.json、qaProfile。",
     "- 是否显式声明表达模式、颜色意图、截图槽位、主体区域和默认总结框理由。",
     "- 是否把状态、机制、事实边界写进产物合同。",
     "",
-    "## 这个门禁不检查什么",
+    "## 这个关卡不检查什么",
     "- 不直接判断渲染 PNG 里的真实重叠、线条歪斜、字号观感和美感。",
     "- 这些必须通过 rendered QA、视觉设计师和 reviewer 子 agent 继续检查。",
     "",

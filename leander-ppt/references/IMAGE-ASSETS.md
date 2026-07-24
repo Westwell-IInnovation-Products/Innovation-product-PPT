@@ -1,39 +1,39 @@
-# Image Assets — Reserve-A-Slot + Prompt-Spec Workflow
+# 图片素材——预留槽位 + Prompt 规格 工作流
 
-Some content is better as a **generated/real image** than hand-drawn vector shapes. Forcing a realistic scene out of rectangles and lines reads stiff/AI-generated ("死板"). This file defines how the deck **reserves an image slot** in the layout and **emits a prompt-spec markdown** so the image can be produced (via `gpt-image-2` / real screenshot / photo) and dropped in later — with the deck always rendering in the meantime.
+有些内容用**生成/真实图片**比手绘矢量形状更好。硬把一个写实场景用矩形和线条拼出来,会显得僵硬、有 AI 味("死板")。本文件定义 deck 如何在布局里**预留一个图片槽位**,并**产出一份 prompt 规格 markdown**,让图片可以(通过 `gpt-image-2` / 真实截图 / 照片)在之后产出并放入——而这期间 deck 始终能正常渲染。
 
-Distilled from several internal technical-deck image workflows; examples are illustrative, not a default page allocation.
+提取自若干内部技术 deck 的图片工作流;示例仅作说明,不是默认的页面分配。
 
-## When to draw vector vs reserve an image slot
+## 何时画矢量、何时预留图片槽位
 
-**Draw with components (vector)** — relationships and structure: flow, matrix, timeline, architecture, comparison, table, chart, simple meaning-bearing icons. Editable, on-brand, fast. This is the default.
+**用组件画(矢量)**——用于关系与结构:流程、矩阵、时间线、架构、对比、表格、图表、简单的承载含义的图标。可编辑、符合品牌、快。这是默认。
 
-**Reserve an image slot** — when the subject is a **scene or realistic depiction** that vector renders crudely:
-- Real-world scenes that explain the current subject, installation, workflow, or operating environment.
-- Sensor / point-cloud / detection visualizations ("what the output looks like" — colored point cloud, detection boxes).
-- Product likenesses, textured/organic subjects, anything needing depth/perspective.
-- Decorative scene strips (port skyline) for cover/closing/divider polish.
-- Heuristic: *if hand-drawing it needs dozens of primitives and still looks stiff → reserve an image slot.*
+**预留图片槽位**——当主体是矢量渲染起来很粗糙的**场景或写实描绘**时:
+- 解释当前主题、安装、工作流或运行环境的真实世界场景。
+- 传感器 / 点云 / 检测可视化("输出长什么样"——彩色点云、检测框)。
+- 产品外形、有纹理/有机的主体,以及任何需要景深/透视的东西。
+- 给封面/结尾/分隔页做点缀的装饰性场景条(港口天际线)。
+- 经验法则:*如果手绘它需要几十个图元、而且仍然显得僵硬 → 预留一个图片槽位。*
 
-A deck should **mix both** — an all-vector deck reads rigid (see `LESSONS.md` → "balance vector diagrams with real imagery").
+一份 deck 应该**两者混用**——全矢量的 deck 读起来很死板(见 `LESSONS.md`:矢量图示与真实图片需平衡)。
 
-## The workflow
+## 工作流
 
-1. **Outline.** In `outline.md`, mark such a page's `Component source` as `image2` (or `real-image`), and list the asset in the Asset list with its slot. Plan the page so a real rectangle is reserved for the image.
-2. **Build with an image slot.** Use `ui.imageSlot(...)` (scaffold helper) for the reserved rectangle. It renders the transparent PNG if the file exists, else a **vector fallback** (glyph on a tinted ground) so the deck never breaks. Page data carries `img: "assets/<group>/<name>.png"`.
-3. **Emit a prompt-spec markdown** next to the deck: `<deck>-images.gpt-image-2.md` — one entry per asset (id, page+slot, filename, size, transparency, ready-to-run prompt, shared style line). Hand it to the user (or run `gpt-image-2` if `OPENAI_API_KEY` / a host image tool is available — see `LESSONS.md` tool check).
-4. **Drop in + re-render.** User saves the **transparent** PNGs to `assets/`. Re-render — images blend into the theme background. Done.
+1. **大纲。** 在 `outline.md` 里,把这类页面的 `Component source` 标为 `image2`(或 `real-image`),并把该素材连同它的槽位列进 Asset 清单。把页面规划成:为图片预留一个真实矩形。
+2. **用图片槽位来搭建。** 用 `ui.imageSlot(...)`(框架 helper)放那个预留矩形。若文件存在,它渲染透明 PNG;否则渲染**矢量备用**(着色底上的字形),这样 deck 永不崩。页面数据带 `img: "assets/<group>/<name>.png"`。
+3. **产出一份 prompt 规格 markdown**,放在 deck 旁边:`<deck>-images.gpt-image-2.md`——每个素材一条(id、页面+槽位、文件名、尺寸、透明度、可直接运行的 prompt、共享风格行)。把它交给用户(或者,如果有 `OPENAI_API_KEY` / 宿主图片工具,就跑 `gpt-image-2`——见 `LESSONS.md` 的工具检查)。
+4. **放入 + 重渲染。** 用户把**透明** PNG 存到 `assets/`。重渲染——图片融进主题背景。完成。
 
-## Hard conventions
+## 硬约定
 
-- **Transparent PNG (RGBA, colorType 6), never flattened/opaque.** Verify: a "keyed"/exported file may secretly be RGB (colorType 2) = opaque white box. The non-keyed transparent export is the one to use. (Decode/inspect alpha if unsure.)
-- **No white card behind the image.** A transparent line illustration must sit directly on the theme ground and **blend**. A white/`surface` panel behind it defeats the point (the #1 mistake — "为什么是白色的底图"). If the art needs a container for contrast, use the tinted ground `surface3`, never pure white.
-- **Style is a per-theme token.** Base: deep navy `#07195A`, single-weight (~3px) line or stipple, flat or light isometric, **transparent bg, no text**. Square `1:1` for spot illustrations; wide `3:1` for strips (skyline).
-- **Sizing:** contain the (usually square) art inside the slot, centered; don't distort to a non-square box.
-- **Naming:** kebab-case under `assets/<group>/` (e.g. `assets/scenes/p05-operating-scene.png`).
-- **Boundary:** real screenshots/photos keep their source label (public-reference). Don't fabricate logos/product photos.
+- **透明 PNG(RGBA,colorType 6),绝不压平/不透明。** 核实:一个"抠像"/导出的文件可能暗地里是 RGB(colorType 2)= 不透明的白盒子。要用的是那个非抠像的透明导出。(不确定就解码/检查 alpha。)
+- **图片背后不要白卡。** 透明线条插画必须直接坐在主题底上并**融合**。背后放一块白/`surface` 面板就前功尽弃(头号错误——"为什么是白色的底图")。如果画面需要一个容器来做对比,用着色底 `surface3`,绝不用纯白。
+- **风格是每个主题的一个 token。** Base:深藏青 `#07195A`,单一线宽(~3px)的线条或点画,平面或轻微等距,**透明底、无文字**。点状插画用正方形 `1:1`;条幅用宽幅 `3:1`(天际线)。
+- **尺寸:** 把(通常是正方形的)画面 contain 在槽位内、居中;不要拉伸到一个非正方形的盒子里。
+- **命名:** `assets/<group>/` 下用 kebab-case(如 `assets/scenes/p05-operating-scene.png`)。
+- **边界:** 真实截图/照片保留其来源标签(公开引用)。不要伪造 logo/产品照片。
 
-## `imageSlot` helper (scaffold `components/editorial.js`)
+## `imageSlot` helper(框架 `components/editorial.js`)
 
 ```js
 // Reserve a slot. Transparent PNG → blends on theme ground (no card). Missing → vector fallback.
@@ -46,7 +46,7 @@ ui.imageSlot(slide, {
 });
 ```
 
-## Prompt-spec markdown template
+## Prompt 规格 markdown 模板
 
 ```markdown
 # <Deck 名> · 待生成图清单 (gpt-image-2)
@@ -57,4 +57,4 @@ ui.imageSlot(slide, {
 > <英文 prompt……, transparent background, no text, 1:1>
 ```
 
-Project-specific prompt specs belong in the project scaffold. Do not load a prior project's prompts as defaults for a new deck.
+项目专属的 prompt 规格属于项目框架。不要把上一个项目的 prompt 作为新 deck 的默认加载。

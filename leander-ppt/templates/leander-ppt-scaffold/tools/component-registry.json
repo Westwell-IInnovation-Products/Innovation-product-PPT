@@ -1,11 +1,11 @@
 {
   "schemaVersion": "component-registry.v3",
   "libraryCounts": {
-    "themeLibraries": 2,
-    "baseComponents": 57,
+    "themeLibraries": 5,
+    "baseComponents": 63,
     "editorialComponents": 7,
     "bespokeComponents": 6,
-    "totalExecutableComponents": 70,
+    "totalExecutableComponents": 76,
     "image2Components": 0
   },
   "themes": [
@@ -16,10 +16,28 @@
       "style": "warm off-white ground, navy structure, Westwell red focus, restrained corporate layout"
     },
     {
+      "name": "base2",
+      "label": "Base2",
+      "bestFor": "internal mechanism, evidence, status, governance, and decision decks",
+      "style": "warm off-white ground, navy structure, red semantic focus, rounded panels, and restrained single-layer elevation"
+    },
+    {
+      "name": "base3",
+      "label": "Base3",
+      "bestFor": "high-density work-result reporting, business plans, and dense label-to-detail reviews",
+      "style": "white ground, flat and sharp chrome with square corners and no elevation, navy structure carrying a red and ocean-teal tri-accent graphic layer, statement titles over a dense label-to-detail grid"
+    },
+    {
       "name": "leander-global",
       "label": "Leander Global",
       "bestFor": "external, international, customer-facing or formal decks",
       "style": "clean white ground, navy structure, azure focus, formal English-first look"
+    },
+    {
+      "name": "global-v2",
+      "label": "GlobalV2",
+      "bestFor": "industrial, automation, technical product, mechanism, and evidence-led decks",
+      "style": "blue-white high-key ground, deep-ink structure, engineering-blue focus, restrained teal data signal, reference-measured title and baseline chrome"
     }
   ],
   "externalSources": [
@@ -116,6 +134,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -137,9 +158,12 @@
       ],
       "density": "low",
       "level": "page-pattern",
-      "relationPrimitive": "scene",
-      "expressionCapability": "anchor the page with a real or generated visual, screenshot, map, or scene; tuned for closing, slogan, brand",
+      "relationPrimitive": "brand-closing",
+      "expressionCapability": "close a deck with one memorable slogan, approved brand chrome, intentional whitespace, and optional page-local action extensions",
       "semanticBindings": [
+        "closing commitment",
+        "call to action",
+        "brand sign-off",
         "product scene",
         "screenshot proof",
         "generated concept image"
@@ -147,25 +171,31 @@
       "editable": "yes",
       "composable": "limited",
       "slots": [
-        "imageArea",
-        "markers",
-        "caption",
-        "sourceOrPrompt"
+        "slogan",
+        "subtitle",
+        "brandChrome",
+        "footer"
       ],
       "variants": [
         "base",
         "compact",
+        "action-extension",
         "image-or-evidence"
       ],
       "avoidWhen": [
+        "the page is not a deck closing",
+        "multiple competing conclusions are required",
         "only a small local visual part is needed",
         "the image would be decorative rather than explanatory"
       ],
       "qaRisks": [
+        "more than one closing focal point",
+        "brand chrome is missing",
+        "local action extensions compete with the slogan",
+        "hard-coded semantics instead of reusable relationship",
         "decorative image",
         "generated image too complex",
-        "image/text mismatch",
-        "hard-coded semantics instead of reusable relationship"
+        "image/text mismatch"
       ],
       "themeTokensUsed": [
         "colors.bg",
@@ -185,12 +215,20 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
-      "metadataSource": "legacy-inferred",
-      "metadataReviewStatus": "legacy-reviewed",
-      "selectionConfidenceCap": 0.74
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "selectionConfidenceCap": 0.88,
+      "reviewedAt": "2026-07-23",
+      "reviewedBy": "component-curator",
+      "secondaryRelationships": [
+        "decision"
+      ]
     },
     {
       "name": "sectionDivider",
@@ -253,6 +291,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -321,6 +362,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -391,6 +435,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -461,6 +508,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -530,6 +580,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -599,6 +652,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -669,6 +725,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -739,6 +798,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -761,7 +823,7 @@
       "density": "medium",
       "level": "page-pattern",
       "relationPrimitive": "evidence",
-      "expressionCapability": "present measurable proof, charts, metrics, or source-backed observations; tuned for chart, composition, ratio",
+      "expressionCapability": "show part-to-whole composition from sourced quantitative values whose total and unit are explicit",
       "semanticBindings": [
         "metric proof",
         "trend evidence",
@@ -770,10 +832,11 @@
       "editable": "yes",
       "composable": "limited",
       "slots": [
-        "metricsOrChart",
+        "segments",
+        "values",
+        "unit",
         "sourceBoundary",
-        "annotation",
-        "caveat"
+        "annotation"
       ],
       "variants": [
         "base",
@@ -781,13 +844,18 @@
         "image-or-evidence"
       ],
       "avoidWhen": [
+        "the page is qualitative",
+        "values do not share one total",
+        "there is no source or unit",
         "only a small local visual part is needed",
         "there is no source, data boundary, or proof object"
       ],
       "qaRisks": [
+        "segments do not sum to the stated total",
+        "small slices are unreadable",
+        "missing source boundary",
         "unsupported claims",
         "chart readability",
-        "missing source boundary",
         "hard-coded semantics instead of reusable relationship"
       ],
       "themeTokensUsed": [
@@ -808,20 +876,27 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
-      "metadataSource": "legacy-inferred",
-      "metadataReviewStatus": "legacy-reviewed",
-      "selectionConfidenceCap": 0.74
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "selectionConfidenceCap": 0.68,
+      "secondaryRelationships": [
+        "contrast"
+      ],
+      "reviewedAt": "2026-07-22",
+      "reviewedBy": "component-curator"
     },
     {
       "name": "radar",
       "library": "base",
       "route": "component-library",
       "relationships": [
-        "contrast",
-        "evidence"
+        "contrast"
       ],
       "tags": [
         "capability",
@@ -831,7 +906,7 @@
       "density": "medium",
       "level": "page-pattern",
       "relationPrimitive": "contrast",
-      "expressionCapability": "compare two states, options, tensions, or before/after outcomes; tuned for capability, multi-dimension, score",
+      "expressionCapability": "compare alternatives across common normalized axes with the same direction and measurement boundary",
       "semanticBindings": [
         "before and after",
         "problem versus mechanism",
@@ -840,20 +915,27 @@
       "editable": "yes",
       "composable": "limited",
       "slots": [
-        "left",
-        "right",
-        "contrastBridge",
-        "conclusion"
+        "axes",
+        "normalizedSeries",
+        "scale",
+        "legend",
+        "sourceBoundary"
       ],
       "variants": [
         "base",
         "compact"
       ],
       "avoidWhen": [
+        "the page is qualitative",
+        "axes have unrelated units",
+        "more than three series must be compared",
         "only a small local visual part is needed",
         "the two sides are not comparable on the same dimension"
       ],
       "qaRisks": [
+        "axes imply false comparability",
+        "overlapping polygons hide values",
+        "normalization is unexplained",
         "unequal comparison sides",
         "decorative red without meaning",
         "weak conclusion",
@@ -877,20 +959,27 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
-      "metadataSource": "legacy-inferred",
-      "metadataReviewStatus": "legacy-reviewed",
-      "selectionConfidenceCap": 0.74
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "selectionConfidenceCap": 0.64,
+      "secondaryRelationships": [
+        "evidence"
+      ],
+      "reviewedAt": "2026-07-22",
+      "reviewedBy": "component-curator"
     },
     {
       "name": "waterfall",
       "library": "base",
       "route": "component-library",
       "relationships": [
-        "evidence",
-        "sequence"
+        "evidence"
       ],
       "tags": [
         "value-bridge",
@@ -900,7 +989,7 @@
       "density": "medium",
       "level": "page-pattern",
       "relationPrimitive": "evidence",
-      "expressionCapability": "present measurable proof, charts, metrics, or source-backed observations; tuned for value-bridge, delta, financial",
+      "expressionCapability": "explain additive positive and negative deltas that reconcile a sourced starting value to an ending value",
       "semanticBindings": [
         "metric proof",
         "trend evidence",
@@ -909,10 +998,12 @@
       "editable": "yes",
       "composable": "limited",
       "slots": [
-        "metricsOrChart",
+        "startValue",
+        "deltas",
+        "endValue",
+        "unit",
         "sourceBoundary",
-        "annotation",
-        "caveat"
+        "annotation"
       ],
       "variants": [
         "base",
@@ -920,10 +1011,16 @@
         "image-or-evidence"
       ],
       "avoidWhen": [
+        "the page is qualitative",
+        "changes are not additive",
+        "start and end values cannot be reconciled",
         "only a small local visual part is needed",
         "there is no source, data boundary, or proof object"
       ],
       "qaRisks": [
+        "delta arithmetic does not reconcile",
+        "positive and negative semantics are unclear",
+        "missing unit or source",
         "unsupported claims",
         "chart readability",
         "missing source boundary",
@@ -947,20 +1044,27 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
-      "metadataSource": "legacy-inferred",
-      "metadataReviewStatus": "legacy-reviewed",
-      "selectionConfidenceCap": 0.74
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "selectionConfidenceCap": 0.76,
+      "secondaryRelationships": [
+        "sequence"
+      ],
+      "reviewedAt": "2026-07-22",
+      "reviewedBy": "component-curator"
     },
     {
       "name": "heatmap",
       "library": "base",
       "route": "component-library",
       "relationships": [
-        "evidence",
-        "contrast"
+        "evidence"
       ],
       "tags": [
         "matrix",
@@ -970,7 +1074,7 @@
       "density": "high",
       "level": "page-pattern",
       "relationPrimitive": "evidence",
-      "expressionCapability": "present measurable proof, charts, metrics, or source-backed observations; tuned for matrix, risk, intensity",
+      "expressionCapability": "compare two-dimensional observations on one consistent scale with a visible legend and source boundary",
       "semanticBindings": [
         "metric proof",
         "trend evidence",
@@ -979,10 +1083,12 @@
       "editable": "yes",
       "composable": "limited",
       "slots": [
-        "metricsOrChart",
+        "rows",
+        "columns",
+        "values",
+        "scaleLegend",
         "sourceBoundary",
-        "annotation",
-        "caveat"
+        "annotation"
       ],
       "variants": [
         "base",
@@ -991,14 +1097,19 @@
         "reduced-density"
       ],
       "avoidWhen": [
+        "the page is qualitative",
+        "cells use incomparable scales",
+        "there is no legend or source",
         "only a small local visual part is needed",
         "the page has low information density or needs a breathing transition",
         "there is no source, data boundary, or proof object"
       ],
       "qaRisks": [
+        "color scale is ambiguous",
+        "labels overflow dense cells",
+        "missing source boundary",
         "unsupported claims",
         "chart readability",
-        "missing source boundary",
         "hard-coded semantics instead of reusable relationship",
         "text overflow or unreadable labels"
       ],
@@ -1020,12 +1131,20 @@
         "maxBodyChars": 72
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
-      "metadataSource": "legacy-inferred",
-      "metadataReviewStatus": "legacy-reviewed",
-      "selectionConfidenceCap": 0.74
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "selectionConfidenceCap": 0.72,
+      "secondaryRelationships": [
+        "contrast"
+      ],
+      "reviewedAt": "2026-07-22",
+      "reviewedBy": "component-curator"
     },
     {
       "name": "processTimeline",
@@ -1042,7 +1161,7 @@
       "density": "medium",
       "level": "page-pattern",
       "relationPrimitive": "sequence",
-      "expressionCapability": "express ordered stages, handoffs, milestones, or production flow; tuned for process, horizontal, steps",
+      "expressionCapability": "show a single linear ordered process whose stages share one direction and comparable granularity",
       "semanticBindings": [
         "production workflow",
         "approval pipeline",
@@ -1054,7 +1173,8 @@
         "stages",
         "connectors",
         "stageLabels",
-        "evidenceOrOutput"
+        "stageDetails",
+        "outcome"
       ],
       "variants": [
         "base",
@@ -1062,9 +1182,15 @@
         "line"
       ],
       "avoidWhen": [
+        "multiple actors require lanes",
+        "dated gates are the primary message",
+        "the relationship is cyclic",
         "only a small local visual part is needed"
       ],
       "qaRisks": [
+        "unclear start and end",
+        "uneven stage granularity",
+        "connector direction is ambiguous",
         "connector geometry",
         "step spacing",
         "unclear start/end",
@@ -1088,12 +1214,20 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
-      "metadataSource": "legacy-inferred",
-      "metadataReviewStatus": "legacy-reviewed",
-      "selectionConfidenceCap": 0.74
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "selectionConfidenceCap": 0.84,
+      "secondaryRelationships": [
+        "lifecycle"
+      ],
+      "reviewedAt": "2026-07-22",
+      "reviewedBy": "component-curator"
     },
     {
       "name": "timelineVertical",
@@ -1157,6 +1291,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -1179,7 +1316,7 @@
       "density": "medium",
       "level": "page-pattern",
       "relationPrimitive": "sequence",
-      "expressionCapability": "express ordered stages, handoffs, milestones, or production flow; tuned for icon-nodes, line-frame, milestones",
+      "expressionCapability": "show numbered or dated milestones where gates, approvals, or deliverables are more important than continuous flow",
       "semanticBindings": [
         "production workflow",
         "approval pipeline",
@@ -1188,10 +1325,11 @@
       "editable": "yes",
       "composable": "limited",
       "slots": [
-        "stages",
-        "connectors",
-        "stageLabels",
-        "evidenceOrOutput"
+        "milestones",
+        "datesOrNumbers",
+        "gates",
+        "deliverables",
+        "currentMilestone"
       ],
       "variants": [
         "base",
@@ -1199,9 +1337,15 @@
         "line"
       ],
       "avoidWhen": [
+        "there are no meaningful gates or milestones",
+        "actor ownership requires lanes",
+        "the page explains value transformation",
         "only a small local visual part is needed"
       ],
       "qaRisks": [
+        "milestone order is unclear",
+        "gate and deliverable are conflated",
+        "date labels collide",
         "connector geometry",
         "step spacing",
         "unclear start/end",
@@ -1225,12 +1369,20 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
-      "metadataSource": "legacy-inferred",
-      "metadataReviewStatus": "legacy-reviewed",
-      "selectionConfidenceCap": 0.74
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "selectionConfidenceCap": 0.82,
+      "secondaryRelationships": [
+        "decision"
+      ],
+      "reviewedAt": "2026-07-22",
+      "reviewedBy": "component-curator"
     },
     {
       "name": "pipelineFlow",
@@ -1248,7 +1400,7 @@
       "density": "medium",
       "level": "layout-block",
       "relationPrimitive": "sequence",
-      "expressionCapability": "express ordered stages, handoffs, milestones, or production flow; tuned for process, phases, summary, mechanism",
+      "expressionCapability": "show grouped phases spanning an execution rail with supporting inputs, outputs, or control evidence",
       "semanticBindings": [
         "production workflow",
         "approval pipeline",
@@ -1257,20 +1409,26 @@
       "editable": "yes",
       "composable": "medium",
       "slots": [
-        "container",
-        "stages",
-        "connectors",
-        "stageLabels",
-        "supportingEvidence"
+        "phases",
+        "phaseSpans",
+        "executionSteps",
+        "inputs",
+        "outputs",
+        "controlEvidence"
       ],
       "variants": [
         "base",
         "line"
       ],
       "avoidWhen": [
-        "the page relationship, density, or required slots do not match this component"
+        "phase spans are meaningless",
+        "a simple linear process is sufficient",
+        "multiple actors require lanes"
       ],
       "qaRisks": [
+        "phase bands and steps misalign",
+        "supporting evidence overwhelms the rail",
+        "direction is unclear",
         "connector geometry",
         "step spacing",
         "unclear start/end",
@@ -1294,12 +1452,20 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
-      "metadataSource": "legacy-inferred",
-      "metadataReviewStatus": "legacy-reviewed",
-      "selectionConfidenceCap": 0.74
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "selectionConfidenceCap": 0.8,
+      "secondaryRelationships": [
+        "system-map"
+      ],
+      "reviewedAt": "2026-07-22",
+      "reviewedBy": "component-curator"
     },
     {
       "name": "valueChain",
@@ -1316,7 +1482,7 @@
       "density": "medium",
       "level": "page-pattern",
       "relationPrimitive": "sequence",
-      "expressionCapability": "express ordered stages, handoffs, milestones, or production flow; tuned for chain, stages, business-flow",
+      "expressionCapability": "show how inputs are transformed through value-adding stages into explicit outputs or outcomes",
       "semanticBindings": [
         "production workflow",
         "approval pipeline",
@@ -1325,10 +1491,11 @@
       "editable": "yes",
       "composable": "limited",
       "slots": [
+        "inputs",
         "stages",
-        "connectors",
-        "stageLabels",
-        "evidenceOrOutput"
+        "transformations",
+        "outputs",
+        "valueEvidence"
       ],
       "variants": [
         "base",
@@ -1336,9 +1503,15 @@
         "line"
       ],
       "avoidWhen": [
+        "stages do not transform anything",
+        "the page only lists chronological steps",
+        "actor ownership is the primary message",
         "only a small local visual part is needed"
       ],
       "qaRisks": [
+        "input and output are disconnected",
+        "stages read as generic cards",
+        "value added by each stage is missing",
         "connector geometry",
         "step spacing",
         "unclear start/end",
@@ -1362,12 +1535,20 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
-      "metadataSource": "legacy-inferred",
-      "metadataReviewStatus": "legacy-reviewed",
-      "selectionConfidenceCap": 0.74
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "selectionConfidenceCap": 0.78,
+      "secondaryRelationships": [
+        "system-map"
+      ],
+      "reviewedAt": "2026-07-22",
+      "reviewedBy": "component-curator"
     },
     {
       "name": "swimlaneProcess",
@@ -1384,7 +1565,7 @@
       "density": "high",
       "level": "page-pattern",
       "relationPrimitive": "sequence",
-      "expressionCapability": "express ordered stages, handoffs, milestones, or production flow; tuned for roles, lanes, cross-role-process",
+      "expressionCapability": "show aligned actions across actors or roles so ownership, handoff, and timing remain visible",
       "semanticBindings": [
         "production workflow",
         "approval pipeline",
@@ -1393,10 +1574,12 @@
       "editable": "yes",
       "composable": "limited",
       "slots": [
-        "stages",
-        "connectors",
-        "stageLabels",
-        "evidenceOrOutput"
+        "phases",
+        "lanes",
+        "owners",
+        "actions",
+        "handoffs",
+        "exceptions"
       ],
       "variants": [
         "base",
@@ -1405,10 +1588,16 @@
         "reduced-density"
       ],
       "avoidWhen": [
+        "there is only one actor",
+        "ownership is not relevant",
+        "actions cannot align to common phases",
         "only a small local visual part is needed",
         "the page has low information density or needs a breathing transition"
       ],
       "qaRisks": [
+        "handoffs cross unrelated lanes",
+        "lane labels become unreadable",
+        "empty cells dominate the page",
         "connector geometry",
         "step spacing",
         "unclear start/end",
@@ -1433,12 +1622,20 @@
         "maxBodyChars": 72
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
-      "metadataSource": "legacy-inferred",
-      "metadataReviewStatus": "legacy-reviewed",
-      "selectionConfidenceCap": 0.74
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "selectionConfidenceCap": 0.86,
+      "secondaryRelationships": [
+        "hierarchy"
+      ],
+      "reviewedAt": "2026-07-22",
+      "reviewedBy": "component-curator"
     },
     {
       "name": "gantt",
@@ -1504,6 +1701,9 @@
         "maxBodyChars": 72
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -1516,8 +1716,7 @@
       "library": "base",
       "route": "component-library",
       "relationships": [
-        "state",
-        "lifecycle"
+        "state"
       ],
       "tags": [
         "state",
@@ -1527,9 +1726,13 @@
       ],
       "density": "medium",
       "level": "page-pattern",
-      "relationPrimitive": "state",
-      "expressionCapability": "show a current state, isolated unit, memory boundary, or state transition; tuned for state, memory, status, repair",
+      "relationPrimitive": "state-transition",
+      "expressionCapability": "show explicit ordinary, current, and exception states with allowed transitions, operations, and entry or exit evidence",
       "semanticBindings": [
+        "software version update",
+        "model deployment state",
+        "template or Skill installation",
+        "approval object lifecycle",
         "page isolation",
         "state memory",
         "local repair boundary"
@@ -1538,9 +1741,11 @@
       "composable": "limited",
       "slots": [
         "states",
+        "transitions",
         "currentState",
-        "detailExpansion",
-        "evidence"
+        "allowedOperations",
+        "entryExitEvidence",
+        "exceptionState"
       ],
       "variants": [
         "base",
@@ -1548,9 +1753,16 @@
         "line"
       ],
       "avoidWhen": [
+        "items are merely chronological steps",
+        "states have no transition rules",
+        "the current state is irrelevant",
         "only a small local visual part is needed"
       ],
       "qaRisks": [
+        "transition direction is unclear",
+        "state and action are conflated",
+        "current state is encoded as failed",
+        "exception paths cross the main flow",
         "fake file/state structure",
         "unclear current state",
         "over-dense expansion",
@@ -1574,12 +1786,20 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
-      "metadataSource": "legacy-inferred",
-      "metadataReviewStatus": "legacy-reviewed",
-      "selectionConfidenceCap": 0.74
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "selectionConfidenceCap": 0.88,
+      "secondaryRelationships": [
+        "lifecycle"
+      ],
+      "reviewedAt": "2026-07-23",
+      "reviewedBy": "component-curator"
     },
     {
       "name": "workflowConfig",
@@ -1643,6 +1863,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -1712,6 +1935,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -1779,6 +2005,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -1847,6 +2076,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -1859,8 +2091,7 @@
       "library": "base",
       "route": "component-library",
       "relationships": [
-        "system-map",
-        "hierarchy"
+        "system-map"
       ],
       "tags": [
         "architecture",
@@ -1870,7 +2101,7 @@
       "density": "high",
       "level": "page-pattern",
       "relationPrimitive": "system-map",
-      "expressionCapability": "show modules, dependencies, inputs, outputs, and central system paths; tuned for architecture, layers, modules",
+      "expressionCapability": "show dependency layers, shared rails, and modules whose vertical order carries architectural meaning",
       "semanticBindings": [
         "skill module map",
         "platform architecture",
@@ -1879,9 +2110,10 @@
       "editable": "yes",
       "composable": "limited",
       "slots": [
+        "layers",
         "modules",
+        "sharedRails",
         "dependencies",
-        "coreNode",
         "inputsOutputs"
       ],
       "variants": [
@@ -1890,10 +2122,16 @@
         "reduced-density"
       ],
       "avoidWhen": [
+        "vertical order has no dependency meaning",
+        "a central input-core-output map is clearer",
+        "the page has too few modules",
         "only a small local visual part is needed",
         "the page has low information density or needs a breathing transition"
       ],
       "qaRisks": [
+        "layers imply a false dependency",
+        "module density becomes unreadable",
+        "shared rails compete with layers",
         "module overload",
         "dependency ambiguity",
         "center path unclear",
@@ -1918,12 +2156,20 @@
         "maxBodyChars": 72
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
-      "metadataSource": "legacy-inferred",
-      "metadataReviewStatus": "legacy-reviewed",
-      "selectionConfidenceCap": 0.74
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "selectionConfidenceCap": 0.82,
+      "secondaryRelationships": [
+        "hierarchy"
+      ],
+      "reviewedAt": "2026-07-22",
+      "reviewedBy": "component-curator"
     },
     {
       "name": "moduleCorrespondenceMap",
@@ -1931,8 +2177,7 @@
       "library": "base",
       "route": "component-library",
       "relationships": [
-        "system-map",
-        "hierarchy"
+        "system-map"
       ],
       "tags": [
         "module-correspondence-map",
@@ -1951,17 +2196,19 @@
       "composable": "limited",
       "editable": "yes",
       "relationPrimitive": "system-map",
-      "expressionCapability": "show modules, dependencies, inputs, outputs, and central system paths; tuned for module-correspondence-map, system.module-map, directory-to-module-responsibility-output, directory",
+      "expressionCapability": "map source units or folders to modules, responsibilities, and outputs while preserving traceable correspondence",
       "semanticBindings": [
         "skill module map",
         "platform architecture",
         "capability architecture"
       ],
       "slots": [
+        "sourceUnits",
         "modules",
-        "dependencies",
-        "coreNode",
-        "inputsOutputs"
+        "responsibilities",
+        "outputs",
+        "correspondenceLinks",
+        "rootContext"
       ],
       "variants": [
         "base",
@@ -1969,10 +2216,16 @@
         "reduced-density"
       ],
       "avoidWhen": [
+        "there is no traceable correspondence",
+        "the page only shows an architecture",
+        "source units are fictional",
         "only a small local visual part is needed",
         "the page has low information density or needs a breathing transition"
       ],
       "qaRisks": [
+        "correspondence links cross",
+        "source and module labels are conflated",
+        "too many one-to-many mappings",
         "module overload",
         "dependency ambiguity",
         "center path unclear",
@@ -1997,12 +2250,20 @@
         "maxBodyChars": 72
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
-      "metadataSource": "legacy-inferred",
-      "metadataReviewStatus": "legacy-reviewed",
-      "selectionConfidenceCap": 0.74
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "selectionConfidenceCap": 0.7,
+      "secondaryRelationships": [
+        "hierarchy"
+      ],
+      "reviewedAt": "2026-07-22",
+      "reviewedBy": "component-curator"
     },
     {
       "name": "archDualEngine",
@@ -2067,6 +2328,9 @@
         "maxBodyChars": 72
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -2089,7 +2353,7 @@
       "density": "medium",
       "level": "page-pattern",
       "relationPrimitive": "system-map",
-      "expressionCapability": "show modules, dependencies, inputs, outputs, and central system paths; tuned for architecture, input-output, platform",
+      "expressionCapability": "show inputs entering a central system, its internal modules, and outputs leaving through explicit boundaries",
       "semanticBindings": [
         "skill module map",
         "platform architecture",
@@ -2098,19 +2362,26 @@
       "editable": "yes",
       "composable": "limited",
       "slots": [
+        "inputs",
+        "core",
         "modules",
-        "dependencies",
-        "coreNode",
-        "inputsOutputs"
+        "outputs",
+        "boundaries",
+        "dependencies"
       ],
       "variants": [
         "base",
         "compact"
       ],
       "avoidWhen": [
+        "there is no meaningful central system",
+        "layers are the primary relationship",
+        "the page only inventories capabilities",
         "only a small local visual part is needed"
       ],
       "qaRisks": [
+        "core becomes an unlabeled box",
+        "inputs and outputs are symmetric without meaning",
         "module overload",
         "dependency ambiguity",
         "center path unclear",
@@ -2134,12 +2405,20 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
-      "metadataSource": "legacy-inferred",
-      "metadataReviewStatus": "legacy-reviewed",
-      "selectionConfidenceCap": 0.74
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "selectionConfidenceCap": 0.86,
+      "secondaryRelationships": [
+        "ecosystem"
+      ],
+      "reviewedAt": "2026-07-22",
+      "reviewedBy": "component-curator"
     },
     {
       "name": "topology",
@@ -2201,6 +2480,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -2269,6 +2551,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -2341,6 +2626,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -2353,8 +2641,7 @@
       "library": "base",
       "route": "component-library",
       "relationships": [
-        "toolbox",
-        "hierarchy"
+        "toolbox"
       ],
       "tags": [
         "tool-system",
@@ -2368,7 +2655,7 @@
       "density": "high",
       "level": "page-pattern",
       "relationPrimitive": "toolbox",
-      "expressionCapability": "show capability groups, reusable assets, and how tools are called; tuned for tool-system, theme-library, component-library, image-tools",
+      "expressionCapability": "show a hierarchy of tool groups connected to an explicit selection, scoring, or calling engine",
       "semanticBindings": [
         "tool system",
         "asset library",
@@ -2377,10 +2664,12 @@
       "editable": "yes",
       "composable": "limited",
       "slots": [
+        "root",
         "toolGroups",
-        "items",
-        "detailPanel",
-        "selectionLogic"
+        "tools",
+        "detailPanels",
+        "selectionEngine",
+        "callingLogic"
       ],
       "variants": [
         "base",
@@ -2389,11 +2678,17 @@
         "reduced-density"
       ],
       "avoidWhen": [
+        "there is no selection or calling logic",
+        "the page only lists tools",
+        "a flat capability inventory is sufficient",
         "only a small local visual part is needed",
         "the page has low information density or needs a breathing transition",
         "there is no selection/calling logic, only a list of tools"
       ],
       "qaRisks": [
+        "tree and engine compete",
+        "branches cross",
+        "tool detail overwhelms calling logic",
         "tool list without calling logic",
         "semantic icon ambiguity",
         "dense side panel",
@@ -2418,12 +2713,20 @@
         "maxBodyChars": 72
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
-      "metadataSource": "legacy-inferred",
-      "metadataReviewStatus": "legacy-reviewed",
-      "selectionConfidenceCap": 0.74
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "selectionConfidenceCap": 0.84,
+      "secondaryRelationships": [
+        "hierarchy"
+      ],
+      "reviewedAt": "2026-07-22",
+      "reviewedBy": "component-curator"
     },
     {
       "name": "platformTrend",
@@ -2490,6 +2793,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -2560,6 +2866,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -2630,6 +2939,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -2699,6 +3011,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -2768,6 +3083,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -2842,6 +3160,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -2854,8 +3175,7 @@
       "library": "base",
       "route": "component-library",
       "relationships": [
-        "toolbox",
-        "system-map"
+        "ecosystem"
       ],
       "tags": [
         "hub",
@@ -2865,19 +3185,21 @@
       "density": "medium",
       "level": "page-pattern",
       "relationPrimitive": "toolbox",
-      "expressionCapability": "show capability groups, reusable assets, and how tools are called; tuned for hub, capability, tool-system",
+      "expressionCapability": "show one core connected to independent capabilities or participants whose relation to the center matters more than relations among spokes",
       "semanticBindings": [
         "tool system",
         "asset library",
-        "capability inventory"
+        "capability inventory",
+        "generic slide relationship"
       ],
       "editable": "yes",
       "composable": "limited",
       "slots": [
-        "toolGroups",
-        "items",
-        "detailPanel",
-        "selectionLogic"
+        "core",
+        "spokes",
+        "capabilities",
+        "connections",
+        "statusOrEvidence"
       ],
       "variants": [
         "base",
@@ -2885,13 +3207,16 @@
         "line"
       ],
       "avoidWhen": [
-        "only a small local visual part is needed",
-        "there is no selection/calling logic, only a list of tools"
+        "spokes depend on each other sequentially",
+        "the page needs layers",
+        "the center is only decorative",
+        "only a small local visual part is needed"
       ],
       "qaRisks": [
-        "tool list without calling logic",
-        "semantic icon ambiguity",
-        "dense side panel",
+        "radial symmetry hides priority",
+        "spoke labels collide",
+        "center lacks a clear role",
+        "visual relationship mismatch",
         "hard-coded semantics instead of reusable relationship"
       ],
       "themeTokensUsed": [
@@ -2912,12 +3237,20 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
-      "metadataSource": "legacy-inferred",
-      "metadataReviewStatus": "legacy-reviewed",
-      "selectionConfidenceCap": 0.74
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "selectionConfidenceCap": 0.78,
+      "secondaryRelationships": [
+        "system-map"
+      ],
+      "reviewedAt": "2026-07-22",
+      "reviewedBy": "component-curator"
     },
     {
       "name": "featureGrid",
@@ -2981,6 +3314,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -3049,6 +3385,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -3117,6 +3456,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -3188,6 +3530,9 @@
         "maxBodyChars": 72
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -3261,6 +3606,9 @@
         "maxBodyChars": 72
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -3333,6 +3681,9 @@
         "maxBodyChars": 72
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -3345,8 +3696,7 @@
       "library": "base",
       "route": "component-library",
       "relationships": [
-        "contrast",
-        "decision"
+        "contrast"
       ],
       "tags": [
         "matrix",
@@ -3357,7 +3707,7 @@
       "density": "high",
       "level": "page-pattern",
       "relationPrimitive": "contrast",
-      "expressionCapability": "compare two states, options, tensions, or before/after outcomes; tuned for matrix, capability, compare, table",
+      "expressionCapability": "compare capabilities or options across common dimensions using consistent cells, labels, and evidence boundaries",
       "semanticBindings": [
         "before and after",
         "problem versus mechanism",
@@ -3366,10 +3716,12 @@
       "editable": "yes",
       "composable": "limited",
       "slots": [
-        "left",
-        "right",
-        "contrastBridge",
-        "conclusion"
+        "options",
+        "dimensions",
+        "cells",
+        "legend",
+        "recommendation",
+        "sourceBoundary"
       ],
       "variants": [
         "base",
@@ -3377,11 +3729,17 @@
         "reduced-density"
       ],
       "avoidWhen": [
+        "options are not comparable",
+        "dimensions change by row",
+        "the matrix would invent scores",
         "only a small local visual part is needed",
         "the page has low information density or needs a breathing transition",
         "the two sides are not comparable on the same dimension"
       ],
       "qaRisks": [
+        "cells imply false precision",
+        "dense labels become unreadable",
+        "recommendation lacks criteria",
         "unequal comparison sides",
         "decorative red without meaning",
         "weak conclusion",
@@ -3406,12 +3764,20 @@
         "maxBodyChars": 72
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
-      "metadataSource": "legacy-inferred",
-      "metadataReviewStatus": "legacy-reviewed",
-      "selectionConfidenceCap": 0.74
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "selectionConfidenceCap": 0.8,
+      "secondaryRelationships": [
+        "toolbox"
+      ],
+      "reviewedAt": "2026-07-22",
+      "reviewedBy": "component-curator"
     },
     {
       "name": "twoOptionCompare",
@@ -3475,6 +3841,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -3544,6 +3913,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -3610,6 +3982,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -3680,6 +4055,9 @@
         "maxBodyChars": 72
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -3749,6 +4127,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -3817,6 +4198,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -3885,6 +4269,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -3953,6 +4340,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -4021,6 +4411,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -4090,6 +4483,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -4158,6 +4554,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -4228,6 +4627,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -4298,6 +4700,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -4310,9 +4715,7 @@
       "library": "base",
       "route": "component-library",
       "relationships": [
-        "scene",
-        "evidence",
-        "system-map"
+        "scene"
       ],
       "tags": [
         "image",
@@ -4322,7 +4725,7 @@
       "density": "medium",
       "level": "page-pattern",
       "relationPrimitive": "scene",
-      "expressionCapability": "anchor the page with a real or generated visual, screenshot, map, or scene; tuned for image, markers, annotation",
+      "expressionCapability": "anchor numbered callouts to real locations on an image or diagram and connect them to concise explanatory evidence",
       "semanticBindings": [
         "product scene",
         "screenshot proof",
@@ -4331,10 +4734,12 @@
       "editable": "yes",
       "composable": "limited",
       "slots": [
-        "imageArea",
+        "imageOrDiagram",
         "markers",
-        "caption",
-        "sourceOrPrompt"
+        "leaderLines",
+        "legend",
+        "sourceBoundary",
+        "caption"
       ],
       "variants": [
         "base",
@@ -4342,10 +4747,16 @@
         "image-or-evidence"
       ],
       "avoidWhen": [
+        "there is no real image or diagram",
+        "callouts cannot be anchored precisely",
+        "the image is decorative",
         "only a small local visual part is needed",
         "the image would be decorative rather than explanatory"
       ],
       "qaRisks": [
+        "markers cover the subject",
+        "leader lines cross",
+        "source boundary is missing",
         "decorative image",
         "generated image too complex",
         "image/text mismatch",
@@ -4369,12 +4780,20 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
-      "metadataSource": "legacy-inferred",
-      "metadataReviewStatus": "legacy-reviewed",
-      "selectionConfidenceCap": 0.74
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "selectionConfidenceCap": 0.86,
+      "secondaryRelationships": [
+        "evidence"
+      ],
+      "reviewedAt": "2026-07-22",
+      "reviewedBy": "component-curator"
     },
     {
       "name": "workbenchMock",
@@ -4442,6 +4861,9 @@
         "maxBodyChars": 72
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -4454,7 +4876,6 @@
       "library": "base",
       "route": "component-library",
       "relationships": [
-        "scene",
         "evidence"
       ],
       "tags": [
@@ -4465,19 +4886,24 @@
       "density": "high",
       "level": "page-pattern",
       "relationPrimitive": "scene",
-      "expressionCapability": "anchor the page with a real or generated visual, screenshot, map, or scene; tuned for dashboard, monitor, ui",
+      "expressionCapability": "show a monitored operational state through a clearly labeled mockup or a source-backed real interface",
       "semanticBindings": [
         "product scene",
         "screenshot proof",
-        "generated concept image"
+        "generated concept image",
+        "metric proof",
+        "trend evidence",
+        "source-backed finding"
       ],
       "editable": "yes",
       "composable": "limited",
       "slots": [
-        "imageArea",
-        "markers",
-        "caption",
-        "sourceOrPrompt"
+        "statusSummary",
+        "metrics",
+        "trendOrMap",
+        "controls",
+        "mockupLabel",
+        "sourceBoundary"
       ],
       "variants": [
         "base",
@@ -4486,14 +4912,20 @@
         "reduced-density"
       ],
       "avoidWhen": [
+        "the page is qualitative",
+        "a dashboard would invent unsupported live data",
+        "the mockup boundary is not labeled",
         "only a small local visual part is needed",
         "the page has low information density or needs a breathing transition",
-        "the image would be decorative rather than explanatory"
+        "there is no source, data boundary, or proof object"
       ],
       "qaRisks": [
-        "decorative image",
-        "generated image too complex",
-        "image/text mismatch",
+        "mock data appears real",
+        "too many panels compete",
+        "status color lacks a defined meaning",
+        "unsupported claims",
+        "chart readability",
+        "missing source boundary",
         "hard-coded semantics instead of reusable relationship",
         "text overflow or unreadable labels"
       ],
@@ -4515,12 +4947,20 @@
         "maxBodyChars": 72
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
-      "metadataSource": "legacy-inferred",
-      "metadataReviewStatus": "legacy-reviewed",
-      "selectionConfidenceCap": 0.74
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "selectionConfidenceCap": 0.66,
+      "secondaryRelationships": [
+        "state"
+      ],
+      "reviewedAt": "2026-07-22",
+      "reviewedBy": "component-curator"
     },
     {
       "name": "imageSlot",
@@ -4582,6 +5022,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -4650,6 +5093,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -4717,6 +5163,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -4786,6 +5235,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -4855,6 +5307,9 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
@@ -4924,17 +5379,504 @@
         "maxBodyChars": 48
       },
       "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
         "leander-base",
         "leander-global"
       ],
       "metadataSource": "legacy-inferred",
       "metadataReviewStatus": "legacy-reviewed",
       "selectionConfidenceCap": 0.74
+    },
+    {
+      "name": "evidenceLegend",
+      "library": "base",
+      "route": "component-library",
+      "relationships": [
+        "evidence"
+      ],
+      "secondaryRelationships": [
+        "scene"
+      ],
+      "tags": [
+        "legend",
+        "evidence",
+        "markers",
+        "provenance"
+      ],
+      "density": "low",
+      "level": "visual-part",
+      "relationPrimitive": "evidence",
+      "expressionCapability": "explain the meaning, provenance, or status of evidence markers used by an image, diagram, or dashboard",
+      "semanticBindings": [
+        "image annotation legend",
+        "dashboard evidence key",
+        "source status key",
+        "metric proof",
+        "trend evidence",
+        "source-backed finding"
+      ],
+      "editable": "yes",
+      "composable": "high",
+      "slots": [
+        "items",
+        "label",
+        "meaning",
+        "colorToken",
+        "sourceNote"
+      ],
+      "variants": [
+        "horizontal",
+        "vertical",
+        "compact",
+        "image-or-evidence"
+      ],
+      "avoidWhen": [
+        "there is only one self-explanatory marker",
+        "legend colors have no semantic contract",
+        "there is no source, data boundary, or proof object"
+      ],
+      "qaRisks": [
+        "legend differs from the visual",
+        "too many legend items",
+        "color alone carries meaning",
+        "unsupported claims",
+        "chart readability",
+        "missing source boundary"
+      ],
+      "themeTokensUsed": [
+        "colors.surface",
+        "colors.primary",
+        "colors.line",
+        "colors.accent",
+        "colors.teal",
+        "fonts.cn",
+        "fonts.en",
+        "type.*"
+      ],
+      "designStatus": "usable",
+      "designReviewPriority": "P1",
+      "contentCapacity": {
+        "maxItems": 5,
+        "maxLabelChars": 18,
+        "maxBodyChars": 54
+      },
+      "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
+        "leander-base",
+        "leander-global"
+      ],
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "selectionConfidenceCap": 0.82,
+      "reviewedAt": "2026-07-22",
+      "reviewedBy": "component-curator"
+    },
+    {
+      "name": "stageGateRail",
+      "library": "base",
+      "route": "component-library",
+      "relationships": [
+        "sequence"
+      ],
+      "secondaryRelationships": [
+        "decision"
+      ],
+      "tags": [
+        "stage-gate",
+        "rail",
+        "milestone",
+        "status"
+      ],
+      "density": "medium",
+      "level": "layout-block",
+      "relationPrimitive": "sequence",
+      "expressionCapability": "provide a reusable horizontal rail of stages, gates, statuses, and deliverables inside a larger page composition",
+      "semanticBindings": [
+        "stage approval rail",
+        "roadmap gate strip",
+        "maturity checkpoint rail",
+        "production workflow",
+        "approval pipeline",
+        "implementation path"
+      ],
+      "editable": "yes",
+      "composable": "medium",
+      "slots": [
+        "stages",
+        "gate",
+        "status",
+        "deliverable",
+        "currentStage"
+      ],
+      "variants": [
+        "horizontal",
+        "compact",
+        "numbered",
+        "line"
+      ],
+      "avoidWhen": [
+        "there are no gates",
+        "the rail would be the entire page",
+        "stages cannot share one sequence"
+      ],
+      "qaRisks": [
+        "gate labels collide",
+        "status color is undefined",
+        "current stage is unclear",
+        "connector geometry",
+        "step spacing",
+        "unclear start/end",
+        "block forced into a full-page role"
+      ],
+      "themeTokensUsed": [
+        "colors.surface",
+        "colors.primary",
+        "colors.line",
+        "colors.accent",
+        "colors.warn",
+        "colors.green",
+        "fonts.cn",
+        "fonts.en",
+        "type.*"
+      ],
+      "designStatus": "usable",
+      "designReviewPriority": "P1",
+      "contentCapacity": {
+        "maxItems": 6,
+        "maxLabelChars": 18,
+        "maxBodyChars": 42
+      },
+      "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
+        "leander-base",
+        "leander-global"
+      ],
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "selectionConfidenceCap": 0.84,
+      "reviewedAt": "2026-07-22",
+      "reviewedBy": "component-curator"
+    },
+    {
+      "name": "statusLegend",
+      "library": "base",
+      "route": "component-library",
+      "relationships": [
+        "state"
+      ],
+      "secondaryRelationships": [
+        "evidence"
+      ],
+      "tags": [
+        "status",
+        "legend",
+        "state",
+        "semantic-color"
+      ],
+      "density": "low",
+      "level": "visual-part",
+      "relationPrimitive": "state",
+      "expressionCapability": "define reusable state labels, semantic colors, and meanings for state or workflow visuals",
+      "semanticBindings": [
+        "workflow state key",
+        "implementation status legend",
+        "operational state legend",
+        "page isolation",
+        "state memory",
+        "local repair boundary"
+      ],
+      "editable": "yes",
+      "composable": "high",
+      "slots": [
+        "statuses",
+        "label",
+        "meaning",
+        "stateToken"
+      ],
+      "variants": [
+        "horizontal",
+        "vertical",
+        "compact",
+        "line"
+      ],
+      "avoidWhen": [
+        "states are not reused",
+        "status colors are decorative",
+        "labels already explain themselves"
+      ],
+      "qaRisks": [
+        "state token differs from the page",
+        "too many statuses",
+        "color alone carries meaning",
+        "fake file/state structure",
+        "unclear current state",
+        "over-dense expansion"
+      ],
+      "themeTokensUsed": [
+        "colors.surface",
+        "colors.primary",
+        "colors.line",
+        "colors.green",
+        "colors.warn",
+        "colors.danger",
+        "colors.mute",
+        "fonts.cn",
+        "fonts.en",
+        "type.*"
+      ],
+      "designStatus": "usable",
+      "designReviewPriority": "P1",
+      "contentCapacity": {
+        "maxItems": 6,
+        "maxLabelChars": 16,
+        "maxBodyChars": 42
+      },
+      "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
+        "leander-base",
+        "leander-global"
+      ],
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "selectionConfidenceCap": 0.86,
+      "reviewedAt": "2026-07-22",
+      "reviewedBy": "component-curator"
+    },
+    {
+      "name": "regionEyebrow",
+      "library": "base",
+      "route": "component-library",
+      "editable": "yes",
+      "designStatus": "usable",
+      "designReviewPriority": "P3",
+      "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
+        "leander-base",
+        "leander-global"
+      ],
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "reviewedAt": "2026-07-24",
+      "reviewedBy": "component-curator",
+      "selectionConfidenceCap": 0.7,
+      "relationships": [
+        "hierarchy"
+      ],
+      "tags": [
+        "eyebrow",
+        "region-label",
+        "zone",
+        "navigation"
+      ],
+      "density": "low",
+      "level": "visual-part",
+      "relationPrimitive": "hierarchy",
+      "expressionCapability": "label a page region with a letter-spaced uppercase eyebrow so grouped blocks read as named zones; tuned for eyebrow, region-label, zone, navigation",
+      "semanticBindings": [
+        "region label",
+        "zone heading",
+        "structural eyebrow"
+      ],
+      "composable": "high",
+      "slots": [
+        "label"
+      ],
+      "variants": [
+        "base",
+        "centered"
+      ],
+      "avoidWhen": [
+        "the block already carries a clear title of its own",
+        "only one region exists, so a zone label adds noise"
+      ],
+      "qaRisks": [
+        "eyebrow competing with the page title",
+        "uppercase labels overused until they stop signalling",
+        "label not matching the region beneath it"
+      ],
+      "themeTokensUsed": [
+        "colors.mute",
+        "fonts.en",
+        "type.tiny"
+      ],
+      "contentCapacity": {
+        "maxItems": 1,
+        "maxLabelChars": 28,
+        "maxBodyChars": 0
+      }
+    },
+    {
+      "name": "barCard",
+      "library": "base",
+      "route": "component-library",
+      "editable": "yes",
+      "designStatus": "usable",
+      "designReviewPriority": "P3",
+      "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
+        "leander-base",
+        "leander-global"
+      ],
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "reviewedAt": "2026-07-24",
+      "reviewedBy": "component-curator",
+      "selectionConfidenceCap": 0.7,
+      "relationships": [
+        "state"
+      ],
+      "secondaryRelationships": [
+        "decision"
+      ],
+      "tags": [
+        "status",
+        "tier",
+        "risk",
+        "left-bar",
+        "state-rail"
+      ],
+      "density": "medium",
+      "level": "layout-block",
+      "relationPrimitive": "state",
+      "expressionCapability": "encode a row's status or risk tier in the container itself through a left colour bar, soft fill, and label; tuned for status, tier, risk, routing outcome",
+      "semanticBindings": [
+        "risk tier",
+        "routing outcome",
+        "status row",
+        "gate result"
+      ],
+      "composable": "high",
+      "slots": [
+        "label",
+        "meta",
+        "tag",
+        "outcome"
+      ],
+      "variants": [
+        "base",
+        "blocked",
+        "tiered"
+      ],
+      "avoidWhen": [
+        "there is no real status or tier to encode",
+        "a plain card would carry exactly the same meaning"
+      ],
+      "qaRisks": [
+        "colour used as the only status channel",
+        "tier colour not matching its written label",
+        "too many tiers competing on one page"
+      ],
+      "themeTokensUsed": [
+        "colors.surface",
+        "colors.accentSoft",
+        "colors.accent",
+        "colors.primary",
+        "colors.blue",
+        "colors.green",
+        "colors.warn",
+        "colors.line",
+        "fonts.cn",
+        "fonts.en",
+        "type.*",
+        "container.*"
+      ],
+      "contentCapacity": {
+        "maxItems": 5,
+        "maxLabelChars": 22,
+        "maxBodyChars": 36
+      }
+    },
+    {
+      "name": "conclusionBand",
+      "library": "base",
+      "route": "component-library",
+      "editable": "yes",
+      "designStatus": "usable",
+      "designReviewPriority": "P3",
+      "themeCompatibility": [
+        "base2",
+        "base3",
+        "global-v2",
+        "leander-base",
+        "leander-global"
+      ],
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "reviewedAt": "2026-07-24",
+      "reviewedBy": "component-curator",
+      "selectionConfidenceCap": 0.7,
+      "relationships": [
+        "decision"
+      ],
+      "secondaryRelationships": [
+        "evidence"
+      ],
+      "tags": [
+        "conclusion",
+        "takeaway",
+        "boundary",
+        "closing-statement"
+      ],
+      "density": "low",
+      "level": "layout-block",
+      "relationPrimitive": "decision",
+      "expressionCapability": "close a page with its single takeaway or boundary statement, rendered as plain centred text in base and as a bordered band in base2; tuned for conclusion, takeaway, boundary",
+      "semanticBindings": [
+        "page takeaway",
+        "scope boundary",
+        "closing statement"
+      ],
+      "composable": "medium",
+      "slots": [
+        "eyebrow",
+        "text"
+      ],
+      "variants": [
+        "plain",
+        "band"
+      ],
+      "avoidWhen": [
+        "the page has no single conclusion to state",
+        "the takeaway merely restates the page title"
+      ],
+      "qaRisks": [
+        "conclusion restating the title",
+        "takeaway running longer than one line",
+        "band colliding with the footer rule"
+      ],
+      "themeTokensUsed": [
+        "colors.surface",
+        "colors.primary",
+        "colors.accent",
+        "colors.mute",
+        "fonts.cn",
+        "fonts.en",
+        "type.bodyLg",
+        "type.lead",
+        "signature.conclusion"
+      ],
+      "contentCapacity": {
+        "maxItems": 1,
+        "maxLabelChars": 24,
+        "maxBodyChars": 64
+      }
     }
   ],
   "maintenance": {
     "metadataVersion": "component-metadata.v3",
-    "updatedAt": "2026-07-10T03:04:09.197Z",
+    "updatedAt": "2026-07-24T02:11:46.544Z",
     "note": "Inferred metadata is labeled and confidence-capped. New components remain review-required until manual semantic and render review."
   }
 }

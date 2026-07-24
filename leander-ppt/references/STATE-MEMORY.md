@@ -11,7 +11,7 @@
 - `pages/<id>/qa-result.json`：当前渲染的机器 QA 证据。
 - `pages/<id>/qa.md`：由 QA 结果生成的中文摘要。
 - `pages/<id>/out/`：PNG 和组件运行轨迹。
-- `checkpoint-status.json`：用户确认和阶段门禁。
+- `checkpoint-status.json`：用户确认和阶段关卡。
 - `agent-collaboration.json`：当前事件触发的角色证据。
 - `artifact-manifest.md/json`：哪些给用户看，哪些供下一步读取。
 
@@ -34,13 +34,13 @@ state/
 - `issues.json`：问题复发、提升和归档生命周期。
 - `context-pack.json`：某次角色或修复任务的受限输入；默认命令只打印，不生成多个文件。
 
-## 一致性门禁
+## 一致性关卡
 
 ```bash
 node tools/verify-state-memory.js
 ```
 
-门禁不只检查文件存在，还会核对：
+关卡不只检查文件存在，还会核对：
 
 - `workflow.stage` 与 `run-state.currentPhase` 是否一致。
 - 进入蓝图、样页或生产前，依赖 checkpoint 是否已批准或有理由地绕过。

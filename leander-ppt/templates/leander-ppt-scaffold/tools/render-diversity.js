@@ -45,6 +45,27 @@ function similarity(a, b) {
   const distance = a.reduce((sum, value, index) => sum + Math.abs(value - b[index]), 0) / a.length;
   return Number(Math.max(0, 1 - distance).toFixed(4));
 }
+// 占用特征只能比"哪里有墨"，比不出"两页都是菱形扇出"这类 gestalt 撞形。
+// 主视觉形状类在蓝图里声明；这里把共享同一形状类的页对拉出来强制并排复审。
+function shapeClassMap() {
+  const bp = readJson(path.join(ROOT, "layout-blueprint.json"), {});
+  const contracts = bp.contracts || bp.pages || [];
+  const map = {};
+  for (const contract of contracts) {
+    const shape = String(contract.primaryShapeClass || "").toLowerCase().trim();
+    if (!shape) continue;
+    const key = String(contract.page || contract.id || "").toLowerCase().trim();
+    if (key) map[key] = shape;
+    const short = (key.match(/^p\d+/) || [])[0];
+    if (short) map[short] = shape;
+  }
+  return map;
+}
+function shapeForPage(page, map) {
+  const dir = String(page.dir || "").toLowerCase(), id = String(page.id || "").toLowerCase();
+  const short = (id.match(/^p\d+/) || dir.match(/^p\d+/) || [])[0] || "";
+  return map[dir] || map[id] || map[short] || "";
+}
 function pageRows() {
   const active = new Set(cfg.workflow?.activePages || []);
   if (!fs.existsSync(PAGES)) return [];
@@ -71,8 +92,17 @@ function auditRows(rows) {
     const score = similarity(pages[i].feature, pages[j].feature);
     if (score >= 0.985) highlySimilarPairs.push({ left: pages[i].id, right: pages[j].id, score });
   }
-  if (pages.length >= 10 && highlySimilarPairs.length > pages.length) warnings.push({ page: "deck", field: "renderRepetition", message: `高相似渲染页面对 ${highlySimilarPairs.length} 组，整套需检查骨架重复。` });
-  return { version: "render-diversity-audit.v1", generatedAt: new Date().toISOString(), verdict: warnings.length ? "REVIEW" : "PASS", pages: pages.map(({ feature, ...page }) => page), adjacentSimilarities, highlySimilarPairs, warnings };
+  if (pages.length >= 10 && highlySimilarPairs.length > pages.length) warnings.push({ page: "deck", field: "renderRepetition", message: `高相似渲染页面对 ${highlySimilarPairs.length} 组，整套需检查版面结构重复。` });
+  const shapeMap = shapeClassMap();
+  const sharedShapeClassPairs = [];
+  if (Object.keys(shapeMap).length) {
+    for (let i = 0; i < pages.length; i++) for (let j = i + 1; j < pages.length; j++) {
+      const si = shapeForPage(pages[i], shapeMap), sj = shapeForPage(pages[j], shapeMap);
+      if (si && si === sj && !["cover", "big-type"].includes(si)) sharedShapeClassPairs.push({ left: pages[i].id, right: pages[j].id, shapeClass: si });
+    }
+    sharedShapeClassPairs.forEach(pair => warnings.push({ page: pair.right, field: "shapeClassCollision", message: `与 ${pair.left} 共用主视觉形状类「${pair.shapeClass}」，必须并排复审确认构图有实质区分（占用特征查不到 gestalt 撞形）。` }));
+  }
+  return { version: "render-diversity-audit.v1", generatedAt: new Date().toISOString(), verdict: warnings.length ? "REVIEW" : "PASS", pages: pages.map(({ feature, ...page }) => page), adjacentSimilarities, highlySimilarPairs, sharedShapeClassPairs, warnings };
 }
 function writeAudit() {
   const report = auditRows(pageRows());
@@ -98,6 +128,9 @@ function selfTest() {
   const fa = occupancyFeature(a), fb = occupancyFeature(b), fc = occupancyFeature(c);
   assert(similarity(fa.feature, fb.feature) >= 0.99);
   assert(similarity(fa.feature, fc.feature) < 0.95);
+  assert.equal(shapeForPage({ dir: "p12-risk-routing", id: "p12" }, { p12: "diamond-fanout" }), "diamond-fanout");
+  assert.equal(shapeForPage({ dir: "p14-gate", id: "p14" }, { "p14-gate": "funnel-converge" }), "funnel-converge");
+  assert.equal(shapeForPage({ dir: "p99", id: "p99" }, {}), "");
   fs.rmSync(dir, { recursive: true, force: true });
   console.log("PASS render diversity self-test");
 }

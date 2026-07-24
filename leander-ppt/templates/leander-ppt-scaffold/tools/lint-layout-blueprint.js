@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { inspectBlueprintComponentContracts } = require("./component-contract");
 
 const root = process.cwd();
 const input = process.argv[2] || path.join(root, "layout-blueprint.json");
@@ -17,6 +18,17 @@ function norm(value) {
 
 function lower(value) {
   return norm(value).toLowerCase();
+}
+
+// 主视觉形状类：受控枚举，比 skeletonFamily 粗一档。skeletonFamily 是自由文本，
+// 每页都能取唯一串，导致 family-overuse 形同虚设；shapeClass 强制从固定集合里选，
+// 让"画出来是不是同一种形状"的雷同在蓝图阶段就暴露（占用特征审计看不见 gestalt）。
+const SHAPE_CLASSES = [
+  "diamond-fanout", "funnel-converge", "timeline", "grid-matrix", "tree-hierarchy",
+  "layered-rail", "swimlane", "radial-hub", "evidence-board", "big-type", "cover"
+];
+function shapeClassOf(contract) {
+  return lower(contract.primaryShapeClass);
 }
 
 function pagesOf(items) {
@@ -111,6 +123,24 @@ function main() {
   const findings = [];
   const warnings = [];
 
+  const componentAudit = inspectBlueprintComponentContracts(all);
+  componentAudit.errors.forEach(item => addFinding(
+    findings,
+    "error",
+    item.type,
+    [item.page],
+    item.message,
+    "candidateComponents 只能填写 component-index.min.json 中 selectable=true 的精确组件 ID；自由布局词移入 patternHints。"
+  ));
+  componentAudit.warnings.forEach(item => addFinding(
+    warnings,
+    "warning",
+    item.type,
+    [item.page],
+    item.message,
+    "迁移旧字段后重新生成真实组件候选预览。"
+  ));
+
   for (const item of content) {
     if (!norm(item.skeletonFamily)) {
       addFinding(
@@ -132,6 +162,26 @@ function main() {
         "在蓝图合同中显式填写 previewPattern。只写 visualSignature 不够，必须声明低保真预览最终会被画成哪一种形态。"
       );
     }
+    const shape = shapeClassOf(item);
+    if (!shape) {
+      addFinding(
+        warnings,
+        "warning",
+        "missing-shape-class",
+        [item.page],
+        `页面缺少 primaryShapeClass：${item.page}`,
+        `声明主视觉形状类（受控枚举）：${SHAPE_CLASSES.join(" / ")}。用于整套比对"画出来是不是同一种形状"，占用特征审计看不见这一层。`
+      );
+    } else if (!SHAPE_CLASSES.includes(shape)) {
+      addFinding(
+        findings,
+        "error",
+        "invalid-shape-class",
+        [item.page],
+        `primaryShapeClass 取值非法：${item.page} -> ${shape}`,
+        `只能取受控枚举之一：${SHAPE_CLASSES.join(" / ")}。不允许自造字符串，否则每页唯一、检查形同虚设。`
+      );
+    }
   }
 
   for (let i = 1; i < all.length; i++) {
@@ -144,8 +194,8 @@ function main() {
         "warning",
         "adjacent-archetype-repeat",
         [prev.page, curr.page],
-        `相邻页面复用了同一个布局骨架：${prev.page} / ${curr.page} -> ${norm(curr.layoutArchetype)}`,
-        "检查它们是否属于有意系列/对照；如果叙事任务不同，再更换骨架或补充 echoWith / echoRationale。"
+        `相邻页面复用了同一个版面结构：${prev.page} / ${curr.page} -> ${norm(curr.layoutArchetype)}`,
+        "检查它们是否属于有意系列/对照；如果叙事任务不同，再更换版面结构或补充 echoWith / echoRationale。"
       );
     }
     if (previewPatternOf(prev) === previewPatternOf(curr) && !allowsEcho(curr, prev.page)) {
@@ -171,7 +221,7 @@ function main() {
         justified ? "warning" : "error",
         "three-page-family-run",
         run.map((item) => item.page),
-        `连续三页属于同一粗骨架家族：${pagesOf(run)} -> ${families[0]}`,
+        `连续三页属于同一粗版面结构家族：${pagesOf(run)} -> ${families[0]}`,
         justified ? "已说明系列/呼应关系，生产时仍需检查细节区分。" : "确认是否为有意系列；否则至少插入一个不同视觉寄存器。"
       );
     }
@@ -215,9 +265,36 @@ function main() {
         "warning",
         "family-overuse",
         pages.map((page) => page.page),
-        `粗骨架家族占比偏高：${family} ${pages.length}/${content.length}`,
+        `粗版面结构家族占比偏高：${family} ${pages.length}/${content.length}`,
         "检查是否需要在章节内增加对比、证据、放大、矩阵或汇总型版式，避免整套 PPT 看起来都是同一种图。"
       );
+    }
+  }
+
+  for (const [shape, pages] of countBy(content, shapeClassOf)) {
+    if (!shape || shape === "unknown" || !SHAPE_CLASSES.includes(shape)) continue;
+    if (shape === "cover" || shape === "big-type") continue; // 结构性形状允许复现（封面/大字收束）
+    if (pages.length > 3) {
+      addFinding(
+        findings,
+        "error",
+        "shape-class-overuse",
+        pages.map((page) => page.page),
+        `同一主视觉形状类占用过多页面：${shape} -> ${pagesOf(pages)}（${pages.length} 页）`,
+        "整套过度依赖同一种图形；给其中几页改换形状类，或明确说明这是有意系列并补 echo 理由。"
+      );
+    } else if (pages.length >= 2) {
+      const allJustified = pages.every((page) => allowsEcho(page, pages[0].page));
+      if (!allJustified) {
+        addFinding(
+          warnings,
+          "warning",
+          "shape-class-collision",
+          pages.map((page) => page.page),
+          `多页共用同一主视觉形状类：${shape} -> ${pagesOf(pages)}`,
+          "这些页渲染出来容易撞形（占用特征审计查不到 gestalt）；生产时必须并排比对，确保信息层级与构图有实质区分。若为有意系列请补 echoWith / echoRationale。"
+        );
+      }
     }
   }
 
@@ -228,8 +305,8 @@ function main() {
       "error",
       "generic-preview-pattern",
       [item.page],
-      `页面仍存在通用/兜底预览形态：${item.page}`,
-      "补充更具体的 visualSignature 和 layoutArchetype，渲染器也需要有对应骨架。"
+      `页面仍存在通用/备用预览形态：${item.page}`,
+      "补充更具体的 visualSignature 和 layoutArchetype，渲染器也需要有对应版面结构。"
     );
   }
 
@@ -261,13 +338,15 @@ function main() {
     `- 提醒项：${warnings.length}`,
     "",
     "## 检查范围",
-    "- 相邻页面是否复用同一个布局骨架。",
-    "- 连续三页是否属于同一粗骨架家族。",
+    "- 相邻页面是否复用同一个版面结构。",
+    "- 连续三页是否属于同一粗版面结构家族。",
     "- visualSignature 是否重复且没有 echo 理由。",
-    "- 某一粗骨架家族是否占比过高。",
+    "- 某一粗版面结构家族是否占比过高。",
     "- 不同视觉签名是否被预览器画成同一种形态。",
     "- previewPattern 是否全页显式填写、是否在整套中重复使用。",
-    "- 是否存在 generic / fallback / plain-card-grid 兜底形态。",
+    "- primaryShapeClass 是否合法、是否多页撞形（受控枚举，粗于 skeletonFamily）。",
+    "- candidateComponents 是否为真实可选组件，patternHints 是否与组件 ID 分离。",
+    "- 是否存在 generic / fallback / plain-card-grid 备用形态。",
     "",
     "## 硬性问题"
   ];

@@ -31,8 +31,18 @@ function pageRule(id, text, severity = "P1") { return { id, severity, text: Stri
 function buildProfile(page) {
   const vs = page.visualSelection || {};
   const selected = vs.selectedRoute || {};
-  const relationship = normalizeRelationship(vs.relationship || page.relationship || "decision");
   const blueprint = findBlueprint(page.id || page.page) || vs.blueprintContract || page.blueprintContract || null;
+  const chromeFields = [
+    page.storyRole, page.relationship, page.relationshipSubtype, page.skeletonFamily,
+    blueprint?.storyRole, blueprint?.relationship, blueprint?.relationshipSubtype, blueprint?.skeletonFamily,
+    vs.relationship, vs.relationshipSubtype
+  ].map(value => String(value || "").toLowerCase());
+  const chromeRelationship = chromeFields.some(value => /(^|[.\s_-])closing($|[.\s_-])|brand-closing/.test(value))
+    ? "closing"
+    : chromeFields.some(value => /(^|[.\s_-])cover($|[.\s_-])|brand-cover/.test(value))
+      ? "cover"
+      : "";
+  const relationship = chromeRelationship || normalizeRelationship(vs.relationship || page.relationship || "decision");
   const component = findComponent(selected.name || page.component);
   const ruleSets = ["universal"];
   if (RULES.ruleSets[`relationship.${relationship}`]) ruleSets.push(`relationship.${relationship}`);
@@ -54,7 +64,7 @@ function buildProfile(page) {
   return {
     version: "qa-profile.zh.v2",
     rulesVersion: RULES.version,
-    scope: selected.route === "theme-chrome" || relationship === "cover" ? "theme-chrome-page" : "content-page",
+    scope: selected.route === "theme-chrome" || ["cover", "closing"].includes(relationship) ? "theme-chrome-page" : "content-page",
     relationship,
     selectedRoute: { route: selected.route || "unknown", name: selected.name || "unknown" },
     blueprintRef: blueprint ? `layout-blueprint.json#${blueprint.page || blueprint.id}` : null,

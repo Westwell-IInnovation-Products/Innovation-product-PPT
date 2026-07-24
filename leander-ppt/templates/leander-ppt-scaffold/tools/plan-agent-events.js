@@ -29,6 +29,11 @@ function pageHashes() {
     return { id, renderSha256: shaFile(path.join(base, dir, "out", `${id}.png`)), renderDigest: d.renderDigest, selectionDigest: d.selectionDigest, selectionOutcomeDigest: d.selectionOutcomeDigest, qaProfileDigest: digest(page.qaProfile || {}), sourceDigest: d.sourceDigest };
   });
 }
+function scopedPageHashes() {
+  const all = pageHashes(), active = new Set(cfg.workflow?.activePages || []);
+  const fullDeck = cfg.workflow?.events?.fullDeckRendered === true;
+  return fullDeck || !active.size ? all : all.filter(page => active.has(page.id));
+}
 function requiredRoles() {
   const ac = cfg.agentCollaboration || {}, events = cfg.workflow?.events || {}, roles = [];
   Object.entries(ac.roleTriggers || {}).forEach(([role, names]) => { if ((names || []).some(name => events[name] === true)) roles.push(role); });
@@ -53,7 +58,10 @@ function inputs(role) {
     "layout-architect-zh": [relHash("outline.md"), relHash("layout-blueprint.json"), relHash("DESIGN.md")],
     "visual-designer-zh": [relHash("DESIGN.md"), relHash("visual-direction.md"), relHash("output/full-deck-contact-sheet.png"), relHash("output/render-diversity-audit.json"), pageHashes().map(({ id, renderSha256, renderDigest, selectionOutcomeDigest }) => ({ id, renderSha256, renderDigest, selectionOutcomeDigest }))],
     "component-curator-zh": [relHash("tools/component-registry.json"), pageHashes().map(({ id, selectionDigest }) => ({ id, selectionDigest }))],
-    "reviewer-zh": [relHash("output/full-deck-contact-sheet.png"), relHash("output/quality-baseline-audit.json"), relHash("output/render-diversity-audit.json"), pageHashes().map(({ id, renderSha256, renderDigest, selectionOutcomeDigest, qaProfileDigest, sourceDigest }) => ({ id, renderSha256, renderDigest, selectionOutcomeDigest, qaProfileDigest, sourceDigest }))],
+    // qa-evidence-index.json is a compact reviewer read surface, but it is not
+    // part of the event digest: reviewer output changes its own verdict/checks
+    // and must not recursively trigger another identical review.
+    "reviewer-zh": [relHash("output/full-deck-contact-sheet.png"), relHash("output/quality-baseline-audit.json"), relHash("output/render-diversity-audit.json"), scopedPageHashes().map(({ id, renderSha256, renderDigest, selectionOutcomeDigest, qaProfileDigest, sourceDigest }) => ({ id, renderSha256, renderDigest, selectionOutcomeDigest, qaProfileDigest, sourceDigest }))],
     "presenter-zh": [relHash("outline.md"), relHash("speaker-notes.md"), relHash("output/full-deck-contact-sheet.png")]
   };
   return { ...common, artifacts: map[role] || [] };
@@ -75,7 +83,7 @@ function build() {
       maxRunsThisPhase: 1
     };
   }
-  return { version: "agent-event-plan.v2", generatedAt: new Date().toISOString(), stage: cfg.workflow?.stage || "", policy: "mode-b-two-review-runs", roles };
+  return { version: "agent-event-plan.v3", generatedAt: new Date().toISOString(), stage: cfg.workflow?.stage || "", policy: "mode-b-delta-first-review", reviewerScope: cfg.workflow?.events?.fullDeckRendered === true ? "full-deck-once" : "active-pages-delta", roles };
 }
 if (require.main === module) { const value = build(); if (process.argv.includes("--write")) { fs.mkdirSync(path.join(ROOT, "state"), { recursive: true }); fs.writeFileSync(path.join(ROOT, "state", "agent-event-plan.json"), JSON.stringify(value, null, 2) + "\n", "utf8"); } console.log(JSON.stringify(value)); }
 module.exports = { build, requiredRoles, phaseForRole };

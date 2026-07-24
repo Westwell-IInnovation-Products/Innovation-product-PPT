@@ -49,13 +49,14 @@ function build() {
   }
   if (stage === "layout-blueprint") {
     add(items, "user-confirm", "蓝图说明", "layout-blueprint.md", "确认故事节奏和页面合同。", true);
-    add(items, "user-confirm", "整套蓝图预览", "output/layout-blueprint-preview.svg", "看整套布局节奏和重复。", true);
-    add(items, "user-confirm", "高风险页预览", "output/layout-blueprint-risk-preview.svg", "放大检查复杂结构。", true);
+    add(items, "user-confirm", "整套仅几何蓝图", "output/layout-blueprint-preview.svg", "检查整套布局节奏和重复；不代表真实组件效果。", true);
+    add(items, "user-confirm", "高风险页仅几何预览", "output/layout-blueprint-risk-preview.svg", "放大检查复杂结构；不代表真实组件效果。", true);
+    add(items, "user-confirm", "真实组件候选预览", "output/layout-blueprint-component-shortlist.svg", "检查当前主题下的真实组件外观与候选差异。", true);
     add(items, "user-confirm", "蓝图 QA 摘要", "output/layout-blueprint-preview-qa.md", "PASS 才能进入锚点样页。", true);
   }
   if (stage === "anchor-sample") {
     add(items, "user-confirm", "锚点样页可编辑 PPTX", cfg.anchorFileName || "output/anchor-samples.pptx", "确认真实页面的视觉、密度和编辑性。", true);
-    add(items, "user-confirm", "锚点样页联系表", "output/anchor-samples-contact-sheet.svg", "并排检查锚点页的风格、节奏和复杂结构。", true);
+    add(items, "user-confirm", "锚点样页联系表", "output/anchor-samples-contact-sheet.svg", "并排检查标杆页的风格、节奏和复杂结构。", true);
   }
   if (stage === "production-batch") {
     add(items, "user-confirm", "当前批次可编辑 PPTX", cfg.batchFileName || "output/current-batch.pptx", "确认当前批次的内容、视觉和节奏。", true);
@@ -77,9 +78,10 @@ function build() {
   ].forEach(([file, purpose]) => add(items, "next-input", purpose, file, "下一阶段按需读取。", false));
   [
     ["output/layout-blueprint-preview-qa.json", "蓝图机器 QA"], ["output/layout-blueprint-geometry.json", "蓝图几何证据"],
+    ["output/layout-blueprint-component-shortlist.json", "真实组件候选映射"], ["output/layout-blueprint-component-shortlist.md", "真实组件候选摘要"],
     ["output/layout-blueprint-preview-lint.json", "蓝图预览 lint"], ["output/layout-blueprint-diversity-audit.json", "布局多样性审计"]
     , ["output/render-diversity-audit.json", "渲染级多样性审计"], ["state/render-dependency-manifest.json", "渲染依赖清单"], ["state/token-ledger.json", "Token 账本"], ["state/context-rotation-lock.json", "上下文轮换锁"]
-  ].forEach(([file, purpose]) => add(items, "internal-evidence", purpose, file, "内部门禁证据，通常无需逐项确认。", false));
+  ].forEach(([file, purpose]) => add(items, "internal-evidence", purpose, file, "内部关卡证据，通常无需逐项确认。", false));
 
   const collaboration = exists("agent-collaboration.json") ? JSON.parse(fs.readFileSync(abs("agent-collaboration.json"), "utf8").replace(/^\uFEFF/, "")) : {};
   const openEvents = cfg.workflow?.events || {};
@@ -102,7 +104,7 @@ function build() {
   group(groups, stale ? "archive-reference" : "internal-evidence", stale ? "旧页面实现" : "页面实现", currentOnly(pageImplementations), stale ? "保留用于对比。" : "只在实现或修复时读取。" );
   group(groups, stale ? "archive-reference" : "internal-evidence", stale ? "旧页面渲染与 QA" : "页面渲染与 QA", currentOnly(pageEvidence), "重复证据按组统计，不逐文件写入 JSON。" );
   if (scopedByActivePages) {
-    group(groups, "archive-reference", "非活动页面目录", pageContracts.filter(file => !activePagePath(file, activePages)), "当前活动范围之外的页面不读取、不渲染，也不参与本阶段门禁。" );
+    group(groups, "archive-reference", "非活动页面目录", pageContracts.filter(file => !activePagePath(file, activePages)), "当前活动范围之外的页面不读取、不渲染，也不参与本阶段关卡。" );
   }
   const roleReports = list("agent-reviews", file => /\.md$/i.test(file) && !currentRoleArtifacts.includes(file));
   group(groups, stale ? "archive-reference" : "internal-evidence", stale ? "旧角色报告" : "其他角色报告", roleReports, "按事件读取对应角色的最新报告。" );
@@ -111,7 +113,7 @@ function build() {
     version: "leander-artifact-map.v3", generatedAt: new Date().toISOString(), stage,
     legend: {
       "user-confirm": "用户现在需要查看或确认。", "next-input": "下一轮按需读取。",
-      "internal-evidence": "机器门禁或角色证据，通常无需逐项确认。", "final-output": "最终交付物。", "archive-reference": "历史参考。"
+      "internal-evidence": "机器关卡或角色证据，通常无需逐项确认。", "final-output": "最终交付物。", "archive-reference": "历史参考。"
     }, items, groups
   };
 }

@@ -1,71 +1,71 @@
-# PPT Brief Spec
+# PPT Brief 规格
 
-`brief.md` is the first working file for every deck. It defines why the deck exists before any outline or slide is written.
+`brief.md` 是每一份 deck 的第一个工作文件。它在写任何大纲或页面之前,先定义这份 deck 为什么存在。
 
-## When To Read
+## 何时读
 
-Read this file in Phase 1 before writing `outline.md`.
+在 Phase 1、写 `outline.md` 之前读本文件。
 
-## Required Fields
+## 必填字段
 
 ```markdown
 # PPT Brief
 
-## Source
-- Materials:
-- Source type: existing PPT / Word / outline / script / notes / mixed
-- Source language:
-- Must preserve:
+## 来源
+- 素材:
+- 来源类型:已有 PPT / Word / 大纲 / 讲稿 / 笔记 / 混合
+- 来源语言:
+- 必须保留:
 
-## Audience And Occasion
-- Audience:
-- Occasion:
-- Decision or action expected:
-- Sensitivities:
+## 受众与场合
+- 受众:
+- 场合:
+- 期望的决策或行动:
+- 敏感点:
 
-## Output Goal
-- What the audience should remember:
-- What the audience should do next:
-- Target page count:
-- Presentation time:
+## 输出目标
+- 希望受众记住什么:
+- 希望受众下一步做什么:
+- 目标页数:
+- 演讲时长:
 
-## Deck Type
-- Type: management report / internal sharing / product introduction / presales / customer demo / training / project review / other
-- Evidence priority:
-- Tone:
+## Deck 类型
+- 类型:管理汇报 / 内部分享 / 产品介绍 / 售前 / 客户演示 / 培训 / 项目复盘 / 其他
+- 证据优先级:
+- 语气:
 
-## Constraints
-- Must use:
-- Must avoid:
-- Data boundary: achieved / planned / estimate / public reference
-- Asset boundary (required; answer each item "available <path>" or "none" — never leave blank):
-  - Company logo:
-  - Product photos / renders:
-  - Real system screenshots:
-  - Brand PPT template:
-  - Reference deck the user likes:
+## 约束
+- 必须使用:
+- 必须避免:
+- 数据边界:已达成 / 计划中 / 估算 / 公开引用
+- 素材边界(必填;每一项都回答"可用 <路径>"或"无"——绝不留空):
+  - 公司 logo:
+  - 产品照片 / 渲染图:
+  - 真实系统截图:
+  - 品牌 PPT 模板:
+  - 用户喜欢的参考 deck:
 ```
 
-## Scenario Guidance
+## 场景指引
 
-Choose the deck type before choosing structure.
+先选 deck 类型,再选结构。
 
-| Deck type | Main job | Evidence to preserve |
+| Deck 类型 | 主要任务 | 要保留的证据 |
 |---|---|---|
-| Management report / resource approval | Help the audience decide | Problem position, business impact, decision request, resources, risks, milestones |
-| Internal sharing | Help colleagues understand and reuse | Background, method, examples, pitfalls, reusable checklist |
-| Product introduction / presales | Help the audience recognize value | Customer pain, product capability, differentiation, implementation path, proof boundary |
-| Customer demo | Make value feel relevant to the customer | Customer scenario, effect, implementation mode, risk boundary, next action |
-| Training | Help the audience learn | Learning goal, concepts, steps, exercises, checks, summary |
-| Project review / progress sync | Align facts and next actions | Goal, progress, deviation, reason, risk, owner, date |
+| 管理汇报 / 资源审批 | 帮助受众做决策 | 问题定位、业务影响、决策请求、资源、风险、里程碑 |
+| 内部分享 | 帮助同事理解和复用 | 背景、方法、案例、坑、可复用清单 |
+| 产品介绍 / 售前 | 帮助受众识别价值 | 客户痛点、产品能力、差异化、落地路径、证据边界 |
+| 客户演示 | 让价值与客户相关 | 客户场景、效果、落地模式、风险边界、下一步行动 |
+| 培训 | 帮助受众学会 | 学习目标、概念、步骤、练习、检查、总结 |
+| 项目复盘 / 进度同步 | 对齐事实与下一步行动 | 目标、进度、偏差、原因、风险、owner、日期 |
 
-## Self Check
+## 自检
 
-Run this check before writing `outline.md`.
+在写 `outline.md` 之前运行此检查。
 
-- [ ] Audience, occasion, output goal, page count, and deck type are explicit.
-- [ ] The deck type determines evidence priority.
-- [ ] Achieved, planned, estimate, and public-reference claims are distinguishable.
-- [ ] Missing assets are named instead of silently replaced with unrelated visuals.
-- [ ] Real assets (logo, product photos, screenshots, brand template) were explicitly requested from the user; pages with available assets must route them as evidence.
-- [ ] If required information is missing and cannot be inferred from materials, ask the user before proceeding.
+- [ ] 受众、场合、输出目标、页数、deck 类型都已明确。
+- [ ] deck 类型决定了证据优先级。
+- [ ] "已达成、计划中、估算、公开引用"这几类说法可以彼此区分。
+- [ ] 缺失的素材被点名,而不是被无关视觉悄悄替换。
+- [ ] 真实素材(logo、产品照片、截图、品牌模板)已明确向用户索取;有可用素材的页面必须把它们作为证据来路由。
+- [ ] 如果缺少必要信息、且无法从素材推断,先问用户再继续。

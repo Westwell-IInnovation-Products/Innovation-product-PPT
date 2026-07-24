@@ -47,7 +47,7 @@ warning 可以在有明确理由时接受，error 必须阻断视觉生产。
 
 如果 `DESIGN.md` 和已经确认的用户反馈冲突，先更新 `DESIGN.md`，重新运行 lint，再继续生产页面。
 
-## 硬门禁
+## 硬关卡
 
 仅写规则不够。涉及蓝图或页面生产时必须运行：
 
@@ -57,4 +57,4 @@ node tools/verify-design-gates.js blueprint
 node tools/verify-design-gates.js pages
 ```
 
-这个门禁负责检查规则是否进入产物合同，例如表达模式、颜色意图、主体区域、截图槽位、默认总结框理由和中文 QA。它不能替代渲染后的视觉判断；真实重叠、歪线、微小字号和美感问题仍必须通过 rendered QA、视觉设计师和 reviewer 检查。
+这个关卡负责检查规则是否进入产物合同，例如表达模式、颜色意图、主体区域、截图槽位、默认总结框理由和中文 QA。它不能替代渲染后的视觉判断；真实重叠、歪线、微小字号和美感问题仍必须通过 rendered QA、视觉设计师和 reviewer 检查。

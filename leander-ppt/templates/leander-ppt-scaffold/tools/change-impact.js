@@ -32,7 +32,7 @@ function selfTest() {
   page.qaProfile.x = 1; fs.writeFileSync(path.join(pageDir, "page.json"), JSON.stringify(page));
   let impact = inspect({ root }); assert.equal(impact.kind, "no-render"); assert(impact.evidenceChanges.p01.includes("qaDigest"));
   commitManifest({ root }); page.visualSelection.candidateRoutes.push({ route: "image2", score: 1 }); fs.writeFileSync(path.join(pageDir, "page.json"), JSON.stringify(page));
-  impact = inspect({ root }); assert.equal(impact.kind, "no-render"); assert(impact.evidenceChanges.p01.includes("selectionDigest"));
+  impact = inspect({ root }); assert.equal(impact.kind, "page-render"); assert(impact.evidenceChanges.p01.includes("selectionDigest"));
   commitManifest({ root }); page.visualSelection.selectedRoute.name = "y"; fs.writeFileSync(path.join(pageDir, "page.json"), JSON.stringify(page));
   impact = inspect({ root }); assert.equal(impact.kind, "page-render"); assert(impact.evidenceChanges.p01.includes("selectionOutcomeDigest"));
   fs.writeFileSync(path.join(pageDir, "page.js"), "module.exports={id:'p01',v:2};\n"); assert.equal(inspect({ root }).kind, "page-render");

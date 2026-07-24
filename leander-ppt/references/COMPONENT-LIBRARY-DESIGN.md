@@ -1,30 +1,30 @@
-# Component Library Design
+# 组件库设计
 
-This file defines how the Leander PPT component library should evolve. It addresses a key issue: the current library is useful, but most components are page-level generators. Stable production needs a layered, tagged, composable library.
+本文件定义 Leander PPT 组件库应如何演进。它针对一个关键问题:当前的库有用,但大多数组件是页面级生成器。稳定的生产需要一个分层、打标签、可组合的库。
 
-## Current State
+## 当前状态
 
-Components are executable JavaScript functions, not `.pptx` snippets. A page calls a component from `page.js`, passing data and theme context. The output PPTX is generated later.
+组件是可执行的 JavaScript 函数,不是 `.pptx` 片段。一个页面从 `page.js` 调用一个组件,传入数据和主题上下文。输出的 PPTX 在之后生成。
 
-Current strengths:
-- Editable PPT shapes and text.
-- Version-diff friendly JS/JSON.
-- Per-page isolation and QA.
-- Registry-driven route selection.
+当前优势:
+- 可编辑的 PPT 形状和文字。
+- 对版本 diff 友好的 JS/JSON。
+- 逐页隔离和 QA。
+- 注册表驱动的路线选择。
 
-Current gaps:
-- The registry mostly describes full-page components.
-- Component scoring is lightweight keyword matching.
-- There is no formal way to combine one component's layout with another component's visual part.
-- Component metadata does not yet describe slots, variants, composition safety, or avoid conditions.
+当前缺口:
+- 注册表大多描述整页组件。
+- 组件打分是轻量的关键词匹配。
+- 没有正式的办法把一个组件的布局和另一个组件的小部件组合起来。
+- 组件元数据还没有描述槽位、变体、组合安全性或避免条件。
 
-## Three-Layer Component Model
+## 三层组件模型
 
-### 1. Page Patterns
+### 1. 整页版式(Page Patterns)
 
-Whole-slide structures. Use when the page relationship is clear and the component fits most of the page.
+整张幻灯片的结构。当页面关系清楚、且组件适配页面大部分时用。
 
-Examples:
+例子:
 - problem -> mechanism map
 - state isolation page
 - tool-system tree
@@ -32,13 +32,13 @@ Examples:
 - sharing-boundary board
 - architecture center
 
-Purpose: decide the page's main visual organization.
+目的:决定页面的主视觉组织。
 
-### 2. Layout Blocks
+### 2. 局部版块(Layout Blocks)
 
-Reusable structural regions that can be combined inside a page pattern.
+可以在一个整页版式内部组合的、可复用的结构区域。
 
-Examples:
+例子:
 - left-right contrast
 - folder row + selected expansion
 - vertical step rail
@@ -47,13 +47,13 @@ Examples:
 - evidence board
 - callout panel
 
-Purpose: allow mixed pages without creating one-off full-page components.
+目的:允许混合页面,而不用创建一次性的整页组件。
 
-### 3. Visual Parts
+### 3. 小部件(Visual Parts)
 
-Small reusable visual assets and drawing helpers.
+小的可复用视觉资产和绘制 helper。
 
-Examples:
+例子:
 - file chips
 - folder icons
 - stage number dots
@@ -63,11 +63,11 @@ Examples:
 - badge/chip styles
 - callout leader lines
 
-Purpose: make custom or mixed pages look consistent without rebuilding every detail.
+目的:让自定义或混合页面看起来一致,而不用重建每个细节。
 
-## Component Metadata Standard
+## 组件元数据标准
 
-Every reusable component should eventually declare:
+每个可复用组件最终都应声明:
 
 ```json
 {
@@ -88,17 +88,17 @@ Every reusable component should eventually declare:
 }
 ```
 
-## Semantic-Neutral Abstraction Standard
+## 语义中立的抽象标准
 
-Reusable components must be abstracted by their **relationship primitive** and **expression capability**, not by the one semantic meaning they happened to carry in the current deck.
+可复用组件必须按它们的**基本关系类型**和**表达能力**抽象,而不是按它们在当前 deck 里碰巧承载的那一个语义含义。
 
-Bad abstraction:
+糟糕的抽象:
 
 - `teamCollaborationFlow`
 - `contextTransitionChart`
 - `harnessSkillSharingPage`
 
-Better abstraction:
+更好的抽象:
 
 - `multiActorContributionToSharedPool`
 - `selectAndExpandUnit`
@@ -106,7 +106,7 @@ Better abstraction:
 - `phaseRoutedContext`
 - `feedbackLoopWithPromotion`
 
-The same component may bind to multiple meanings:
+同一个组件可以绑定到多个含义:
 
 ```json
 {
@@ -128,72 +128,72 @@ The same component may bind to multiple meanings:
 }
 ```
 
-### Component Scoring
+### 组件打分
 
-When selecting a component, score in this order:
+选择组件时,按此顺序打分:
 
-1. Relationship fit: does the primitive match the page intent?
-2. Structure fit: do the required slots exist without forcing the page?
-3. Composition fit: can a page pattern combine with layout blocks and visual parts cleanly?
-4. Evidence fit: can the component show the real artifact or source boundary?
-5. Theme fit: does the component work with the active theme tokens?
-6. Keyword fit: current deck wording is only a weak signal.
+1. 关系匹配:基本类型是否匹配页面意图?
+2. 结构匹配:所需槽位是否存在、而不用硬套页面?
+3. 组合匹配:一个整页版式能否干净地与局部版块和小部件组合?
+4. 证据匹配:组件能否展示真实产物或来源边界?
+5. 主题匹配:组件是否与活跃主题 token 兼容?
+6. 关键词匹配:当前 deck 措辞只是一个弱信号。
 
-Keyword-only matching is not enough. If a component is chosen because a page says "team", "tool", or "context" but the relationship structure differs, reject it.
+只靠关键词匹配不够。如果一个组件是因为页面说了"team"、"tool"或"context"而被选中、但关系结构不同,拒绝它。
 
-Do not present internal numeric scores as the user-facing selection logic in a deck. Scores are an internal shortlist aid. In the PPT, explain the mechanism as:
+不要在 deck 里把内部数值分数当作面向用户的选择逻辑呈现。分数是一个内部的入围辅助。在 PPT 里,把机制解释成:
 
 ```text
 blueprint contract -> expression mode -> relationship primitive -> required slots -> theme/evidence fit -> risk rejection -> page binding
 ```
 
-If the blueprint has already fixed the page skeleton and expression mode, component selection should narrow the search, not redesign the page from scratch.
+如果蓝图已经固定了页面版面结构和表达模式,组件选择应变窄搜索,而不是从头重新设计页面。
 
-### Variant And Derivative Rule
+### 变体与派生规则
 
-If a new drawing is a derivative of an existing component:
+如果一个新绘制是现有组件的派生:
 
-- Same relationship + same structure + different content: extend slots or examples.
-- Same relationship + small visual change: add a variant.
-- Same page pattern + one reusable region: extract a layout block.
-- Same icon/connector/chip repeated in several pages: extract a visual part.
-- Different relationship primitive: add a new page pattern.
+- 相同关系 + 相同结构 + 不同内容:扩展槽位或例子。
+- 相同关系 + 小的视觉变化:加一个变体。
+- 相同整页版式 + 一个可复用区域:抽取一个局部版块。
+- 相同图标/连接线/chip 在若干页面重复:抽取一个小部件。
+- 不同的基本关系类型:加一个新的整页版式。
 
-The library should grow by reusable logic, not by accumulating one-off deck semantics.
+库应按可复用的逻辑增长,而不是靠积累一次性的 deck 语义。
 
-## Reuse Decision
+## 复用决策
 
-Before adding a new component:
+添加一个新组件之前:
 
-1. Is it only a color/line/fill style difference?
-   - Add a `variant` to the existing component.
-2. Is the structure the same but the data slots differ?
-   - Extend the component input schema.
-3. Is only one local part useful?
-   - Extract a layout block or visual part.
-4. Does the page relationship differ from all existing components?
-   - Add a new page pattern.
-5. Is it project-specific or sensitive?
-   - Keep it in the project, not the shared library.
+1. 它只是颜色/线条/填充的样式差异吗?
+   - 给现有组件加一个 `variant`。
+2. 结构相同、但数据槽位不同吗?
+   - 扩展组件的输入 schema。
+3. 只有一个局部部件有用吗?
+   - 抽取一个局部版块或小部件。
+4. 页面关系与所有现有组件都不同吗?
+   - 加一个新的整页版式。
+5. 它是项目专属或敏感的吗?
+   - 把它留在项目里,不进共享库。
 
-## Fusion Rule
+## 融合规则
 
-A page may combine components, but the combination should be explicit:
+一个页面可以组合组件,但组合应该是显式的:
 
 ```text
 page pattern + layout block + visual parts
 ```
 
-Examples:
-- `problemMap` page pattern + `imageSlot` visual part.
-- `toolSystemTree` page pattern + custom external component source list.
-- `stateFlow` relationship + folder-expansion layout block + file-chip visual parts.
+例子:
+- `problemMap` 整页版式 + `imageSlot` 小部件。
+- `toolSystemTree` 整页版式 + 自定义外部组件来源列表。
+- `stateFlow` 关系 + folder-expansion 局部版块 + file-chip 小部件。
 
-Avoid combining two full page patterns unless one is reduced to a layout block. Two page patterns on one slide usually create clutter.
+避免组合两个整页模式,除非其中一个被降为一个局部版块。一张幻灯片上两个整页版式通常制造杂乱。
 
-### Expression Mode First
+### 表达模式优先
 
-Before selecting a component, decide the page's expression mode:
+选择组件之前,先决定页面的表达模式:
 
 - mechanism-diagram
 - screenshot-evidence
@@ -204,41 +204,42 @@ Before selecting a component, decide the page's expression mode:
 - simple-image2-illustration
 - component-composite
 
-The component library is only one route. It should not override a stronger evidence screenshot, a clearer big-number page, or a simple generated illustration.
+组件库只是一条路线。它不应压过一张更强的证据截图、一张更清晰的大数字页,或一张简单的生成插画。
 
-## Promotion Rule
+## 提升规则
 
-A new drawing should enter the shared component library only when:
+一个新绘制只有在以下情况才应进入共享组件库:
 
-- it solves a recurring page problem
-- its inputs can be described generically
-- it has a clear level: page-pattern, layout-block, or visual-part
-- it is not tied to one confidential project
-- it has at least one realistic example and a QA risk list
+- 它解决一个反复出现的页面问题
+- 它的输入能被通用地描述
+- 它有一个清晰的层级:page-pattern、layout-block,或 visual-part
+- 它不绑定到一个机密项目
+- 它至少有一个真实的例子和一份 QA 风险清单
 
-If it is a one-off but useful, keep it in the deck project's page implementation or project-local `components/`.
+如果它是一次性但有用的,把它留在 deck 项目的页面实现或项目本地的 `components/` 里。
 
-## Stability And Ease-Of-Use
+## 稳定性与易用性
 
-- Prefer fewer stable components with good slots over many near-duplicates.
-- Give every component a simple default path and optional advanced slots.
-- Keep component names semantic, not visual-only.
-- Make the registry compact enough for routine reads.
-- When a component repeatedly needs manual overrides, fix its metadata or split it into smaller blocks.
+- 优先少量带好槽位的稳定组件,而不是很多近乎重复的。
+- 给每个组件一条简单的默认路径和可选的高级槽位。
+- 让组件名保持语义,不只是视觉。
+- 让注册表紧凑到能常规读取。
+- 当一个组件反复需要手工覆盖时,修它的元数据、或把它拆成更小的块。
 
 ## Component Maintenance Mode
 
-组件库维护是临时治理动作，不是日常 PPT 生产流程。只有在用户明确要求“打磨组件库 / 优化组件 / 沉淀新组件 / 调整组件选择机制”时执行。
+组件库维护是临时治理动作，不是日常 PPT 生产流程。只有在用户明确要求“打磨组件库 / 优化组件 / 积累新组件 / 调整组件选择机制”时执行。
 
 维护顺序：
 
 1. 先建立可运行基线：对 `components/*.js` 执行语法检查，不能在不可运行文件上做视觉优化。
-2. 再更新注册表：运行 `node tools/enrich-component-registry.js`，补齐 relationship-first 元数据，并重算组件数量。
-3. 再更新索引：运行 `node tools/build-component-index.js`，让日常选组件读取 compact index。
-4. 再跑组件库 lint：运行 `node tools/lint-component-library.js --strict`，检查语法、元数据、硬编码颜色。
-5. 最后才考虑代码层组件美化；每次只改少量组件，并立即跑语法和 lint。
+2. 再维护人工覆盖：编辑 `tools/component-metadata-overrides.json`，并运行 `node tools/lint-component-metadata-overrides.js`。
+3. 再更新注册表：运行 `node tools/enrich-component-registry.js`，只补齐未被人工覆盖的 relationship-first 元数据，并重算组件数量。
+4. 再更新索引：运行 `node tools/build-component-index.js`，让日常选组件读取 compact index。
+5. 再跑组件库 lint 与审计：运行 `node tools/lint-component-library.js --strict` 和 `node tools/component-metadata-audit.js`。
+6. 最后才考虑代码层组件美化；每次只改少量组件，并立即跑语法和 lint。
 
-不要用全局字符串替换盲目“换肤”。组件文件可能包含特殊编码或历史注释，必须使用可运行基线、小步修改、逐步验证。
+不要用全局字符串替换盲目“换主题”。组件文件可能包含特殊编码或历史注释，必须使用可运行基线、小步修改、逐步验证。
 
 ## Visual Designer Review Rules
 
@@ -253,7 +254,7 @@ If it is a one-off but useful, keep it in the deck project's page implementation
 
 ## Theme Adaptation Rule
 
-组件库应通过 `theme.colors`、`theme.type`、`theme.signature` 自动换肤。新增组件必须避免直接写死项目色值。
+组件库应通过 `theme.colors`、`theme.type`、`theme.signature` 自动换主题。新增组件必须避免直接写死项目色值。
 
 允许的例外：
 
@@ -270,7 +271,7 @@ If it is a one-off but useful, keep it in the deck project's page implementation
 2. **Renderer 层**：`components/*.js`、`components/editorial.js`、`components/bespoke.js`、`components/tool-system-tree.js` 提供真实可调用的同名 JS 函数。
 3. **Selector 层**：`tools/component-index.min.json` 和 `tools/select-visual-route.js` 只允许选择 `selectable=true` 的组件。
 
-禁止把某次 PPT 中的页面级函数直接登记成 `usable` 组件。页面级函数如果值得沉淀，必须先完成组件迁移：
+禁止把某次 PPT 中的页面级函数直接登记成 `usable` 组件。页面级函数如果值得积累，必须先完成组件迁移：
 
 - 抽象关系能力，而不是当前页面语义；
 - 给出通用输入槽位；
@@ -311,12 +312,46 @@ node tools/render-component-library-preview.js
 
 新组件如果没有人工语义审核，`designStatus` 必须保持 `review-required`，不能因为 enrich 脚本补齐了字段就变成 `usable`。
 
-双主题验证必须真实渲染：
+### 人工覆盖的权威边界
+
+`tools/component-metadata-overrides.json` 是策展语义的权威层，适用于：
+
+- 主关系与次关系；
+- 表达能力和语义绑定；
+- 输入槽位、变体与内容容量；
+- `avoidWhen`、`qaRisks` 和选择置信度上限；
+- 人工审核人、审核日期和审核状态。
+
+它不能伪造运行时事实：渲染器是否存在、组件是否实际可选择、组件是否在某个主题成功渲染，仍由 renderer、index 和真实 manifest 决定。`enrich-component-registry.js` 与 `build-component-index.js` 必须先合并人工覆盖，再补齐推断字段；重复运行的结果必须确定一致。
+
+策展审核对每个 cohort 至少回答五个问题：
+
+1. 每个组件靠什么独特关系获得入选资格？
+2. 选择前必须具备什么证据或输入槽位？
+3. 它应当击败哪个相邻组件，为什么？
+4. 实际几何结构是否有实质差异，而不只是换了标签？
+5. 当前选择置信度上限是否有人工证据支持？
+
+若四个以上组件拥有相同的关系/表达能力/槽位/避免条件指纹，应视为治理告警，而不是“组件很多”。
+
+四主题验证必须真实渲染：
 
 ```bash
 node tools/render-component-library-preview.js --theme leander-base --out-dir <base-output>
+node tools/render-component-library-preview.js --theme base2 --out-dir <base2-output>
 node tools/render-component-library-preview.js --theme leander-global --out-dir <global-output>
-node tools/verify-component-themes.js <base-manifest> <global-manifest> --write
+node tools/render-component-library-preview.js --theme global-v2 --out-dir <global-v2-output>
+node tools/verify-component-themes.js <base-manifest> <base2-manifest> <global-manifest> <global-v2-manifest> --write
 ```
 
 这个验证只能证明组件能够在主题下技术渲染。视觉设计师仍需检查对比度、前景色、颜色语义和结构质量。
+
+### 可组合子组件的晋升
+
+优先把重复出现但不能独占整页的内容积累为 `layout-block` 或 `visual-part`。第二阶段的首批基准是：`evidenceLegend`（证据语义）、`stageGateRail`（阶段与审批门）、`statusLegend`（状态语义）。它们只能在以下条件全部满足后从 `review-required` 晋升为 `usable`：
+
+- 输入槽位不绑定某个项目事实；
+- 使用主题 token，四主题均真实渲染；
+- 小批量图册完成人工视觉检查；
+- renderer、registry、index 三层名称与状态一致；
+- 严格 lint、元数据审计和回归测试通过。

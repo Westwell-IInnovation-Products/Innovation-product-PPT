@@ -1,14 +1,16 @@
-// Merge two real-render manifests into component theme compatibility metadata.
-// Usage: node tools/verify-component-themes.js <base-manifest> <global-manifest> [--write]
+// Merge real-render manifests into component theme compatibility metadata.
+// Usage: node tools/verify-component-themes.js <manifest> <manifest> [...] [--write]
 const fs = require("fs");
 const path = require("path");
 const registryFile = path.join(__dirname, "component-registry.json");
 function read(file) { return JSON.parse(fs.readFileSync(file, "utf8").replace(/^\uFEFF/, "")); }
 function successful(manifest) { return new Set((manifest.manifest || []).filter(item => ["rendered", "rendered-blocked"].includes(item.status)).map(item => item.name)); }
 function main() {
-  const baseFile = process.argv[2], globalFile = process.argv[3];
-  if (!baseFile || !globalFile) { console.error("usage: node tools/verify-component-themes.js <base-manifest> <global-manifest> [--write]"); process.exit(1); }
-  const manifests = [read(path.resolve(baseFile)), read(path.resolve(globalFile))];
+  const files = process.argv.slice(2).filter(arg => arg !== "--write");
+  if (files.length < 2) { console.error("usage: node tools/verify-component-themes.js <manifest> <manifest> [...] [--write]"); process.exit(1); }
+  const manifests = files.map(file => read(path.resolve(file)));
+  if (manifests.some(item => !item.theme)) { console.error("every manifest must declare a theme"); process.exit(1); }
+  if (new Set(manifests.map(item => item.theme)).size !== manifests.length) { console.error("manifest themes must be unique"); process.exit(1); }
   const byTheme = new Map(manifests.map(item => [item.theme, successful(item)]));
   const registry = read(registryFile), report = [];
   registry.components = registry.components.map(component => {

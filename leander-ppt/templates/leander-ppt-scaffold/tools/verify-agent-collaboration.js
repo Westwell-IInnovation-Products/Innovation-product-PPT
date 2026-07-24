@@ -5,6 +5,7 @@ const crypto = require("crypto");
 const ROOT = path.join(__dirname, "..");
 const cfg = require("../deck.config");
 const { build: buildEventPlan, requiredRoles } = require("./plan-agent-events");
+const { verifyFile: verifyAgentReceipt } = require("./agent-run-receipt");
 function arg(name, fallback) { const i = process.argv.indexOf(`--${name}`); return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : fallback; }
 const file = path.resolve(arg("file", path.join(ROOT, "agent-collaboration.json")));
 const roleBrief = path.join(ROOT, "role-briefs.md");
@@ -32,10 +33,25 @@ function validateRun(role, item, planned, errors) {
   const artifact = artifactPath(item.artifact);
   if (!artifact || !fs.existsSync(artifact)) errors.push(`${role}: artifact missing or wildcard artifacts are invalid`);
   else if (item.outputDigest !== shaFile(artifact)) errors.push(`${role}: outputDigest does not match current artifact`);
+  const receiptFile = artifactPath(item.receipt);
+  if (!receiptFile || !fs.existsSync(receiptFile)) errors.push(`${role}: agent run receipt missing`);
+  else {
+    const checked = verifyAgentReceipt(receiptFile, {
+      root: ROOT,
+      role,
+      threadId: item.threadId,
+      runId: item.runId,
+      eventDigest: item.eventDigest,
+      inputDigest: item.inputDigest,
+      threadPolicy: planned.threadPolicy
+    });
+    if (!checked.ok) errors.push(`${role}: agent run receipt invalid (${checked.errors.join("; ")})`);
+    if (checked.sha256 !== item.receiptDigest) errors.push(`${role}: agent run receipt digest mismatch`);
+  }
   if (planned.threadPolicy === "fresh-fork-none" && item.status !== "completed") errors.push(`${role}: fresh review requires an independent completed run`);
   if (planned.action === "reuse-existing-run" && item.threadId !== planned.reuseThreadId) errors.push(`${role}: reused run must keep planned threadId`);
-  const phaseRuns = [...(item.runs || []), item].filter(run => run.phase === planned.requiredPhase && run.status === "completed");
-  if (phaseRuns.length > Number(planned.maxRunsThisPhase || 1)) errors.push(`${role}: more than one completed run recorded for ${planned.requiredPhase}`);
+  const sameEventRuns = [...(item.runs || []), item].filter(run => run.phase === planned.requiredPhase && run.status === "completed" && run.eventDigest === planned.eventDigest);
+  if (sameEventRuns.length > Number(planned.maxRunsThisPhase || 1)) errors.push(`${role}: unchanged event digest was reviewed more than once for ${planned.requiredPhase}`);
 }
 
 function main() {
@@ -47,7 +63,7 @@ function main() {
   if (ac.requireRoleBriefs !== false && !fs.existsSync(roleBrief)) errors.push("role-briefs.md is required");
   const livePlan = buildEventPlan();
   const recordedPlan = readJson(path.join(ROOT, "state", "agent-event-plan.json"));
-  if (!recordedPlan || recordedPlan.version !== "agent-event-plan.v2") errors.push("state/agent-event-plan.json v2 is required before running roles");
+  if (!recordedPlan || recordedPlan.version !== "agent-event-plan.v3") errors.push("state/agent-event-plan.json v3 is required before running roles");
   const roles = data?.roles || {}, required = requiredRoles();
   required.forEach(role => {
     const planned = recordedPlan?.roles?.[role];
@@ -72,10 +88,10 @@ function main() {
 }
 function selfTest() {
   const errors = [], digest = "a".repeat(64);
-  validateRun("reviewer-zh", { status: "completed", action: "run-fresh-once", event: "final", phase: "production-final", threadId: "t1", runId: "r1", eventDigest: digest, inputDigest: digest, outputDigest: digest, artifact: "missing.md", verdict: "SHIP", summary: "checked", runs: [] }, { action: "run-fresh-once", requiredPhase: "production-final", eventDigest: digest, threadPolicy: "fresh-fork-none", maxRunsThisPhase: 1 }, errors);
+  validateRun("reviewer-zh", { status: "completed", action: "run-fresh-once", event: "final", phase: "production-final", threadId: "t1", runId: "r1", eventDigest: digest, inputDigest: digest, outputDigest: digest, artifact: "missing.md", receipt: "missing.json", receiptDigest: digest, verdict: "SHIP", summary: "checked", runs: [] }, { action: "run-fresh-once", requiredPhase: "production-final", eventDigest: digest, threadPolicy: "fresh-fork-none", maxRunsThisPhase: 1 }, errors);
   if (!errors.some(error => /artifact missing/.test(error))) throw new Error("missing review artifact was not enforced");
   const staleErrors = [];
-  validateRun("reviewer-zh", { status: "completed", action: "run-fresh-once", event: "final", phase: "production-final", threadId: "t1", runId: "r1", eventDigest: "b".repeat(64), inputDigest: digest, outputDigest: digest, artifact: "missing.md", verdict: "MAYBE", summary: "checked", runs: [] }, { action: "run-fresh-once", requiredPhase: "production-final", eventDigest: digest, maxRunsThisPhase: 1 }, staleErrors);
+  validateRun("reviewer-zh", { status: "completed", action: "run-fresh-once", event: "final", phase: "production-final", threadId: "t1", runId: "r1", eventDigest: "b".repeat(64), inputDigest: digest, outputDigest: digest, artifact: "missing.md", receipt: "missing.json", receiptDigest: digest, verdict: "MAYBE", summary: "checked", runs: [] }, { action: "run-fresh-once", requiredPhase: "production-final", eventDigest: digest, maxRunsThisPhase: 1 }, staleErrors);
   if (!staleErrors.some(error => /verdict/.test(error)) || !staleErrors.some(error => /eventDigest/.test(error))) throw new Error("verdict/eventDigest validation was not enforced");
   console.log("PASS agent independence self-test");
 }

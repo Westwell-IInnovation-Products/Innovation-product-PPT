@@ -56,8 +56,10 @@ const theme = {
     footer: { style: "bar", color: "accent" },
     divider: "big-number",
     cover: "warm-right",
-    closing: "center-warm"
+    closing: "center-warm",
+    conclusion: "plain"
   },
+  container: { round: true, radius: 8, shadow: false },
   grid: {
     w: 1920,
     h: 1080,
@@ -86,14 +88,28 @@ const theme = {
 };
 
 const { globalTheme } = require("./leander-global");
+const { globalV2Theme } = require("./global-v2");
+const { base2Theme } = require("./base2");
+const { base3Theme } = require("./base3");
 
 const themes = {
   "leander-base": theme,
-  "leander-global": globalTheme
+  "base2": base2Theme,
+  "base3": base3Theme,
+  "leander-global": globalTheme,
+  "global-v2": globalV2Theme
 };
 
 function getTheme(name) {
-  const t = themes[name];
+  const raw = String(name || "").trim();
+  const normalized = /^global-?v2$/i.test(raw)
+    ? "global-v2"
+    : /^base-?2$/i.test(raw)
+      ? "base2"
+      : /^base-?3$/i.test(raw)
+        ? "base3"
+        : raw;
+  const t = themes[normalized];
   if (!t || t === theme) return theme;
   return {
     ...theme, ...t,
@@ -103,6 +119,15 @@ function getTheme(name) {
     grid: { ...theme.grid, ...t.grid },
     ppt: { ...theme.ppt, ...t.ppt },
     brand: { ...theme.brand, ...t.brand },
+    shape: {
+      ...(theme.shape || {}),
+      ...(t.shape || {}),
+      radius: { ...(theme.shape && theme.shape.radius || {}), ...(t.shape && t.shape.radius || {}) }
+    },
+    elevation: { ...(theme.elevation || {}), ...(t.elevation || {}) },
+    stroke: { ...(theme.stroke || {}), ...(t.stroke || {}) },
+    componentStyle: { ...(theme.componentStyle || {}), ...(t.componentStyle || {}) },
+    container: t.container || { round: true, shadow: true },
     signature: t.signature || theme.signature
   };
 }

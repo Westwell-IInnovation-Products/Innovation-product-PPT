@@ -1,57 +1,57 @@
-# Artifact Labels
+# 产物标签
 
-Use this file when a phase produces many files, or before reporting progress to the user.
+当一个 phase 产出很多文件时,或在向用户报告进度之前,使用本文件。
 
-## Goal
+## 目标
 
-Every output must have a clear audience. Do not ask the user to inspect internal machine inputs, QA evidence, and final deliverables as one undifferentiated pile.
+每个输出都必须有明确的受众。不要让用户把内部机器输入、QA 证据和最终交付物当作一堆不加区分的东西来查看。
 
-Run after every phase output, batch production, feedback repair, or final delivery:
+在每个 phase 输出、批量生产、反馈修复或终版交付之后运行:
 
 ```bash
 node tools/artifact-map.js --write
 ```
 
-This creates:
+这会创建:
 
-- `artifact-manifest.md`: human-readable report for the user and main agent.
-- `artifact-manifest.json`: machine-readable handoff for the next step.
+- `artifact-manifest.md`:给用户和主 agent 看的、人类可读的报告。
+- `artifact-manifest.json`:给下一步用的、机器可读的 handoff。
 
-## Labels
+## 标签
 
-| Label | Meaning | Typical examples |
+| 标签 | 含义 | 典型例子 |
 |---|---|---|
-| `user-confirm` | The user should review or approve before the next major phase. | `outline.md`, `layout-blueprint.md`, contact sheets, preview PNGs |
-| `next-input` | Input for the next production, repair, QA, or agent step. | `page.json`, `page.js`, `checkpoint-status.json`, `agent-collaboration.json` |
-| `internal-evidence` | Render, QA, or role evidence used to debug and audit quality. | `pages/*/qa.md`, `pages/*/out/*.png`, `agent-reviews/*.md` |
-| `final-output` | Deliverable artifact. | `.pptx`, final exported preview package |
-| `archive-reference` | Long-term memory or raw history. Read only when needed. | `LESSONS-ARCHIVE.md`, feedback logs |
+| `user-confirm` | 用户应在下一个大 phase 之前审阅或审批。 | `outline.md`、`layout-blueprint.md`、contact sheet、预览 PNG |
+| `next-input` | 下一步生产/修复/QA/agent 步骤的输入。 | `page.json`、`page.js`、`checkpoint-status.json`、`agent-collaboration.json` |
+| `internal-evidence` | 用于调试和审计质量的 render/QA/角色证据。 | `pages/*/qa.md`、`pages/*/out/*.png`、`agent-reviews/*.md` |
+| `final-output` | 交付物。 | `.pptx`、最终导出的预览包 |
+| `archive-reference` | 长期记忆或原始历史。仅在需要时读。 | `LESSONS-ARCHIVE.md`、反馈日志 |
 
-## Reporting Rule
+## 报告规则
 
-When reporting to the user, lead with:
+向用户报告时,按以下顺序开头:
 
-1. What needs user confirmation now.
-2. What is final output, if any.
-3. What is being kept as next-step input.
-4. What was generated only as internal evidence.
+1. 现在需要用户确认的是什么。
+2. 有的话,最终输出是什么。
+3. 作为下一步输入保留的是什么。
+4. 只作为内部证据生成的是什么。
 
-Avoid listing every per-page file unless the user asks. Give the manifest path instead.
+除非用户要求,否则不要逐一列出每个按页文件。给出 manifest 路径即可。
 
-## Handoff Rule
+## Handoff 规则
 
-Before the next task step, read `artifact-manifest.json` or `artifact-manifest.md` first. Use it with `context-pack.js` to decide which files to open.
+在下一个任务步骤之前,先读 `artifact-manifest.json` 或 `artifact-manifest.md`。配合 `context-pack.js` 决定要打开哪些文件。
 
-For example:
+例如:
 
-- Layout review: read only `layout-blueprint.md`, preview images, and any risk-page notes.
-- Page repair: read affected `page.json/page.js/qa.md`, affected render PNGs, and shared component files only if the manifest or context pack shows a shared dependency.
-- Final QA: read final output preview, deck-level QA, role review evidence, and page evidence only for failed or risky pages.
+- 布局评审:只读 `layout-blueprint.md`、预览图,以及任何风险页备注。
+- 页面修复:只读受影响的 `page.json/page.js/qa.md`、受影响的 render PNG,以及——仅当 manifest 或 context pack 显示存在共享依赖时——共享组件文件。
+- 终版 QA:读最终输出预览、deck 级 QA、角色评审证据,以及——仅对失败或高风险页——页面证据。
 
-## PPT Explanation
+## PPT 讲解
 
-When the deck itself explains the Leander-PPT harness, include this mechanism as a small but concrete example:
+当 deck 本身要讲解 Leander-PPT harness 时,把这个机制作为一个小而具体的例子:
 
 - "输出不是一堆文件，而是被标记为确认物、下一步输入、内部证据、最终交付、长期记忆。"
-- Put a real `artifact-manifest.md` screenshot near the QA/observability or team collaboration section.
-- Use the manifest to explain why each phase can stop for user confirmation without losing machine-readable state.
+- 在 QA/可观测性或团队协作章节附近,放一张真实的 `artifact-manifest.md` 截图。
+- 用 manifest 解释:为什么每个 phase 都能停下来等用户确认,同时不丢失机器可读的 state。

@@ -3,6 +3,7 @@
 const fs = require("fs");
 const path = require("path");
 const cfg = require("../deck.config");
+const { inspectSelectionDiversity } = require("./visual-selection-diversity");
 
 const ROOT = path.join(__dirname, "..");
 const PAGES = path.join(ROOT, "pages");
@@ -44,7 +45,11 @@ const errors = [];
 const warnings = [];
 const pages = selectedDirs().map(dir => ({ dir, data: readJson(path.join(PAGES, dir, "page.json"), {}) }));
 const qualityTarget = readJson(path.join(ROOT, "quality-target.json"), {});
-if (qualityTarget.version !== "leander-quality-target.v1") add(errors, "deck", "qualityTarget", "缺少 leander-quality-target.v1。同步脚手架并明确本项目质量目标。");
+const blueprintDataForDiversity = readJson(path.join(ROOT, "layout-blueprint.json"), {});
+const diversityAudit = inspectSelectionDiversity(pages.map(item => item.data), blueprintDataForDiversity.contracts || blueprintDataForDiversity.pages || []);
+diversityAudit.errors.forEach(item => add(errors, "deck", item.type, item.message));
+diversityAudit.warnings.forEach(item => add(warnings, "deck", item.type, item.message));
+if (qualityTarget.version !== "leander-quality-target.v1") add(errors, "deck", "qualityTarget", "缺少 leander-quality-target.v1。同步框架并明确本项目质量目标。");
 if (Number(qualityTarget.minimumOverallScore || 0) < 8) add(errors, "deck", "qualityTarget", "正式质量目标不得低于 8/10。");
 if (!Array.isArray(qualityTarget.dimensions) || qualityTarget.dimensions.length < 5) add(errors, "deck", "qualityTarget", "质量目标必须覆盖内容、故事、视觉、可读性、证据和可讲述性等维度。");
 const ids = new Set();

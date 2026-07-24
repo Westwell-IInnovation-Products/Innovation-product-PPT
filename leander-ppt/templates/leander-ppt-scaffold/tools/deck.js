@@ -1,5 +1,5 @@
-﻿// Per-page production pipeline with a hard QA gate.
-//   node tools/deck.js render [--pages a,b] -> render active/selected pages to pages/<id>/out/<id>.png
+// Per-page production pipeline with a hard QA gate.
+//   node tools/deck.js render [--force] [--pages a,b] -> render active/selected pages to pages/<id>/out/<id>.png
 //   node tools/deck.js verify        -> page QA gate only (exit 0 if all pages fresh+PASS, else non-zero). Used by the Stop hook.
 //   node tools/deck.js verify --final -> page QA gate + agent collaboration gate.
 //   node tools/deck.js build [--draft] -> verify, then assemble PASS pages into the final pptx (--draft assembles all anyway)
@@ -15,12 +15,14 @@ const { requireToolchain, libreOfficeProfile } = require("./toolchain");
 const { verify: verifyQaResult, shaFile } = require("./verify-qa-result");
 const { digestPage, loadManifest, sharedRenderDigest, commitManifest } = require("./page-digests");
 const { inspect: inspectChanges } = require("./change-impact");
+const { sceneFromSlide, writePageAudit, verifyPageAudit } = require("./render-geometry-audit");
+const { inspectThemeChromeTrace } = require("./verify-page-preflight");
 
 const ROOT = path.join(__dirname, "..");
 const PAGES = path.join(ROOT, "pages");
 
 // Keep in sync with .leander-scaffold-version.json; regression blackbox fails on drift.
-const SCAFFOLD_VERSION = "0.6.0-beta.8";
+const SCAFFOLD_VERSION = "0.6.0-beta.17";
 function verifyScaffoldVersion() {
   const file = path.join(ROOT, ".leander-scaffold-version.json");
   let version = "";
@@ -74,6 +76,13 @@ function verifyRenderedQualityIfFinal() {
     process.exit(error.status || 1);
   }
 }
+function verifyFinalGate() {
+  try {
+    cp.execFileSync(process.execPath, [path.join(__dirname, "final-gate.js")], { stdio: "inherit" });
+  } catch (error) {
+    process.exit(error.status || 1);
+  }
+}
 
 function workflowTarget(command) {
   const stage = (cfg.workflow || {}).stage;
@@ -91,7 +100,8 @@ function selectedPageNames() {
   const index = process.argv.indexOf("--pages");
   const cli = index >= 0 && process.argv[index + 1] ? process.argv[index + 1].split(",") : [];
   const configured = Array.isArray(cfg.workflow && cfg.workflow.activePages) ? cfg.workflow.activePages : [];
-  return [...new Set((cli.length ? cli : configured).map(value => String(value).trim()).filter(Boolean))];
+  const selected = cli.length ? cli : cfg.workflow?.stage === "production" ? [] : configured;
+  return [...new Set(selected.map(value => String(value).trim()).filter(Boolean))];
 }
 function pageDirs() {
   const dirs = fs.readdirSync(PAGES).filter(d => fs.existsSync(path.join(PAGES, d, "page.js"))).sort();
@@ -230,6 +240,15 @@ function gate() {
     else if (manifest.sharedRenderDigest !== currentShared) { status = "STALE-RENDER"; reason = "shared theme/component render digest changed - re-render full deck"; }
     else if (!manifest.pages?.[d] || manifest.pages[d].renderDigest !== digests.renderDigest) { status = "STALE-RENDER"; reason = "page renderDigest changed - re-render this page"; }
     else {
+      const geometry = verifyPageAudit(dir, meta);
+      if (!geometry.ok) { status = "BAD-GEOMETRY"; reason = geometry.errors.slice(0, 3).join("; "); }
+    }
+    if (status === "PASS") {
+      const trace = loadPageJson(path.join(dir, "out", "component-trace.json"));
+      const chromeErrors = inspectThemeChromeTrace(meta, trace);
+      if (chromeErrors.length) { status = "BAD-THEME-CHROME"; reason = chromeErrors.join("; "); }
+    }
+    if (status === "PASS") {
       const qaEvidence = verifyQaResult(dir);
       if (!qaEvidence.ok) { status = "BAD-QA-EVIDENCE"; reason = qaEvidence.errors.slice(0, 3).join("; "); }
       else if (!fs.existsSync(qa)) { status = "MISSING-QA-SUMMARY"; reason = "qa.md must be generated from qa-result.json"; }
@@ -240,21 +259,32 @@ function gate() {
   return { ok: rows.every(r => r.status === "PASS"), rows };
 }
 
-function assemble(onlyPass) {
+function assemble(onlyPass, options = {}) {
   const pptx = newPptx(theme);
   const ctx = makeCtx(pptx, theme);
   const g = gate();
   const use = g.rows.filter(r => !onlyPass || r.status === "PASS");
-  const traces = {};
+  const traces = {}, scenes = {};
   use.forEach(r => {
     const p = loadPage(r.dir);
     const slide = pptx.addSlide();
     slide.addNotes(`${p.id} 路 ${p.title} 路 gate=${r.status}`);
     ctx.trace.beginPage(p.id);
     try { p.build(slide, ctx); }
-    finally { traces[p.id] = ctx.trace.endPage(p.id); }
+    finally {
+      traces[p.id] = ctx.trace.endPage(p.id);
+      const pageMeta = loadPageJson(path.join(PAGES, r.dir, "page.json")) || {};
+      scenes[p.id] = sceneFromSlide(slide, p.id, pageMeta);
+    }
+    if (options.draft) {
+      slide.addText("DRAFT · NOT QA APPROVED", {
+        x: 120, y: 500, w: 1040, h: 70,
+        fontFace: "Century Gothic", fontSize: 27, bold: true,
+        color: "C51516", rotate: -12, align: "center", margin: 0
+      });
+    }
   });
-  return { pptx, used: use, gate: g, traces };
+  return { pptx, used: use, gate: g, traces, scenes };
 }
 
 function renderPptxToPngs(pptxAbs, outDir) {
@@ -277,7 +307,16 @@ function cmdRender() {
     process.exit(1);
   }
   const requested = selectedPageNames();
-  const impact = inspectChanges({ root: ROOT, pages: requested });
+  const forced = process.argv.includes("--force");
+  const impact = forced
+    ? {
+      version: "change-impact.v1",
+      kind: "shared-render",
+      affectedPages: fs.readdirSync(PAGES).filter(d => fs.existsSync(path.join(PAGES, d, "page.js"))).sort(),
+      evidenceChanges: {},
+      sharedRenderChanged: true
+    }
+    : inspectChanges({ root: ROOT, pages: requested });
   if (impact.kind === "no-render") {
     console.log(`render skipped: no renderDigest changes (${Object.keys(impact.evidenceChanges || {}).length} evidence-only page changes)`);
     return Promise.resolve();
@@ -285,7 +324,7 @@ function cmdRender() {
   if (impact.kind === "shared-render") runtimePageSelection = fs.readdirSync(PAGES).filter(d => fs.existsSync(path.join(PAGES, d, "page.js"))).sort();
   else runtimePageSelection = impact.affectedPages;
   // Assemble affected pages -> render once -> split each slide back to its page output.
-  const { pptx, used, traces } = assemble(false);
+  const { pptx, used, traces, scenes } = assemble(false);
   const tmp = path.join(ROOT, "output", "_render.pptx");
   fs.mkdirSync(path.dirname(tmp), { recursive: true });
   return pptx.writeFile({ fileName: tmp }).then(() => {
@@ -302,6 +341,7 @@ function cmdRender() {
         const meta = loadPageJson(path.join(pageDir, "page.json")) || {};
         const selected = meta.visualSelection && meta.visualSelection.selectedRoute || {};
         const digests = digestPage(pageDir, ROOT);
+        writePageAudit(pageDir, scenes[r.id], renderFile);
         const trace = {
           version: "component-trace.v2",
           pageId: r.id,
@@ -311,13 +351,15 @@ function cmdRender() {
           selectedBinding: selected,
           calls: traces[r.id] || []
         };
+        const chromeErrors = inspectThemeChromeTrace(meta, trace);
+        if (chromeErrors.length) throw new Error(`THEME CHROME GATE FAILED ${r.id}: ${chromeErrors.join("; ")}`);
         fs.writeFileSync(path.join(od, "component-trace.json"), JSON.stringify(trace, null, 2) + "\n", "utf8");
       }
     });
     fs.rmSync(tmp, { force: true });
     fs.rmSync(tmpOut, { recursive: true, force: true });
     commitManifest({ root: ROOT, pages: used.map(row => row.dir) });
-    console.log(`rendered ${used.length} pages -> pages/<id>/out/<id>.png`);
+    console.log(`rendered ${used.length} pages${forced ? " (forced full-deck)" : ""} -> pages/<id>/out/<id>.png`);
   });
 }
 
@@ -326,8 +368,16 @@ function printGate(g) {
   const pass = g.rows.filter(r => r.status === "PASS").length;
   console.log(`  -- ${pass}/${g.rows.length} PASS`);
 }
+function draftOutputPath(fileName) {
+  const parsed = path.parse(fileName);
+  return path.join(parsed.dir, `${parsed.name}.draft${parsed.ext || ".pptx"}`);
+}
 
 function cmdVerify(finalMode) {
+  if (finalMode) {
+    verifyFinalGate();
+    return;
+  }
   verifyWorkflowEntry(workflowTarget(finalMode ? "build" : "verify"), finalMode ? "deck-verify-final" : "deck-verify");
   verifyQualityBaseline();
   verifyPagePreflight();
@@ -344,13 +394,12 @@ function cmdVerify(finalMode) {
 
 function cmdBuild(draft) {
   // --draft relaxes page QA only. It never bypasses the workflow receipt or user checkpoints.
-  verifyWorkflowEntry(workflowTarget("build"), draft ? "deck-build-draft" : "deck-build");
-  verifyQualityBaseline();
-  verifyPagePreflight();
-  if (!draft) verifyPhaseCheckpointsIfNeeded();
-  if (!draft) verifyAgentCollaborationIfEnabled();
-  if (!draft) verifyRenderedQualityIfFinal();
-  if (!draft) verifyDesignGateIfNeeded();
+  if (!draft) verifyFinalGate();
+  else {
+    verifyWorkflowEntry(workflowTarget("build"), "deck-build-draft");
+    verifyQualityBaseline();
+    verifyPagePreflight();
+  }
   const g = gate();
   console.log("QA gate:");
   printGate(g);
@@ -358,26 +407,51 @@ function cmdBuild(draft) {
     console.error("REFUSING to build final deck: pages above are not fresh+PASS. Use --draft to assemble anyway.");
     process.exit(1);
   }
-  const { pptx, used } = assemble(!draft);
+  const { pptx, used } = assemble(!draft, { draft });
   const stage = cfg.workflow && cfg.workflow.stage;
-  const outputFile = stage === "anchor-sample" && cfg.anchorFileName
+  const canonicalFile = stage === "anchor-sample" && cfg.anchorFileName
     ? cfg.anchorFileName
     : stage === "production-batch" && cfg.batchFileName
       ? cfg.batchFileName
       : cfg.fileName;
-  if (/[<>]/.test(String(outputFile || ""))) {
-    console.error(`deck.config fileName still contains a template placeholder: ${outputFile}. Set a real output path before building.`);
+  if (/[<>]/.test(String(canonicalFile || ""))) {
+    console.error(`deck.config fileName still contains a template placeholder: ${canonicalFile}. Set a real output path before building.`);
     process.exit(1);
   }
+  const outputFile = draft
+    ? draftOutputPath(canonicalFile)
+    : path.join(ROOT, "output", ".staging", `${(loadPageJson(path.join(ROOT, "workflow-receipt.json")) || {}).runId || "run"}.pptx`);
+  fs.mkdirSync(path.dirname(outputFile), { recursive: true });
   return pptx.writeFile({ fileName: outputFile }).then(f => {
-    console.log(`wrote ${f}  (${used.length} pages${draft ? ", DRAFT incl. non-PASS" : ", all PASS"})`);
+    if (draft) {
+      fs.rmSync(path.join(ROOT, "output", "final-artifact-receipt.json"), { force: true });
+      console.log(`wrote ${f}  (${used.length} pages, DRAFT watermarked; canonical untouched)`);
+      return;
+    }
+    cp.execFileSync(process.execPath, [
+      path.join(__dirname, "final-artifact-gate.js"),
+      "verify", "--pptx", path.resolve(f), "--publish", path.resolve(canonicalFile)
+    ], { stdio: "inherit" });
+    console.log(`published ${canonicalFile}  (${used.length} pages, all gates + zero-pixel final lock PASS)`);
   });
 }
 
-const cmd = process.argv[2], draft = process.argv.includes("--draft"), finalMode = process.argv.includes("--final");
-verifyScaffoldVersion();
-verifyToolFreeze();
-if (cmd === "render") cmdRender();
-else if (cmd === "verify") cmdVerify(finalMode);
-else if (cmd === "build") cmdBuild(draft);
-else { console.log("usage: node tools/deck.js render|verify [--final]|build [--draft] [--pages a,b]"); process.exit(1); }
+function printContextTail() {
+  try { cp.execFileSync(process.execPath, [path.join(__dirname, "context-budget-gate.js"), "--tail"], { stdio: "inherit" }); } catch {}
+}
+if (require.main === module) {
+  const cmd = process.argv[2], draft = process.argv.includes("--draft"), finalMode = process.argv.includes("--final");
+  verifyScaffoldVersion();
+  verifyToolFreeze();
+  if (cmd === "render") Promise.resolve(cmdRender()).then(printContextTail);
+  else if (cmd === "verify") Promise.resolve(cmdVerify(finalMode)).then(printContextTail);
+  else if (cmd === "build") Promise.resolve(cmdBuild(draft)).then(printContextTail);
+  else if (cmd === "verify-pages-only") {
+    const result = gate();
+    printGate(result);
+    if (!result.ok) process.exit(1);
+  }
+  else { console.log("usage: node tools/deck.js render [--force]|verify [--final]|build [--draft] [--pages a,b]"); process.exit(1); }
+}
+
+module.exports = { gate, assemble, renderPptxToPngs, draftOutputPath };
