@@ -7,8 +7,10 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 const { digestPage, legacyContractDigest, legacyRenderContextDigest, shaFile, shaText } = require("./page-digests");
+const { POLICY_VERSION } = require("./geometry-policy");
 
 const RULES = JSON.parse(fs.readFileSync(path.join(__dirname, "qa-rules.zh.json"), "utf8").replace(/^\uFEFF/, ""));
+const QA_RESULT_VERSION = "qa-result.zh.v3";
 function readJson(file) { try { return JSON.parse(fs.readFileSync(file, "utf8").replace(/^\uFEFF/, "")); } catch { return null; } }
 function norm(value) { return String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, ""); }
 function evidenceError(value, expectedType = "", ruleId = "") {
@@ -18,10 +20,61 @@ function evidenceError(value, expectedType = "", ruleId = "") {
   const observation = String(value.observation || value.numericResult || "").trim();
   if (method.length < 4) return "evidence.method is required";
   if (observation.length < 6) return "evidence.observation or numericResult is required";
+  if (/^(未发现该规则失败|未发现问题|无明显问题|符合要求|检查通过|整体成立|由.+共同支撑)[。.!]*$/i.test(observation)) return "evidence.observation is generic and not grounded in an observable page fact";
+  if (ruleId === "r.contrast.scale" && !/(\d+\s*[×xX*]\s*\d+|等宽|等高|同尺寸|同尺度|不等|比例|视觉重量|体量|基线)/i.test(observation)) return "contrast scale evidence must state the observed size, baseline, ratio, or visual-weight relationship";
+  if (ruleId === "r.contrast.mapping" && !/(一一|逐项|组级|多对一|一对多|无映射|不映射|基数|\d+\s*(?:对|→|项))/i.test(observation)) return "contrast mapping evidence must state the actual cardinality or mapping mode";
+  if (expectedType === "machine-geometry") {
+    if (method !== "machine-geometry") return "machine geometry evidence requires method=machine-geometry";
+    if (!Array.isArray(value.findingIds)) return "machine geometry evidence requires findingIds[]";
+    if (String(value.policyVersion || "") !== POLICY_VERSION) return "machine geometry evidence policyVersion is stale";
+    if (!/^[a-f0-9]{64}$/i.test(String(value.artifactSha256 || ""))) return "machine geometry evidence requires artifactSha256";
+    return String(value.artifact || "").trim().length >= 3 ? "" : "machine geometry evidence requires artifact";
+  }
   if (expectedType === "source-reference") return String(value.source || "").trim().length >= 3 ? "" : "source-reference evidence requires source";
   if (expectedType === "component-trace") return String(value.artifact || "").trim().length >= 3 ? "" : "component-trace evidence requires artifact";
   if (String(value.artifact || "").trim().length < 3) return "render/contract evidence requires artifact";
   if (String(value.location || "").trim().length < 3) return "render/contract evidence requires a specific location";
+  return "";
+}
+function isMachineRule(ruleId) {
+  return RULES.rules?.[ruleId]?.evidenceClass === "machine-geometry" || RULES.rules?.[ruleId]?.evidence === "machine-geometry";
+}
+function geometryReport(pageDir) {
+  const file = path.join(pageDir, "out", "geometry-audit.json");
+  return { file, report: readJson(file), sha256: shaFile(file) };
+}
+function machineCheck(pageDir, ruleId) {
+  const current = geometryReport(pageDir);
+  const findings = (current.report?.findings || []).filter(item => item.ruleId === ruleId && ["P0", "P1"].includes(item.severity));
+  const page = readJson(path.join(pageDir, "page.json"), {});
+  const renderSha256 = shaFile(findRender(pageDir, page));
+  const valid = current.report?.version === "render-geometry-audit.v1"
+    && current.report?.policyVersion === POLICY_VERSION
+    && current.report?.renderSha256 === renderSha256
+    && !!current.sha256;
+  return {
+    ruleId,
+    status: valid && !findings.length ? "PASS" : "FAIL",
+    evidence: {
+      ruleId,
+      artifact: "out/geometry-audit.json",
+      artifactSha256: current.sha256,
+      location: findings.length ? findings.map(item => (item.objects || []).join(" / ")).join("; ") : "full-slide geometry scene",
+      method: "machine-geometry",
+      policyVersion: POLICY_VERSION,
+      findingIds: findings.map(item => item.id),
+      observation: valid
+        ? `${findings.length} blocking finding(s) for ${ruleId}`
+        : "geometry audit missing or stale"
+    }
+  };
+}
+function machineEvidenceError(pageDir, check) {
+  const current = machineCheck(pageDir, check.ruleId);
+  const evidence = check.evidence || {};
+  if (check.status !== current.status) return `machine status must be ${current.status}`;
+  if (evidence.artifactSha256 !== current.evidence.artifactSha256) return "machine geometry artifact hash is stale";
+  if (JSON.stringify(evidence.findingIds || []) !== JSON.stringify(current.evidence.findingIds || [])) return "machine geometry findingIds do not match the current audit";
   return "";
 }
 function evidenceFingerprint(check) {
@@ -30,15 +83,21 @@ function evidenceFingerprint(check) {
 }
 function evidenceSetErrors(checks = [], expectedIds = []) {
   const errors = [], relevant = checks.filter(check => expectedIds.includes(check.ruleId) && check.status === "PASS");
-  const fingerprints = new Map(), locations = new Set();
+  const fingerprints = new Map(), locations = new Set(), observations = new Map();
   relevant.forEach(check => {
     const fp = evidenceFingerprint(check);
     if (fp) fingerprints.set(fp, [...(fingerprints.get(fp) || []), check.ruleId]);
     if (check.evidence?.location) locations.add(String(check.evidence.location).trim().toLowerCase());
+    const normalizedObservation = String(check.evidence?.observation || check.evidence?.numericResult || "").toLowerCase().replace(/\s+/g, "").replace(/[，。；：、,.!?:;()[\]{}'"“”‘’_-]+/g, "");
+    if (normalizedObservation) observations.set(normalizedObservation, [...(observations.get(normalizedObservation) || []), check.ruleId]);
   });
   fingerprints.forEach((ruleIds, fp) => {
     const families = new Set(ruleIds.map(id => id.split(".").slice(0, 2).join(".")));
     if (ruleIds.length >= 3 && families.size >= 2) errors.push(`generic evidence reused across unrelated rules: ${ruleIds.join(", ")}`);
+  });
+  observations.forEach(ruleIds => {
+    const families = new Set(ruleIds.map(id => id.split(".").slice(0, 2).join(".")));
+    if (ruleIds.length >= 2 && families.size >= 2) errors.push(`same observation reused across unrelated rules: ${ruleIds.join(", ")}`);
   });
   const renderChecks = relevant.filter(check => RULES.rules?.[check.ruleId]?.evidence === "render-location");
   if (renderChecks.length >= 8 && locations.size < 2) errors.push("render QA uses one generic location for all checks; provide rule-specific page locations");
@@ -84,7 +143,7 @@ function verify(pageDir) {
   if (!page) return { ok: false, errors: ["page.json missing or invalid"] };
   const profile = page.qaProfile;
   if (!profile || profile.version !== "qa-profile.zh.v2") errors.push("qaProfile must be qa-profile.zh.v2");
-  if (!result || result.version !== "qa-result.zh.v2") errors.push("qa-result.json missing or not qa-result.zh.v2");
+  if (!result || result.version !== QA_RESULT_VERSION) errors.push(`qa-result.json missing or not ${QA_RESULT_VERSION}`);
   const renderFile = findRender(pageDir, page), renderSha = shaFile(renderFile);
   const digests = digestPage(pageDir, path.resolve(pageDir, "..", ".."));
   if (!renderSha) errors.push(`render missing: ${renderFile}`);
@@ -103,6 +162,10 @@ function verify(pageDir) {
     else {
       const evidenceProblem = evidenceError(check.evidence, RULES.rules?.[ruleId]?.evidence || "", ruleId);
       if (evidenceProblem) errors.push(`QA check lacks rule-specific evidence: ${ruleId} (${evidenceProblem})`);
+      if (isMachineRule(ruleId)) {
+        const machineProblem = machineEvidenceError(pageDir, check);
+        if (machineProblem) errors.push(`QA machine evidence mismatch: ${ruleId} (${machineProblem})`);
+      }
     }
   });
   errors.push(...evidenceSetErrors([...(checks.values())], expected));
@@ -125,7 +188,7 @@ function init(pageDir) {
   const profile = page.qaProfile;
   const currentDigests = digestPage(pageDir, path.resolve(pageDir, "..", ".."));
   const output = {
-    version: "qa-result.zh.v2",
+    version: QA_RESULT_VERSION,
     pageId: page.id || page.page || path.basename(pageDir),
     verdict: "PENDING",
     renderSha256: shaFile(renderFile),
@@ -136,7 +199,9 @@ function init(pageDir) {
       sourceDigest: currentDigests.sourceDigest
     },
     reviewer: { role: "reviewer-zh", runId: "", mode: "independent-render-review" },
-    checks: expectedRuleIds(profile).map(ruleId => ({ ruleId, status: "PENDING", evidence: { ruleId, artifact: path.relative(pageDir, renderFile).replace(/\\/g, "/"), location: "", method: "", observation: "", source: "" } })),
+    checks: expectedRuleIds(profile).map(ruleId => isMachineRule(ruleId)
+      ? machineCheck(pageDir, ruleId)
+      : { ruleId, status: "PENDING", evidence: { ruleId, artifact: path.relative(pageDir, renderFile).replace(/\\/g, "/"), location: "", method: "", observation: "", source: "" } }),
     remainingRisks: []
   };
   const resultFile = path.join(pageDir, "qa-result.json");
@@ -144,6 +209,44 @@ function init(pageDir) {
   output.digests.qaDigest = digestPage(pageDir, path.resolve(pageDir, "..", "..")).qaDigest;
   fs.writeFileSync(resultFile, JSON.stringify(output, null, 2) + "\n", "utf8");
   console.log(`initialized ${path.join(pageDir, "qa-result.json")}`);
+  return output;
+}
+
+function upgrade(pageDir, prior = readJson(path.join(pageDir, "qa-result.json"))) {
+  const page = readJson(path.join(pageDir, "page.json"));
+  if (!page || page.qaProfile?.version !== "qa-profile.zh.v2") throw new Error("Build qa-profile.zh.v2 before QA upgrade");
+  const renderFile = findRender(pageDir, page);
+  if (!fs.existsSync(renderFile)) throw new Error("Render page before QA upgrade");
+  const priorChecks = new Map((prior?.checks || []).map(check => [check.ruleId, check]));
+  const currentDigests = digestPage(pageDir, path.resolve(pageDir, "..", ".."));
+  const checks = expectedRuleIds(page.qaProfile).map(ruleId => {
+    if (isMachineRule(ruleId)) return machineCheck(pageDir, ruleId);
+    return priorChecks.get(ruleId) || { ruleId, status: "PENDING", evidence: { ruleId, artifact: path.relative(pageDir, renderFile).replace(/\\/g, "/"), location: "", method: "", observation: "", source: "" } };
+  });
+  const machineFailed = checks.some(check => isMachineRule(check.ruleId) && check.status !== "PASS");
+  const allPassed = checks.every(check => check.status === "PASS");
+  const output = {
+    version: QA_RESULT_VERSION,
+    pageId: page.id || page.page || path.basename(pageDir),
+    verdict: machineFailed ? "FIX-FIRST" : allPassed ? "PASS" : "PENDING",
+    renderSha256: shaFile(renderFile),
+    digests: {
+      renderDigest: currentDigests.renderDigest,
+      selectionOutcomeDigest: currentDigests.selectionOutcomeDigest,
+      qaDigest: currentDigests.qaDigest,
+      sourceDigest: currentDigests.sourceDigest
+    },
+    reviewer: prior?.reviewer || { role: "reviewer-zh", runId: "", mode: "independent-render-review" },
+    checks,
+    remainingRisks: machineFailed
+      ? checks.filter(check => isMachineRule(check.ruleId) && check.status !== "PASS").map(check => `${check.ruleId}: ${(check.evidence?.findingIds || []).join(", ")}`)
+      : (prior?.remainingRisks || [])
+  };
+  const resultFile = path.join(pageDir, "qa-result.json");
+  fs.writeFileSync(resultFile, JSON.stringify(output, null, 2) + "\n", "utf8");
+  output.digests.qaDigest = digestPage(pageDir, path.resolve(pageDir, "..", "..")).qaDigest;
+  fs.writeFileSync(resultFile, JSON.stringify(output, null, 2) + "\n", "utf8");
+  return output;
 }
 
 function writeMarkdown(pageDir, verified) {
@@ -184,12 +287,21 @@ function selfTest() {
   fs.writeFileSync(path.join(dir, "page.json"), JSON.stringify(page), "utf8");
   fs.writeFileSync(path.join(dir, "page.js"), "module.exports = {};\n", "utf8");
   fs.writeFileSync(path.join(dir, "out", "fixture.png"), "render-v1", "utf8");
+  fs.writeFileSync(path.join(dir, "out", "geometry-audit.json"), JSON.stringify({
+    version: "render-geometry-audit.v1",
+    policyVersion: POLICY_VERSION,
+    pageId: "fixture",
+    renderSha256: shaFile(path.join(dir, "out", "fixture.png")),
+    findings: [],
+    verdict: "PASS"
+  }), "utf8");
   init(dir);
   const resultFile = path.join(dir, "qa-result.json");
   const result = readJson(resultFile);
   result.verdict = "PASS";
   result.reviewer.runId = "self-test";
   result.checks.forEach((check, index) => {
+    if (isMachineRule(check.ruleId)) return;
     const type = RULES.rules?.[check.ruleId]?.evidence || "";
     check.status = "PASS";
     check.evidence.ruleId = check.ruleId;
@@ -224,4 +336,4 @@ function main() {
 }
 
 if (require.main === module) main();
-module.exports = { verify, init, writeMarkdown, expectedRuleIds, evidenceError, evidenceSetErrors, contractDigest, renderContextDigest, shaFile, shaText };
+module.exports = { verify, init, upgrade, writeMarkdown, expectedRuleIds, evidenceError, evidenceSetErrors, isMachineRule, machineCheck, contractDigest, renderContextDigest, shaFile, shaText, QA_RESULT_VERSION };

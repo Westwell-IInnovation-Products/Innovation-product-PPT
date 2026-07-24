@@ -49,13 +49,13 @@ function inspect() {
   if (JSON.stringify(manifest.compat) !== JSON.stringify(["codex"])) add("compatibility-claim", manifestFile, "internal beta must claim only tested Codex compatibility");
 
   const forbiddenPaths = [
-    "README.md",
     "templates/leander-ppt-scaffold/state/context-pack.json",
     "templates/leander-ppt-scaffold/artifact-manifest.json",
     "templates/leander-ppt-scaffold/artifact-manifest.md",
     "templates/leander-ppt-scaffold/workflow-receipt.json",
     "templates/leander-ppt-scaffold/state/token-ledger.json",
-    "templates/leander-ppt-scaffold/state/phase-handoff.json"
+    "templates/leander-ppt-scaffold/state/phase-handoff.json",
+    "templates/leander-ppt-scaffold/state/toolchain-fingerprint.json"
   ];
   forbiddenPaths.forEach(rel => {
     const file = path.join(ROOT, ...rel.split("/"));

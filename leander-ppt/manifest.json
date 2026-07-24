@@ -1,8 +1,8 @@
 {
   "name": "leander-ppt",
-  "version": "0.6.0-beta.9",
+  "version": "0.6.0-beta.17",
   "category": "Presentation / Internal Reporting",
-  "description": "Turn source material into a formal editable PPTX through the mandatory Leander gated workflow. Includes fail-closed active-root Token observability, pre-command and phase-boundary context rotation, deterministic phase runners, competitive visual routes, rule-specific QA evidence, render-level diversity checks, risk-tiered review, and fresh independent final roles.",
+  "description": "Turn source material into a formal editable PPTX through the mandatory Leander gated workflow. Includes cumulative per-task Token accounting, adaptive 3-6 job portfolios, strict context packs, compact delta QA evidence, deterministic phase runners, risk-tiered review, and fresh independent final roles.",
   "compat": [
     "codex"
   ]

@@ -1,0 +1,17 @@
+{
+  "version": "visual-geometry-fixture.v1",
+  "pageId": "connector-imbalance",
+  "elements": [
+    {"id":"left-top","type":"line","role":"connector","group":"principle-spokes","z":1,"x1":4.042,"y1":2.847,"x2":5.320,"y2":3.375,"lineWidthPt":1.4},
+    {"id":"right-top","type":"line","role":"connector","group":"principle-spokes","z":1,"x1":8.014,"y1":3.375,"x2":8.139,"y2":2.847,"lineWidthPt":1.4},
+    {"id":"left-bottom","type":"line","role":"connector","group":"principle-spokes","z":1,"x1":4.042,"y1":4.681,"x2":5.320,"y2":4.014,"lineWidthPt":1.4},
+    {"id":"right-bottom","type":"line","role":"connector","group":"principle-spokes","z":1,"x1":8.014,"y1":4.014,"x2":8.139,"y2":4.681,"lineWidthPt":1.4}
+  ],
+  "expected": [
+    {
+      "ruleId": "u.geometry.connector",
+      "severity": "P1",
+      "objects": ["left-top", "right-top", "left-bottom", "right-bottom"]
+    }
+  ]
+}

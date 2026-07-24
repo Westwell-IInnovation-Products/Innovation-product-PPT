@@ -34,7 +34,7 @@ function gate0FreshTaskError(root) {
   const average = recent.length ? Math.round(recent.reduce((sum, call) => sum + Number(call.input_tokens || 0), 0) / recent.length) : 0;
   const max = calls.length ? Math.max(...calls.map(call => Number(call.input_tokens || 0))) : 0;
   const compactions = Number(root.compactions || 0);
-  if (max >= 180000 || average >= 120000 || compactions > 0) return `FRESH TASK REQUIRED: Gate 0 refuses an already-heavy root task (recent average=${average}, max=${max}, compactions=${compactions}). Start a new Codex task before initializing this deck.`;
+  if (max >= 260000 || average >= 180000 || compactions > 0) return `FRESH TASK REQUIRED: Gate 0 refuses an already-heavy root task (recent average=${average}, max=${max}, compactions=${compactions}). Start a new Codex task before initializing this deck.`;
   return "";
 }
 function rotationAttachError(rotation, threadId, root = {}) {
@@ -62,7 +62,7 @@ function collect(ledger) {
 function runDelta(snapshot, ledger) {
   const base = baselineMap(ledger), records = snapshot.records || [];
   let totals = emptyUsage(), main = emptyUsage(), subagents = emptyUsage();
-  const calls = [], agentRows = [], taskCompactions = [];
+  const calls = [], agentRows = [], taskCompactions = [], deltaRecords = [];
   let callSequence = 0;
   for (const record of records) {
     const gate0Roots = new Set(ledger.gate0RootThreadIds || []);
@@ -72,6 +72,14 @@ function runDelta(snapshot, ledger) {
     const before = base[record.rolloutId] || reconstructed || { usage: emptyUsage(), callCount: 0, compactionCount: 0 };
     const delta = usageDelta(record.usage, before.usage);
     const newCalls = (record.calls || []).slice(Number(before.callCount || 0));
+    deltaRecords.push({
+      rolloutId: record.rolloutId,
+      parentThreadId: record.parentThreadId || "",
+      kind: record.kind,
+      usage: delta,
+      model_calls: newCalls.length,
+      compactions: Math.max(0, Number(record.compactions || 0) - Number(before.compactionCount || 0))
+    });
     totals = addUsage(totals, delta);
     if (record.kind === "main") main = addUsage(main, delta); else subagents = addUsage(subagents, delta);
     calls.push(...newCalls.map(call => ({ ...call, rolloutId: record.rolloutId, kind: record.kind, sequence: callSequence++ })));
@@ -87,6 +95,33 @@ function runDelta(snapshot, ledger) {
   }).map(({ sequence, ...call }) => call);
   const activeRootThreadId = ledger.activeRootThreadId || (ledger.rootThreadIds || []).slice(-1)[0] || "";
   const activeRootCalls = orderedCalls.filter(call => call.kind === "main" && call.rolloutId === activeRootThreadId);
+  const roots = new Set(ledger.rootThreadIds || []), byId = new Map(deltaRecords.map(item => [item.rolloutId, item]));
+  function rootFor(item) {
+    let current = item, guard = 0;
+    while (current && guard++ < 20) {
+      if (roots.has(current.rolloutId)) return current.rolloutId;
+      current = current.parentThreadId ? byId.get(current.parentThreadId) : null;
+    }
+    return "";
+  }
+  const conversationMap = new Map((ledger.rootThreadIds || []).map(threadId => [threadId, {
+    threadId, usage: emptyUsage(), main: emptyUsage(), subagents: emptyUsage(), model_calls: 0, subagent_threads: 0, compactions: 0
+  }]));
+  for (const item of deltaRecords) {
+    const rootThreadId = rootFor(item);
+    if (!rootThreadId || !conversationMap.has(rootThreadId)) continue;
+    const row = conversationMap.get(rootThreadId);
+    row.usage = addUsage(row.usage, item.usage);
+    row[item.kind === "main" ? "main" : "subagents"] = addUsage(row[item.kind === "main" ? "main" : "subagents"], item.usage);
+    row.model_calls += Number(item.model_calls || 0);
+    row.compactions += Number(item.compactions || 0);
+    if (item.kind === "subagent") row.subagent_threads += 1;
+  }
+  const conversations = [...conversationMap.values()].map(item => ({
+    ...item,
+    status: item.threadId === activeRootThreadId ? "active" : "closed"
+  }));
+  const activeConversation = conversations.find(item => item.threadId === activeRootThreadId) || null;
   return {
     totals, main, subagents, agents: agentRows,
     callMetrics: callMetrics(orderedCalls),
@@ -94,6 +129,8 @@ function runDelta(snapshot, ledger) {
     activeRootCalls,
     activeRootRecentCalls: activeRootCalls.slice(-10),
     activeRootThreadId,
+    conversations,
+    activeConversation,
     taskCompactions
   };
 }
@@ -179,7 +216,8 @@ function checkpoint(label) {
     mainIncrement: current.accuracy === "actual" ? usageDelta(current.main, previous?.main || emptyUsage()) : null,
     subagents: current.accuracy === "actual" ? current.subagents : null,
     subagentIncrement: current.accuracy === "actual" ? usageDelta(current.subagents, previous?.subagents || emptyUsage()) : null,
-    callMetrics: current.callMetrics
+    callMetrics: current.callMetrics,
+    activeConversation: current.accuracy === "actual" ? current.activeConversation : null
   };
   const existing = ledger.checkpoints.findIndex(entry => entry.label === label);
   if (existing >= 0) ledger.checkpoints[existing] = item; else ledger.checkpoints.push(item);
@@ -194,6 +232,7 @@ function markdown(report) {
     `- Run ID：${report.runId || "未记录"}`,
     `- 统计截止：${report.collectedAt}`,
     `- 根任务：${report.rootThreadIds.length}`,
+    `- 当前任务累计：${f(report.activeConversation?.usage?.total_tokens)}`,
     `- 模型调用：${f(report.callMetrics.model_calls)}`,
     `- 单次平均输入：${f(report.callMetrics.average_input_tokens)}`,
     `- 单次输入 P95：${f(report.callMetrics.p95_input_tokens)}`,
@@ -212,6 +251,9 @@ function markdown(report) {
   lines.push("", "## 子智能体", "");
   if (report.agents.length) report.agents.forEach(item => lines.push(`- ${item.role} / ${item.threadId}：${f(item.usage.total_tokens)} Token，${f(item.model_calls)} 次调用。`));
   else lines.push("- 当前统计范围内无子智能体消耗。");
+  lines.push("", "## 分任务累计", "");
+  if (report.conversations.length) report.conversations.forEach(item => lines.push(`- ${item.threadId}${item.status === "active" ? "（当前）" : ""}：${f(item.usage.total_tokens)} Token，${f(item.model_calls)} 次调用，${f(item.subagent_threads)} 个子智能体任务。`));
+  else lines.push("- 当前没有可归属的根任务记录。");
   lines.push("", "## 角色汇总", "");
   if (report.roleTotals.length) report.roleTotals.forEach(item => lines.push(`- ${item.role}：${f(item.usage.total_tokens)} Token，${f(item.model_calls)} 次调用，${f(item.threads)} 个任务。`));
   else lines.push("- 当前统计范围内无角色消耗。");
@@ -243,6 +285,8 @@ function report() {
     agents: actual ? current.agents : [],
     roleTotals: [...roleMap.values()],
     callMetrics: current.callMetrics,
+    conversations: actual ? current.conversations : [],
+    activeConversation: actual ? current.activeConversation : null,
     checkpoints: ledger.checkpoints || [],
     sources: current.sources,
     limitations: [...new Set([...(ledger.limitations || []), ...(current.limitations || [])])]
@@ -258,7 +302,7 @@ function selfTest() {
   if (!rotationAttachError(lock, "old", { createdAt: "2026-01-01T00:00:00.000Z" })) throw new Error("old task cleared its own rotation lock");
   if (!rotationAttachError(lock, "historical", { createdAt: "2026-01-01T00:00:00.000Z" })) throw new Error("historical real task cleared the rotation lock");
   if (rotationAttachError(lock, "fresh", { createdAt: "2026-01-03T00:00:00.000Z" })) throw new Error("fresh task was rejected by rotation lock");
-  if (!gate0FreshTaskError({ calls: [{ input_tokens: 190000 }], compactions: 0 })) throw new Error("Gate 0 accepted an over-limit existing task");
+  if (!gate0FreshTaskError({ calls: [{ input_tokens: 270000 }], compactions: 0 })) throw new Error("Gate 0 accepted an over-limit existing task");
   if (gate0FreshTaskError({ calls: [{ input_tokens: 1000 }], compactions: 0 })) throw new Error("Gate 0 rejected a fresh low-context task");
   const usage = input_tokens => ({ input_tokens, cached_input_tokens: 0, non_cached_input: input_tokens, output_tokens: 0, reasoning_output_tokens: 0, total_tokens: input_tokens });
   const masked = runDelta({ records: [
@@ -266,10 +310,11 @@ function selfTest() {
       { timestamp: "2026-01-01T00:00:01.000Z", ...usage(10000) },
       { timestamp: "2026-01-01T00:00:06.000Z", ...usage(60000) }
     ], compactions: 0 },
-    { rolloutId: "child", kind: "subagent", usage: usage(4000), calls: [1, 2, 3, 4].map(index => ({ timestamp: `2026-01-01T00:00:0${index + 1}.000Z`, ...usage(1000) })), compactions: 0 }
+    { rolloutId: "child", parentThreadId: "root", kind: "subagent", usage: usage(4000), calls: [1, 2, 3, 4].map(index => ({ timestamp: `2026-01-01T00:00:0${index + 1}.000Z`, ...usage(1000) })), compactions: 0 }
   ] }, { baselineByRollout: {}, gate0RootThreadIds: [], activeRootThreadId: "root", rootThreadIds: ["root"] });
   const activeInputs = (masked.activeRootRecentCalls || []).map(call => call.input_tokens);
   if (activeInputs.join(",") !== "10000,60000") throw new Error(`active-root budget calls were masked or unordered: ${activeInputs.join(",") || "missing"}`);
+  if (masked.activeConversation?.usage?.total_tokens !== 74000) throw new Error("active conversation did not include descendant subagent usage");
   console.log("PASS token ledger self-test");
 }
 

@@ -8,6 +8,11 @@ function makeComponents(pptx, theme) {
   const F = theme.fonts;
   const shape = pptx.ShapeType;
 
+  function shadowToken(kind, fallback) {
+    const token = theme.elevation && theme.elevation[kind];
+    return token ? { ...token } : fallback;
+  }
+
   function addText(slide, x, y, w, h, text, opts = {}) {
     const plainText = Array.isArray(text) ? text.map(item => item && item.text || "").join("") : String(text || "");
     const fontFace = opts.fontFace || (/[一-鿿]/.test(plainText) ? F.cn : F.en);
@@ -33,12 +38,29 @@ function makeComponents(pptx, theme) {
   }
 
   function rect(slide, x, y, w, h, opts = {}) {
-    slide.addShape(opts.round ? shape.roundRect : shape.rect, {
+    const cont = theme.container || {};
+    const radiusScale = theme.shape && theme.shape.radius;
+    const themedRadius = radiusScale
+      ? h <= 48
+        ? (radiusScale.control ?? 12)
+        : h <= 84
+          ? (radiusScale.inset ?? 14)
+          : (radiusScale.card ?? 18)
+      : (cont.radius ?? 8);
+    const wantRound = opts.round && cont.round !== false;
+    const shadow = cont.shadow === false
+      ? undefined
+      : opts.shadow && typeof opts.shadow === "object"
+        ? opts.shadow
+        : opts.shadow
+          ? shadowToken("card", { type: "outer", color: "1A2030", opacity: 0.14, blur: 8, offset: 2, angle: 90 })
+          : undefined;
+    slide.addShape(wantRound ? shape.roundRect : shape.rect, {
       x: U(x), y: U(y), w: U(w), h: U(h),
       fill: opts.fill ? { color: opts.fill } : { type: "none" },
       line: opts.line ? { color: opts.line, width: opts.lineWidth || 1 } : { type: "none" },
-      rectRadius: opts.round ? U(opts.radius || 8) : undefined,
-      shadow: opts.shadow ? { type: "outer", color: "1A2030", opacity: 0.14, blur: 8, offset: 2, angle: 90 } : undefined
+      rectRadius: wantRound ? U(opts.radius ?? themedRadius) : undefined,
+      shadow
     });
   }
 
@@ -54,12 +76,19 @@ function makeComponents(pptx, theme) {
 
   // 通用自选图形（donut / can / cube / upArrow / rightArrow / roundRect 等），px 入参。
   function shp(slide, type, x, y, w, h, o = {}) {
+    const shadow = (theme.container && theme.container.shadow === false)
+      ? undefined
+      : o.shadow && typeof o.shadow === "object"
+        ? o.shadow
+        : o.shadow
+          ? shadowToken("focus", { type: "outer", color: "1A2030", opacity: 0.18, blur: 9, offset: 3, angle: 90 })
+          : undefined;
     slide.addShape(type, {
       x: U(x), y: U(y), w: U(w), h: U(h),
       fill: o.fill ? { color: o.fill } : { type: "none" },
       line: o.line ? { color: o.line, width: o.lw || 1.4 } : { type: "none" },
       rotate: o.rotate, flipV: o.flipV, flipH: o.flipH,
-      shadow: o.shadow ? { type: "outer", color: "1A2030", opacity: 0.18, blur: 9, offset: 3, angle: 90 } : undefined
+      shadow
     });
   }
 
@@ -79,6 +108,20 @@ function makeComponents(pptx, theme) {
   function header(slide, title, subtitle, opts = {}) {
     slide.background = { color: C.bg };
     const sig = theme.signature || {};
+    if (sig.headerStyle === "reference-kicker") {
+      const chrome = sig.header || {};
+      const marker = chrome.marker || { x: 90, y: 78, w: 33, h: 3, color: "teal" };
+      const label = chrome.label || { x: 138, y: 63, w: 450, h: 33, size: 15, color: "primary" };
+      const titleBox = chrome.title || { x: 87, y: 117, w: 1350, h: 69 };
+      const subtitleBox = chrome.subtitle || { x: 90, y: 192, w: 1320, h: 48 };
+      const eyebrow = opts.eyebrow || sig.eyebrow || "PRODUCT DESIGN";
+      rect(slide, marker.x, marker.y, marker.w, marker.h, { fill: C[marker.color] || marker.color || C.teal });
+      addText(slide, label.x, label.y, label.w, label.h, eyebrow, { size: label.size || 15, color: C[label.color] || label.color || C.primary, bold: true, fontFace: F.en });
+      addText(slide, titleBox.x, titleBox.y, titleBox.w, titleBox.h, title, { size: sig.titleSize || theme.type.h2, color: C.primary, bold: true });
+      if (subtitle) addText(slide, subtitleBox.x, subtitleBox.y, subtitleBox.w, subtitleBox.h, subtitle, { size: sig.subtitleSize || theme.type.body, color: C[sig.subtitleColor] || sig.subtitleColor || C.mute });
+      if (opts.logo) logo(slide);
+      return subtitle ? subtitleBox.y + subtitleBox.h + 12 : titleBox.y + titleBox.h + 18;
+    }
     const titleColor = sig.titleColor === "primary" ? C.primary : C.accent;
     const tSize = sig.titleSize || 40;
     const titleTop = 72;
@@ -103,12 +146,30 @@ function makeComponents(pptx, theme) {
 
   // 页脚：Base=实心红条；Global=右下角灰色 WESTWELL 字标 + 钢蓝小线（参考 CTN/FMS）；
   // 也支持 thin（细线）/ none。
-  function footer(slide) {
+  function footer(slide, data = {}) {
     const f = (theme.signature && theme.signature.footer) || { style: "bar", color: "accent" };
     if (f.style === "none") return;
     if (f.style === "image" && f.img) { slide.addImage({ path: f.img, x: U(f.x ?? 23), y: U(f.y ?? 987), w: U(f.w ?? 1806), h: U(f.h ?? 63) }); return; }
     if (f.style === "wordmark") return footerWordmark(slide, f);
     const col = C[f.color] || C.accent;
+    if (f.style === "reference-baseline") {
+      const coverLine = data.variant === "cover" ? (f.cover || {}) : null;
+      const x = coverLine?.x ?? f.x ?? 87;
+      const y = coverLine?.y ?? f.y ?? 1014;
+      const w = coverLine?.w ?? f.w ?? 1590;
+      rect(slide, x, y, w, 1.5, { fill: col });
+      const sourceBox = f.source || { x: 87, y: 1029, w: 540, h: 24, size: 15 };
+      const pageBox = f.page || { x: 1752, y: 1026, w: 66, h: 27, size: 16.5 };
+      if (data.source) addText(slide, sourceBox.x, sourceBox.y, sourceBox.w, sourceBox.h, data.source, { size: sourceBox.size || 15, color: C.faint });
+      if (data.page) addText(slide, pageBox.x, coverLine?.pageY ?? pageBox.y, pageBox.w, pageBox.h, data.page, { size: pageBox.size || 16.5, color: C.faint, align: "right", fontFace: F.en });
+      return;
+    }
+    if (f.style === "precision-hairline") {
+      line(slide, 96, 998, 1824, 998, { color: col, width: 0.75 });
+      if (data.source) addText(slide, 96, 1013, 1320, 22, data.source, { size: theme.type.tiny || 12, color: C.faint });
+      if (data.page) addText(slide, 1720, 1013, 104, 22, data.page, { size: theme.type.tiny || 12, color: C.faint, align: "right", fontFace: F.en });
+      return;
+    }
     if (f.style === "thin") line(slide, 96, 1000, 1824, 1000, { color: col, width: 1.5 });
     else rect(slide, 56, 996, 1808, 4, { fill: col });
   }
@@ -132,7 +193,38 @@ function makeComponents(pptx, theme) {
     const style = data.coverStyle || sig.cover || "warm-right";
     if (style === "photo-dark") return coverPhotoDark(slide, data, sig);
     if (style === "white-minimal") return coverWhiteMinimal(slide, data, sig);
+    if (style === "precision-split" || style === "reference-split") return coverPrecisionSplit(slide, data, sig);
     return coverWarmRight(slide, data);
+  }
+
+  // GlobalV2 split cover: project evidence on the right, restrained title system on the left.
+  // When no image is supplied, render an explicit evidence slot instead of inventing a scene.
+  function coverPrecisionSplit(slide, data, sig) {
+    slide.background = { color: C.bg };
+    const brand = theme.brand || {};
+    const imageX = 747, imageY = 252, imageW = 1173, imageH = 660;
+    const img = data.image || sig.coverPhoto;
+    if (img) {
+      rect(slide, imageX, imageY, imageW, imageH, { fill: C.surface3, line: C.line, lineWidth: 0.75 });
+      slide.addImage({ path: img, x: U(imageX), y: U(imageY), w: U(imageW), h: U(imageH) });
+    } else {
+      rect(slide, imageX, imageY, imageW, imageH, { fill: C.surface3, line: C.line, lineWidth: 0.75 });
+      line(slide, imageX + 96, imageY + 96, imageX + imageW - 96, imageY + imageH - 96, { color: C.line, width: 0.75 });
+      line(slide, imageX + imageW - 96, imageY + 96, imageX + 96, imageY + imageH - 96, { color: C.line, width: 0.75 });
+      addText(slide, imageX + 190, imageY + 334, imageW - 380, 34, data.evidenceLabel || "PROJECT IMAGE / EVIDENCE SLOT", { size: theme.type.cap || 15, color: C.primary, bold: true, align: "center", fontFace: F.en, charSpacing: 1.4 });
+      addText(slide, imageX + 190, imageY + 380, imageW - 380, 54, "Inject a project-approved product image, technical render, screenshot, or scene through data.image.", { size: theme.type.tiny || 12, color: C.mute, align: "center", fontFace: F.en, lineSpacingMultiple: 1.2 });
+    }
+    rect(slide, 83, 362, 48, 4, { fill: C.teal });
+    rect(slide, 142, 362, 22, 4, { fill: C.blue });
+    const titleCJK = /[一-鿿]/.test(data.title || "");
+    addText(slide, 83, 379, 660, 142, data.title, { size: theme.type.hero || 64, color: C.coverInk || C.primary, bold: true, fontFace: titleCJK ? F.cn : F.en, fit: "shrink", lineSpacingMultiple: 0.96 });
+    if (data.subtitle) addText(slide, 78, 530, 600, 44, data.subtitle, { size: theme.type.lead || 28, color: C.mute, fontFace: /[一-鿿]/.test(data.subtitle) ? F.cn : F.en, lineSpacingMultiple: 1.15 });
+    if (data.description) addText(slide, 83, 596, 650, 82, data.description, { size: theme.type.bodySm || 18, color: C.chromeTextSoft || C.faint, fontFace: /[一-鿿]/.test(data.description) ? F.cn : F.en, lineSpacingMultiple: 1.2 });
+    const tagline = data.tagline || brand.tagline;
+    if (tagline) addText(slide, 83, 708, 560, 34, tagline, { size: theme.type.bodySm || 18, color: C.primary, bold: true, fontFace: F.en });
+    if (data.date) addText(slide, 83, 760, 560, 28, data.date, { size: theme.type.cap || 15, color: C.faint, fontFace: F.en });
+    logo(slide);
+    footer(slide, { source: data.source, page: data.page, variant: "cover" });
   }
 
   function coverWarmRight(slide, data) {
@@ -210,8 +302,13 @@ function makeComponents(pptx, theme) {
       x: U(260), y: U(402), w: U(1400), h: U(110),
       fontFace: F.cn, fontSize: PT(54), align: "center", valign: "middle", margin: 0, fit: "shrink"
     });
-    const hr3 = (theme.signature && theme.signature.headerRule) || {};
-    line(slide, 760, 540, 1160, 540, { color: C[hr3.color] || hr3.color || C.primary, width: 0.75, dash: hr3.dash || "lgDash" });
+    const sig = theme.signature || {};
+    const hr3 = sig.headerRule || {};
+    if (sig.headerStyle === "reference-kicker") {
+      rect(slide, 862, 540, 48, 4, { fill: C.teal });
+      rect(slide, 920, 540, 22, 4, { fill: C.blue });
+    } else if (sig.headerStyle === "precision-eyebrow") rect(slide, 870, 540, 180, 3, { fill: C.accent });
+    else line(slide, 760, 540, 1160, 540, { color: C[hr3.color] || hr3.color || C.primary, width: 0.75, dash: hr3.dash || "lgDash" });
     const tagline = data.tagline || brand.tagline;
     if (tagline) addText(slide, 360, 566, 1200, 44, tagline, { size: 26, color: C.accent, bold: true, align: "center", fontFace: F.en });
     footer(slide);
@@ -324,7 +421,23 @@ function makeComponents(pptx, theme) {
   function sectionDivider(slide, data) {
     const v = (theme.signature && theme.signature.divider) || "big-number";
     if (v === "white-underline") return sectionDividerUnderline(slide, data);
+    if (v === "precision-index" || v === "reference-index") return sectionDividerPrecision(slide, data);
     return sectionDividerBigNumber(slide, data);
+  }
+
+  function sectionDividerPrecision(slide, data) {
+    slide.background = { color: C.bg };
+    const number = String(data.number || "01").padStart(2, "0");
+    rect(slide, 90, 78, 33, 3, { fill: C.teal });
+    addText(slide, 138, 63, 450, 33, data.eyebrow || `SECTION ${number}`, { size: theme.type.cap || 15, color: C.primary, bold: true, fontFace: F.en });
+    addText(slide, 1510, 286, 300, 230, number, { size: 150, color: C.surface3, bold: true, align: "right", fontFace: F.en, fit: "none" });
+    addText(slide, 87, 382, 1320, 94, data.title, { size: theme.type.h1 || 54, color: C.primary, bold: true, fontFace: /[一-鿿]/.test(data.title || "") ? F.cn : F.en, fit: "shrink" });
+    if (data.subtitle) addText(slide, 90, 492, 1180, 62, data.subtitle, { size: theme.type.body || 21, color: C.mute, fontFace: /[一-鿿]/.test(data.subtitle) ? F.cn : F.en, lineSpacingMultiple: 1.25 });
+    if (data.keyword) {
+      rect(slide, 90, 612, 260, 42, { fill: C.accentSoft, line: C.accent, lineWidth: 0.75, round: true, radius: 4 });
+      addText(slide, 110, 625, 220, 16, data.keyword, { size: theme.type.tiny || 12, color: C.primary, bold: true, align: "center" });
+    }
+    footer(slide, { source: data.source, page: data.page });
   }
 
   // 对外分页页：白底、海军蓝粗体标题 + 实心下划线、蓝副标题，右下角字标（对齐 FMS WellFMS Architecture 页）。
@@ -735,11 +848,13 @@ function makeComponents(pptx, theme) {
   }
 
   // 状态机 / 生命周期。main:[{name,status,ops:[]}]。配色=状态语义：
-  // draft=琥珀 ready=藏蓝 queued=灰 running=蓝 done=绿 failed=红 stopped=灰。每个状态下方列出可用操作。
+  // current=强调色 draft=琥珀 ready=藏蓝 queued=灰 running=蓝 done=绿 failed=危险色 stopped=灰。
+  // currentState 可按状态 name 或数组下标显式指定当前态；failed 永远只表示失败/异常。
   function stateFlow(slide, data) {
     header(slide, data.title, data.subtitle);
-    const sc = s => ({ draft: C.warn, ready: C.primary, queued: C.faint, running: C.blue, done: C.green, failed: C.danger, stopped: C.mute }[s] || C.primary);
+    const sc = s => ({ current: C.accent, draft: C.warn, ready: C.primary, queued: C.faint, running: C.blue, done: C.green, failed: C.danger, stopped: C.mute }[s] || C.primary);
     const main = (data.main || []).slice(0, 6);
+    const currentState = data.currentState;
     const n = main.length || 1;
     const chipW = 232, chipH = 72, gap = (1728 - n * chipW) / Math.max(1, n - 1);
     const maxOps = Math.max(0, ...main.map(s => (s.ops || []).length));
@@ -749,10 +864,12 @@ function makeComponents(pptx, theme) {
     const y = Math.max(238, Math.round(238 + ((bodyBot - 238) - block) / 2)); // 整块垂直居中
     main.forEach((s, i) => {
       const x = 96 + i * (chipW + gap);
-      const col = sc(s.status);
+      const isCurrent = s.status === "current" || currentState === s.name || currentState === i;
+      const col = sc(isCurrent ? "current" : s.status);
       if (i < n - 1) line(slide, x + chipW + 8, y + chipH / 2, x + chipW + gap - 8, y + chipH / 2, { color: C.faint, width: 2, arrow: "triangle" });
-      rect(slide, x, y, chipW, chipH, { fill: col, round: true, shadow: true });
-      addText(slide, x, y + 22, chipW, 30, s.name, { size: 21, color: "FFFFFF", bold: true, align: "center" });
+      rect(slide, x, y, chipW, chipH, { fill: col, line: isCurrent ? col : undefined, lineWidth: isCurrent ? 2 : 0, round: true, shadow: true });
+      if (isCurrent) addText(slide, x, y + 5, chipW, 14, "CURRENT", { size: 9, color: "FFFFFF", bold: true, align: "center", charSpacing: 1.4, fontFace: F.en });
+      addText(slide, x, y + (isCurrent ? 27 : 22), chipW, 30, s.name, { size: isCurrent ? 19 : 21, color: "FFFFFF", bold: true, align: "center" });
       const cy = y + chipH + 24;
       rect(slide, x, cy, chipW, cardH, { fill: C.surface, line: C.line, round: true, shadow: true });
       rect(slide, x, cy, chipW, 5, { fill: col });
@@ -1950,10 +2067,61 @@ function makeComponents(pptx, theme) {
     footer(slide);
   }
 
+  // ——— Base2 signature 元件（Round 2）———
+  // 三者都走 rect()/addText()，因此圆角与阴影自动跟随主题 container 策略：
+  // base 出扁平锐角、base2 出圆角带阴影，页面层无需做主题分支。
+
+  // 分区眉标：letter-spaced 全大写区域标，作为区块上方的导览层。
+  function regionEyebrow(slide, x, y, w, text, opts = {}) {
+    addText(slide, x, y, w, opts.h || 22, String(text || "").toUpperCase(), {
+      size: opts.size || theme.type.tiny || 13,
+      color: opts.color || C.mute,
+      bold: true,
+      align: opts.align || "left",
+      fontFace: F.en,
+      charSpacing: opts.charSpacing ?? 2.2
+    });
+  }
+
+  // 左色条卡：容器级状态编码。tier=low/mid/high/done/warn，或用 barColor 自定义。
+  // 位置 + 色条 + 填充 + 标签四通道表达状态，颜色不是唯一通道。
+  function barCard(slide, x, y, w, h, data = {}) {
+    const tierColor = { low: C.primary, mid: C.blue, high: C.accent, done: C.green, warn: C.warn };
+    const col = data.barColor || tierColor[data.tier] || C.primary;
+    const blocked = data.blocked || data.tier === "high";
+    rect(slide, x, y, w, h, {
+      fill: blocked ? C.accentSoft : C.surface,
+      line: blocked ? C.accent : C.line,
+      lineWidth: blocked ? 1.4 : 1,
+      round: true,
+      shadow: true
+    });
+    rect(slide, x + 10, y + 12, 5, Math.max(8, h - 24), { fill: col, round: true, radius: 3 });
+    if (data.label) addText(slide, x + 30, y + 14, w - 210, 26, data.label, { size: theme.type.cap || 16, color: blocked ? C.accent : C.primary, bold: true, fontFace: F.en, charSpacing: 0.8 });
+    if (data.meta) addText(slide, x + 30, y + 44, w - 210, 24, data.meta, { size: theme.type.micro || 14, color: C.mute });
+    if (data.tag) addText(slide, x + w - 180, y + 15, 160, 22, data.tag, { size: theme.type.micro || 14, color: C.mute, align: "right" });
+    if (data.outcome) addText(slide, x + w - 330, y + 42, 310, 28, data.outcome, { size: theme.type.bodyLg || 22, color: blocked ? C.accent : C.primary, bold: true, align: "right" });
+  }
+
+  // 结论带：base=居中红字、无容器；base2=描边圆角带 + 眉标。由 signature.conclusion 决定。
+  function conclusionBand(slide, data = {}) {
+    const style = data.style || (theme.signature && theme.signature.conclusion) || "plain";
+    const x = data.x ?? 96, w = data.w ?? 1728, y = data.y ?? 892;
+    if (style === "band") {
+      const h = data.h ?? 92;
+      rect(slide, x, y, w, h, { fill: C.surface, line: C.primary, lineWidth: 1, round: true });
+      if (data.eyebrow) regionEyebrow(slide, x, y + 14, w, data.eyebrow, { align: "center" });
+      addText(slide, x, y + (data.eyebrow ? 44 : 30), w, 34, data.text || "", { size: theme.type.bodyLg || 24, color: C.primary, bold: true, align: "center" });
+      return;
+    }
+    addText(slide, x, y + 20, w, 40, data.text || "", { size: theme.type.lead || 28, color: C.accent, bold: true, align: "center" });
+  }
+
   return {
     U, PT, addText, rect, line, logo, header, footer, cover, closing,
+    regionEyebrow, barCard, conclusionBand,
     metricCards, bigWordCardMatrix, fourColumnMechanism,
-    sectionDivider, sectionDividerBigNumber, sectionDividerUnderline, systemArchitectureCenter, hubSpokeCapability, roadmapSwimlane,
+    sectionDivider, sectionDividerBigNumber, sectionDividerUnderline, sectionDividerPrecision, systemArchitectureCenter, hubSpokeCapability, roadmapSwimlane,
     caveatBand, stepNav, painCards, cycleLoop, processTimeline,
     archLayered, archDualEngine, moduleCorrespondenceMap,
     stateFlow, beforeAfter, roadmapPhases, workbenchMock, workflowConfig, dashboardMock,

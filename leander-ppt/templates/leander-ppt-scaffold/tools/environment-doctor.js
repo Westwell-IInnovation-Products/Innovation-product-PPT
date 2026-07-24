@@ -3,6 +3,8 @@
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
+const cp = require("child_process");
+const crypto = require("crypto");
 const { resolveToolchain } = require("./toolchain");
 
 const ROOT = path.join(__dirname, "..");
@@ -23,6 +25,27 @@ function installedFont(candidates) {
   const names = new Map(fs.readdirSync(root).map(name => [name.toLowerCase(), name]));
   const hit = candidates.find(name => names.has(name.toLowerCase()));
   return hit ? path.join(root, names.get(hit.toLowerCase())) : "";
+}
+function shaFile(file) {
+  return file && fs.existsSync(file) && fs.statSync(file).isFile()
+    ? crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex")
+    : "";
+}
+function toolVersion(file, args = ["--version"], timeoutMs = 5000) {
+  if (!file) return { version: "", error: "executable path is missing" };
+  const result = cp.spawnSync(file, args, { encoding: "utf8", timeout: timeoutMs, windowsHide: true });
+  const output = `${result.stdout || ""}${result.stderr || ""}`.trim().split(/\r?\n/)[0] || "";
+  if (result.error) {
+    const timedOut = result.error.code === "ETIMEDOUT";
+    return {
+      version: "",
+      error: timedOut ? `version probe timed out after ${timeoutMs} ms` : `version probe failed: ${result.error.message}`
+    };
+  }
+  if (result.status !== 0) {
+    return { version: "", error: `version probe exited ${result.status}${output ? `: ${output}` : ""}` };
+  }
+  return { version: output, error: output ? "" : "version probe returned no output" };
 }
 
 function inspect() {
@@ -46,16 +69,25 @@ function inspect() {
   }
 
   const tools = resolveToolchain();
-  checks.push(tools.soffice
-    ? item("LibreOffice", "PASS", tools.soffice)
-    : item("LibreOffice", "FAIL", "soffice not found", "Install LibreOffice or set SOFFICE_PATH."));
-  checks.push(tools.pdftoppm
-    ? item("Poppler", "PASS", tools.pdftoppm)
-    : item("Poppler", "FAIL", "pdftoppm not found", "Install Poppler or set PDFTOPPM_PATH."));
+  const libreOfficeProbePath = process.platform === "win32" && tools.soffice
+    ? (() => {
+        const consoleExe = path.join(path.dirname(tools.soffice), "soffice.com");
+        return fs.existsSync(consoleExe) ? consoleExe : tools.soffice;
+      })()
+    : tools.soffice;
+  const libreOfficeVersion = tools.soffice ? toolVersion(libreOfficeProbePath) : { version: "", error: "soffice not found" };
+  const popplerVersion = tools.pdftoppm ? toolVersion(tools.pdftoppm, ["-v"]) : { version: "", error: "pdftoppm not found" };
+  checks.push(tools.soffice && !libreOfficeVersion.error
+    ? item("LibreOffice", "PASS", `${tools.soffice} (${libreOfficeVersion.version})`)
+    : item("LibreOffice", "FAIL", libreOfficeVersion.error, "Install/fix LibreOffice or set SOFFICE_PATH to a responsive executable."));
+  checks.push(tools.pdftoppm && !popplerVersion.error
+    ? item("Poppler", "PASS", `${tools.pdftoppm} (${popplerVersion.version})`)
+    : item("Poppler", "FAIL", popplerVersion.error, "Install/fix Poppler or set PDFTOPPM_PATH to a responsive executable."));
 
+  let zh = "", en = "";
   if (process.platform === "win32") {
-    const zh = installedFont(["msyh.ttc", "msyh.ttf", "msyhbd.ttc", "msyhl.ttc"]);
-    const en = installedFont(["gothic.ttf", "gothicb.ttf", "gothicbi.ttf", "gothici.ttf"]);
+    zh = installedFont(["msyh.ttc", "msyh.ttf", "msyhbd.ttc", "msyhl.ttc"]);
+    en = installedFont(["gothic.ttf", "gothicb.ttf", "gothicbi.ttf", "gothici.ttf"]);
     checks.push(zh
       ? item("Microsoft YaHei", "PASS", zh)
       : item("Microsoft YaHei", "WARN", "preferred Chinese font not detected", "Use an approved Chinese fallback and visually recheck text flow."));
@@ -75,13 +107,27 @@ function inspect() {
 
   const failed = checks.filter(check => check.status === "FAIL");
   const warnings = checks.filter(check => check.status === "WARN");
+  const fingerprint = {
+    version: "leander-toolchain-fingerprint.v1",
+    node: process.version,
+    platform: process.platform,
+    arch: process.arch,
+    packageLockSha256: shaFile(path.join(ROOT, "package-lock.json")),
+    libreOffice: { path: tools.soffice || "", versionProbePath: libreOfficeProbePath || "", version: libreOfficeVersion.version, probeError: libreOfficeVersion.error, sha256: shaFile(tools.soffice) },
+    poppler: { path: tools.pdftoppm || "", version: popplerVersion.version, probeError: popplerVersion.error, sha256: shaFile(tools.pdftoppm) },
+    fonts: {
+      microsoftYaHei: { path: zh, sha256: shaFile(zh) },
+      centuryGothic: { path: en, sha256: shaFile(en) }
+    }
+  };
   return {
     version: "leander-environment-doctor.v1",
     root: ROOT,
     platform: `${process.platform}/${process.arch}`,
     ok: failed.length === 0,
     summary: { pass: checks.length - failed.length - warnings.length, warn: warnings.length, fail: failed.length },
-    checks
+    checks,
+    fingerprint
   };
 }
 
@@ -93,11 +139,30 @@ function print(report) {
   console.log(`Environment ${report.ok ? "READY" : "BLOCKED"}: ${report.summary.pass} pass, ${report.summary.warn} warn, ${report.summary.fail} fail`);
 }
 
-if (require.main === module) {
-  const report = inspect();
-  if (process.argv.includes("--json")) console.log(JSON.stringify(report, null, 2));
-  else print(report);
-  if (!report.ok) process.exit(1);
+function selfTest() {
+  const responsive = toolVersion(process.execPath, ["-e", "console.log('v-test')"], 2000);
+  if (responsive.version !== "v-test" || responsive.error) {
+    throw new Error(`responsive version probe failed: ${JSON.stringify(responsive)}`);
+  }
+  const stalled = toolVersion(process.execPath, ["-e", "setInterval(() => {}, 1000)"], 100);
+  if (!/timed out/i.test(stalled.error || "")) {
+    throw new Error(`stalled version probe did not fail closed: ${JSON.stringify(stalled)}`);
+  }
+  console.log("PASS environment doctor bounded probe self-test");
 }
 
-module.exports = { inspect };
+if (require.main === module) {
+  if (process.argv.includes("--self-test")) {
+    selfTest();
+  } else {
+    const report = inspect();
+    const fingerprintFile = path.join(ROOT, "state", "toolchain-fingerprint.json");
+    fs.mkdirSync(path.dirname(fingerprintFile), { recursive: true });
+    fs.writeFileSync(fingerprintFile, JSON.stringify(report.fingerprint, null, 2) + "\n", "utf8");
+    if (process.argv.includes("--json")) console.log(JSON.stringify(report, null, 2));
+    else print(report);
+    if (!report.ok) process.exit(1);
+  }
+}
+
+module.exports = { inspect, toolVersion };

@@ -1,146 +1,146 @@
-# Page Design Method
+# 页面设计方法
 
-Use this method before drawing or repairing a slide. It is distilled from repeated repairs on mechanism pages where the first draft looked tidy but still failed because the visual form, artifact truth, image choice, or alignment was wrong.
+在画或修复一张幻灯片之前,使用本方法。它提取自对机制页的反复修复——那些初稿看着整齐、却仍然失败的页面,原因在于视觉形态、产物真实性、图片选择或对齐出了错。
 
-## 1. Start From The Message, Not The Component
+## 1. 从信息出发,而不是从组件出发
 
-Write the one sentence the page must prove. Then classify the relationship the audience must see:
+写下这一页必须证明的那一句话。然后归类受众必须看到的关系:
 
-- `sequence`: steps, route, stage handoff.
-- `state`: memory, lifecycle, isolation, current/next status.
-- `toolbox`: tool pool, asset library, selectable capability set.
-- `evidence`: data, proof, render result, source comparison.
-- `contrast`: before/after, problem/solution, wrong/right.
-- `system-map`: modules, dependencies, architecture.
-- `scene`: product, real-world situation, metaphor, or visual sample.
+- `sequence`:步骤、路线、阶段交接。
+- `state`:记忆、生命周期、隔离、当前/下一状态。
+- `toolbox`:工具池、素材库、可选能力集合。
+- `evidence`:数据、证明、渲染结果、来源对比。
+- `contrast`:前/后、问题/方案、错/对。
+- `system-map`:模块、依赖、架构。
+- `scene`:产品、真实世界情境、隐喻,或视觉样例。
 
-Do not choose a graphic because it looks convenient. Choose it because it makes the relationship visible.
+不要因为某个图形看着省事就选它。选它,是因为它能让关系可见。
 
-After the coarse relationship, classify a **relationship subtype** and **visual signature**. Coarse relationships are not enough for layout decisions. For example, three pages may all be `contrast`, but one may need problem tension, one may need concept boundary, and one may need before/after benefit.
+在粗关系之后,再归类一个**关系子类型**和**视觉特征**。粗关系不足以支撑布局决策。例如,三个页面可能都是 `contrast`,但一个需要问题张力,一个需要概念边界,一个需要前后收益。
 
-Use these starter subtypes:
+用这些起步子类型:
 
-| Coarse relationship | Relationship subtype | Visual signature | Use when |
+| 粗关系 | 关系子类型 | 视觉特征 | 何时用 |
 |---|---|---|---|
-| `contrast` | `compare.problem-tension` | `problem-tension` | The page creates urgency or explains why the old way fails |
-| `contrast` | `compare.concept-boundary` | `concept-boundary` | The page distinguishes two concepts or shows containment / dependency |
-| `contrast` | `compare.before-after-benefit` | `before-after-benefit` | The page shows improvement after adopting a method |
-| `sequence` | `sequence.orchestration` | `stage-gate-flow` | The page explains ordered execution and human checkpoints |
-| `sequence` | `sequence.end-to-end` | `full-process-spine` | The page summarizes the whole production flow |
-| `state` | `state.folder-zoom` | `selected-folder-expansion` | The page explains page isolation, local memory, or file-based state |
-| `state` | `state.lifecycle` | `state-lifecycle` | The page explains version/status changes over time |
-| `toolbox` | `toolbox.tool-tree` | `tool-tree-with-call-engine` | The page explains a tool pool and how a page selects tools |
-| `system-map` | `system.module-map` | `module-correspondence-map` | The page explains modules, responsibilities, and outputs |
-| `ecosystem` | `ecosystem.landscape` | `domestic-landscape` | The page maps a market / industry / implementation landscape |
-| `ecosystem` | `ecosystem.method-transfer` | `method-transfer-map` | The page shows one method expanding into multiple scenarios |
-| `evidence` | `evidence.convergence` | `platform-convergence` | The page shows multiple external moves converging to one direction |
-| `decision` | `decision.boundary` | `share-boundary-filter` | The page explains what enters / does not enter a shared pool |
-| `lifecycle` | `lifecycle.feedback-loop` | `learning-flywheel` | The page explains repeated learning and self-evolution |
+| `contrast` | `compare.problem-tension` | `problem-tension` | 页面制造紧迫感、或解释旧做法为何失效 |
+| `contrast` | `compare.concept-boundary` | `concept-boundary` | 页面区分两个概念、或展示包含 / 依赖 |
+| `contrast` | `compare.before-after-benefit` | `before-after-benefit` | 页面展示采用某方法后的改进 |
+| `sequence` | `sequence.orchestration` | `stage-gate-flow` | 页面解释有序执行和人工检查点 |
+| `sequence` | `sequence.end-to-end` | `full-process-spine` | 页面概括整条生产流程 |
+| `state` | `state.folder-zoom` | `selected-folder-expansion` | 页面解释页面隔离、本地记忆或基于文件的 state |
+| `state` | `state.lifecycle` | `state-lifecycle` | 页面解释随时间的版本 / 状态变化 |
+| `toolbox` | `toolbox.tool-tree` | `tool-tree-with-call-engine` | 页面解释一个工具池、以及页面如何选工具 |
+| `system-map` | `system.module-map` | `module-correspondence-map` | 页面解释模块、职责和输出 |
+| `ecosystem` | `ecosystem.landscape` | `domestic-landscape` | 页面描绘一个市场 / 行业 / 落地格局 |
+| `ecosystem` | `ecosystem.method-transfer` | `method-transfer-map` | 页面展示一个方法扩展到多个场景 |
+| `evidence` | `evidence.convergence` | `platform-convergence` | 页面展示多个外部动作收敛到一个方向 |
+| `decision` | `decision.boundary` | `share-boundary-filter` | 页面解释什么进入 / 不进入一个共享池 |
+| `lifecycle` | `lifecycle.feedback-loop` | `learning-flywheel` | 页面解释反复学习和自进化 |
 
-If no subtype fits, create a new one in the page contract and later consider whether it should become a reusable component tag.
+如果没有子类型合适,就在页面约束里新建一个,之后再考虑它是否应该变成一个可复用的组件标签。
 
-## 2. Choose The Route — Composition First
+## 2. 选路线——构图优先
 
-For every content page, evaluate the four production routes in this order:
+对每一张内容页,按此顺序评估四条生产路线:
 
-1. **Page-specific composition** (default): hand-compose the page to its visual signature; library components participate as blocks inside the composition.
-2. **External graphic**: prefer whenever real evidence exists — screenshots, maps, existing PPT assets, product renders. A real asset beats a drawn diagram.
-3. **Component library**: use a component as the whole body block only when the relationship is highly standard and the component genuinely fits slots and capacity — and still wrap it in the page skeleton (title band, takeaway band, custom zone).
-4. **image2 / imageSlot**: realistic scenes or simple metaphors that look crude as vector.
+1. **页面专属构图**(默认):按页面的视觉特征手工构图;库组件作为构图里的积木参与。
+2. **外部图形**:只要有真实证据就优先——截图、地图、已有 PPT 素材、产品渲染图。一个真实素材胜过一张画出来的图示。
+3. **组件库**:只有当关系高度标准、且组件真的匹配槽位和容量时,才把某个组件用作整个正文块——而且仍然要用页面版面结构把它包起来(标题带、结论带、自定义区)。
+4. **image2 / imageSlot**:矢量画起来很粗糙的写实场景或简单隐喻。
 
-Whichever route wins, a content page rendered as one bare component call is a quality-floor violation; only covers and section dividers may be single-component pages.
+无论哪条路线胜出,一张渲染成单个裸组件调用的内容页都是质量底线违规;只有封面和章节分隔页可以是单组件页。
 
-When using image2, keep the image simple. Prefer one subject, 3-5 objects, one clear direction, and no text. A busy image with many cables/documents/details weakens a PPT page even if it is technically good art.
+用 image2 时,让图片保持简单。优先一个主体、3-5 个对象、一个清晰方向、无文字。一张有很多线缆/文档/细节的繁忙图片,即便在技术上是好画,也会削弱一张 PPT 页。
 
-## 3. Match The Real Artifact
+## 3. 匹配真实产物
 
-If the page explains files, folders, tools, components, versions, or repositories, inspect the actual artifact first.
+如果页面解释文件、文件夹、工具、组件、版本或仓库,先查看实际产物。
 
-- Show only files/folders that exist.
-- If a memory is inside a file, label it as a field, not a separate file.
-- If a mechanism is planned but not implemented, label it as planned.
-- Do not mix conceptual architecture and actual scaffold structure unless the page explicitly separates them.
+- 只展示存在的文件/文件夹。
+- 如果一个记忆在某个文件内部,把它标为一个字段,而不是一个单独的文件。
+- 如果一个机制是计划中、但未实现,把它标为计划中。
+- 不要把概念架构和实际框架结构混在一起,除非页面明确把它们分开。
 
-## 4. Compose Before Decorating
+## 4. 先构图,再装饰
 
-Decide the layout skeleton before drawing details:
+在画细节之前决定版面结构:
 
-- Split: problem vs solution, before vs after, text zone vs graphic zone.
-- Tree: root -> branches -> details.
-- Flow: start -> stages -> evidence/result.
-- Folder/asset view: collection -> selected item -> expanded contents.
-- Evidence board: claim -> proof -> boundary.
+- 拆分:问题 vs 方案、前 vs 后、文字区 vs 图形区。
+- 树:根 -> 分支 -> 细节。
+- 流:起点 -> 阶段 -> 证据/结果。
+- 文件夹/素材视图:集合 -> 选中项 -> 展开内容。
+- 证据板:主张 -> 证明 -> 边界。
 
-Then place text into the graphic, not beside it. Use labels, chips, stage numbers, folder tabs, and callouts as part of the visual structure.
+然后把文字放进图形里,而不是放在它旁边。把标签、chip、阶段编号、文件夹标签和引注作为视觉结构的一部分。
 
-If a layout blueprint contract exists, start from it:
+如果存在布局蓝图约束,从它开始:
 
 ```text
-blueprint visualSignature -> candidateFamilies -> selected component/layout block -> page composition
+blueprint visualSignature -> candidateComponents + patternHints -> selected component/layout block -> page composition
 ```
 
-Do not reset the page to a generic component just because the component has a high score. The component must serve the approved visual signature, or the override must be recorded.
+不要因为某个组件分数高,就把页面重置成一个通用组件。组件必须服务于已审批的视觉特征,否则必须记录 override。
 
-## 4.5 Composition Skeleton Floor
+## 4.5 版面结构底线
 
-Every content page starts from this skeleton, then earns its variations:
+每张内容页都从这个版面结构起步,再挣得它的变化:
 
-- **Title band**: title + red underline + a one-sentence claim (the page's takeaway, not a column name).
-- **Body**: 2-3 structurally different information zones — never one component filling the body. Mix a primary structure (flow / tree / contrast / matrix / annotated screenshot) with a secondary zone (evidence strip, metric rail, detail callouts).
-- **Takeaway band**: one of — an accent-background conclusion strip at the bottom, a legend rail naming the color semantics, or a next-step pointer.
-- **Annotation layer** on focus pages: gate highlights, colored legend dots, numbered anchors, zone labels.
+- **标题带**:标题 + 红色下划线 + 一句话主张(页面的结论,不是列名)。
+- **正文**:2-3 个结构上不同的信息区——绝不是一个组件填满正文。把一个主结构(流程 / 树 / 对比 / 矩阵 / 带批注的截图)和一个次级区(证据条、指标轨、细节引注)混合。
+- **结论带**:三选一——底部一条强调背景的结论条、一条为颜色语义命名的图例轨,或一个下一步指针。
+- 聚焦页上的**批注层**:gate 高亮、彩色图例点、编号锚点、区块标签。
 
-Deck-level rhythm quota for decks of 20+ pages:
+20+ 页 deck 的 deck 级节奏配额:
 
-- At least 2 big-typography statement pages (section numerals, one-line claims).
-- At least 3 evidence pages using real assets (screenshots, product photos, full-bleed images) whenever the brief lists available assets.
-- At least 1 dark or inverted treatment (cover, section divider, or closing).
-- No three adjacent content pages may share the same skeleton.
+- 至少 2 张大字号陈述页(章节数字、一句话主张)。
+- 只要 brief 列出了可用素材,就至少 3 张使用真实素材的证据页(截图、产品照片、满幅图片)。
+- 至少 1 处深色或反白处理(封面、章节分隔或结尾)。
+- 不允许连续三张内容页共享同一版面结构。
 
-## 5. Assign Color Roles Before Styling
+## 5. 先分配颜色角色,再做样式
 
-Before drawing final components, convert the blueprint's `colorIntent` into page-level color roles:
+在画最终组件之前,把蓝图的 `colorIntent` 转成页面级的颜色角色:
 
-- Red = focus, conflict, risk, current selection, gate, or key change. Use it sparingly and make the reason visible.
-- Navy = stable structure, baseline system, reusable asset, normal path.
-- Light blue / neutral gray = support, inactive peers, secondary evidence, scaffolding.
-- Light red = selected or changed background, not a decorative fill.
-- Cyan = brand marker only unless the theme explicitly says otherwise.
+- 红 = 焦点、冲突、风险、当前选择、gate,或关键变化。用得克制,并让理由可见。
+- 藏青 = 稳定结构、基线系统、可复用素材、常规路径。
+- 浅蓝 / 中性灰 = 支撑、不活跃的同级、次级证据、框架。
+- 浅红 = 选中或变化的背景,不是装饰性填充。
+- 青 = 仅作品牌标记,除非主题明确另有规定。
 
-For every page, name:
+对每一页,命名:
 
-- `accentTarget`: the one object or relationship that gets the strongest red emphasis.
-- `neutralElements`: peer objects that must stay quiet.
-- `colorReason`: why the accent color helps the story.
+- `accentTarget`:得到最强红色强调的那一个对象或关系。
+- `neutralElements`:必须保持安静的同级对象。
+- `colorReason`:为什么这个强调色对故事有帮助。
 
-If everything is red, nothing is important. If color does not explain logic, remove it or demote it.
+如果一切都是红的,就没有东西是重要的。如果颜色不解释逻辑,就删掉它或降级。
 
-## 6. Use Image2 Sparingly And Simply
+## 6. 克制而简单地用 Image2
 
-Use image2 when vector drawing becomes stiff, but constrain it:
+当矢量绘制变得僵硬时用 image2,但要约束它:
 
-- Simple composition: one focal object, few supporting objects, low line density.
-- No text, no labels, no logo, no UI microcopy.
-- Transparent PNG preferred; verify alpha channel before placing.
-- If the generated image looks visually busy, regenerate with a stricter prompt or fall back to a simpler vector metaphor.
+- 简单构图:一个焦点对象、少数支撑对象、低线条密度。
+- 无文字、无标签、无 logo、无 UI 微文案。
+- 优先透明 PNG;放置前核实 alpha 通道。
+- 如果生成的图片看着繁忙,用更严格的 prompt 重生成,或退回到一个更简单的矢量隐喻。
 
-## 7. QA The Geometry And Typography
+## 7. 对几何与排版做 QA
 
-Before marking PASS:
+在标 PASS 之前:
 
-- Connector lines intended to be straight must be horizontal/vertical or intentionally curved.
-- Peer cards use the same title/body size and baseline.
-- Paired result boxes align and use the same role-based type scale.
-- Text clears strokes, arrows, icons, and image edges.
-- White space is symmetric or intentionally assigned to a visual focal point.
-- Icons must visually communicate the represented asset type; do not add circular icon backgrounds unless they carry meaning.
+- 本应是直线的连接线,必须横平竖直、或刻意做成曲线。
+- 同级卡片使用相同的标题/正文尺寸和基线。
+- 成对的结果框对齐,并使用相同的、基于角色的字号体系。
+- 文字避开描边、箭头、图标和图片边缘。
+- 留白对称、或被刻意分配给一个视觉焦点。
+- 图标必须在视觉上传达它所代表的素材类型;不要加圆形图标背景,除非它们承载含义。
 
-## 8. Repair Pattern
+## 8. 修复模式
 
-When feedback arrives:
+当反馈到来时:
 
-1. Map each comment to content, route, artifact truth, layout, typography, geometry, or asset quality.
-2. Fix the route or component first if the same issue can recur.
-3. Patch the smallest page set.
-4. Re-render before judging.
-5. Log the generalizable lesson.
+1. 把每条意见映射到内容、路线、产物真实性、布局、排版、几何或素材质量。
+2. 如果同一个问题可能复发,先修路线或组件。
+3. 修补最小的页面集合。
+4. 判断之前先重渲染。
+5. 记录可推广的教训。

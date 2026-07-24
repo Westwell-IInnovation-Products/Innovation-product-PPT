@@ -1,0 +1,9 @@
+{
+  "version": "visual-geometry-fixture.v1",
+  "pageId": "clean-layout",
+  "elements": [
+    {"id":"arrow","type":"line","role":"connector","z":1,"x1":1,"y1":2,"x2":3,"y2":2,"lineWidthPt":1.5,"arrowEnd":"triangle"},
+    {"id":"label","type":"text","role":"text","z":2,"x":1,"y":2.25,"w":2,"h":0.25,"text":"下一阶段"}
+  ],
+  "expected": []
+}

@@ -1,14 +1,14 @@
-# Terminology Contract
+# 术语约束
 
-Use this reference when a deck repeats framework concepts, product modules, capability names, or mechanism labels.
+当一份 deck 反复出现框架概念、产品模块、能力名称或机制标签时,使用本 reference。
 
-## Goal
+## 目标
 
-One concept should have one name inside one deck. If a deck calls the same concept "QA system", "quality system", and "evaluation mechanism", the audience has to translate instead of follow the story.
+一个概念在一份 deck 里应该只有一个名字。如果一份 deck 把同一个概念叫成"QA 系统""质量体系""评估机制",受众就得先做翻译、而不能跟着故事走。
 
-## Project File
+## 项目文件
 
-Use a project-level `terminology.json`:
+使用项目级的 `terminology.json`:
 
 ```json
 {
@@ -29,19 +29,19 @@ Use a project-level `terminology.json`:
 }
 ```
 
-## Rules
+## 规则
 
-- Use canonical terms in page titles, framework maps, section labels, and summaries.
-- Aliases may appear only as explanatory text, not as the primary label.
-- When a page title uses a first-layer framework name, its body must actually explain that framework or a second-layer mechanism under it.
-- If the deck introduces second-layer mechanisms, make their parent framework explicit in the title or subtitle.
+- 在页面标题、框架图、章节标签和总结里使用规范术语。
+- 别名只能作为解释性文字出现,不能作为主标签。
+- 当一个页面标题使用某个第一层框架名时,它的正文必须真的解释那个框架、或它下面的某个第二层机制。
+- 如果 deck 引入了第二层机制,在标题或副标题里把它们的父框架说清楚。
 
-## Check
+## 检查
 
-Run:
+运行:
 
 ```bash
 node tools/verify-terminology.js
 ```
 
-If the tool reports `FIX-FIRST`, update the outline, layout blueprint, page contracts, or page text before production continues.
+如果工具报 `FIX-FIRST`,在生产继续之前更新大纲、布局蓝图、页面约束或页面文字。

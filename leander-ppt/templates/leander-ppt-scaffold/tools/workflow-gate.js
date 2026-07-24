@@ -1,14 +1,15 @@
 // Mandatory workflow entry and stage gate for every Leander deck.
 // Usage:
 //   node tools/workflow-gate.js init [create|redesign|review]
-//   node tools/workflow-gate.js migrate <outline|blueprint|anchor|production|final> --note "user confirmation"
+//   node tools/workflow-gate.js migrate <outline|blueprint|anchor|production> --note "user confirmation" --receipt-dir <dir> --run-id <id>
 //   node tools/workflow-gate.js status
-//   node tools/workflow-gate.js approve <checkpoint> [mode] --note "user confirmation"
+//   node tools/workflow-gate.js approve <checkpoint> [mode] --receipt <file> [--note "user confirmation"]
 //   node tools/workflow-gate.js verify anchor|production|final
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const cp = require("child_process");
+const { verifyFile: verifyApprovalFile, shaFile: shaApprovalFile } = require("./approval-receipt");
 
 const ROOT = path.join(__dirname, "..");
 const RECEIPT = path.join(ROOT, "workflow-receipt.json");
@@ -54,36 +55,63 @@ function gateTelemetry(label, final = false) {
 }
 
 function initialize(intent) {
+  const existingReceipt = readJson(RECEIPT, null);
+  const existingPages = fs.existsSync(path.join(ROOT, "pages"))
+    ? fs.readdirSync(path.join(ROOT, "pages"), { withFileTypes: true }).filter(entry => entry.isDirectory()).length
+    : 0;
+  const existingOutputDeck = fs.existsSync(path.join(ROOT, "output"))
+    && fs.readdirSync(path.join(ROOT, "output")).some(name => name.toLowerCase().endsWith(".pptx"));
+  const meaningfulExistingBaseline = Boolean(existingReceipt?.initialized) || existingOutputDeck || existingPages > 2;
+  let revisionContract = null;
+  if (intent === "redesign" && meaningfulExistingBaseline) {
+    requiredStep("revision-mode.js", ["verify", "--intent", "redesign"]);
+    revisionContract = readJson(path.join(ROOT, "state", "revision-contract.json"), null);
+  }
+  // A verified delta-revision carries prior user approvals forward instead of re-walking the
+  // whole create pipeline. Only `plan` reopens, because the revision SCOPE (the verified pageMap)
+  // is the one thing the user must re-confirm. full-rebuild and first-time create still reset all.
+  const deltaCarry = Boolean(revisionContract && revisionContract.mode === "delta-revision" && existingReceipt?.initialized);
   const now = new Date().toISOString();
   const receipt = {
     version: "leander-workflow-receipt.v1",
     initialized: true,
     runId: `${now.replace(/[-:.TZ]/g, "").slice(0, 14)}-${crypto.randomBytes(4).toString("hex")}`,
-    intent: intent || "create",
+    intent: deltaCarry ? "delta-revision" : (intent || "create"),
     createdAt: now,
     lastVerifiedAt: null
   };
-  const checkpoints = readJson(CHECKPOINTS, { version: "checkpoint-status.v1", checkpoints: {} });
-  Object.values(checkpoints.checkpoints || {}).forEach(item => {
-    item.status = "pending";
-    delete item.approvedAt;
-    delete item.approvedBy;
-    delete item.runId;
-    delete item.approvalNote;
-    delete item.reason;
-  });
+  if (deltaCarry) {
+    receipt.carriedFromRunId = existingReceipt.runId;
+    receipt.revisionContractAt = revisionContract.createdAt || now;
+  }
+  const checkpoints = planCheckpointTransition(
+    readJson(CHECKPOINTS, { version: "checkpoint-status.v1", checkpoints: {} }),
+    { deltaCarry, newRunId: receipt.runId, fromRunId: existingReceipt?.runId, now });
   requiredStep("token-ledger.js", ["start", "--run-id", receipt.runId]);
   writeJson(RECEIPT, receipt);
   writeJson(CHECKPOINTS, checkpoints);
+  // Delta reuses the existing portfolio; a full reset re-plans it. (R3 will add a 1-job revision plan.)
+  if (!deltaCarry) bestEffort("task-portfolio.js", ["create", "--force"]);
   bestEffort("tool-freeze.js", ["capture", "gate0"]);
   bestEffort("phase-handoff.js", ["write"]);
-  console.log(`Leander Gate 0 initialized: ${receipt.runId}`);
-  console.log("Next required checkpoint: brief + page-by-page outline, then explicit user approval of `plan`.");
+  if (deltaCarry) {
+    const carried = checkpointOrder.filter(key => checkpoints.checkpoints?.[key]?.carriedFromRunId);
+    console.log(`Leander Gate 0 (delta-revision) initialized: ${receipt.runId}`);
+    console.log(`Carried forward from ${existingReceipt.runId}: ${carried.join(", ") || "(none approved yet)"}.`);
+    console.log("Reopened `plan` only — confirm the revision scope (state/revision-contract.json pageMap), then patch just the changed pages.");
+  } else {
+    console.log(`Leander Gate 0 initialized: ${receipt.runId}`);
+    console.log("Next required checkpoint: brief + page-by-page outline, then explicit user approval of `plan`.");
+  }
 }
 
-function migrateExisting(stage, note) {
-  if (!note) {
-    console.error("Migration requires `--note` that records why the existing project state is trusted.");
+function migrateExisting(stage, note, receiptDir, explicitRunId) {
+  if (stage === "final") {
+    console.error("Direct migration to final is forbidden; migrate at outline/blueprint/anchor and re-run final gates.");
+    process.exit(1);
+  }
+  if (!note || !receiptDir || !explicitRunId) {
+    console.error("Migration requires --note, --receipt-dir and --run-id so each migrated checkpoint is bound to an approval receipt.");
     process.exit(1);
   }
   const stageKeys = {
@@ -106,7 +134,7 @@ function migrateExisting(stage, note) {
   const receipt = {
     version: "leander-workflow-receipt.v1",
     initialized: true,
-    runId: `${now.replace(/[-:.TZ]/g, "").slice(0, 14)}-${crypto.randomBytes(4).toString("hex")}`,
+    runId: explicitRunId,
     intent: "migrated-existing-project",
     createdAt: now,
     migratedStage: stage,
@@ -117,11 +145,20 @@ function migrateExisting(stage, note) {
   checkpointOrder.forEach(key => {
     const item = data.checkpoints[key] || {};
     if (stageKeys[stage].includes(key)) {
+      const approvalFile = path.resolve(ROOT, receiptDir, `${key}.json`);
+      const checked = verifyApprovalFile(approvalFile, { root: ROOT, checkpoint: key, runId: receipt.runId });
+      if (!checked.ok) {
+        console.error(`Migration approval receipt failed for ${key}: ${checked.errors.join("; ")}`);
+        process.exit(1);
+      }
       item.status = "approved";
       item.approvedAt = now;
       item.approvedBy = "explicit-existing-project-migration";
       item.runId = receipt.runId;
       item.approvalNote = note;
+      item.approvalReceipt = path.relative(ROOT, approvalFile).replace(/\\/g, "/");
+      item.approvalReceiptSha256 = checked.sha256;
+      item.approvalReceiptRunId = receipt.runId;
       if (key === "productionMode" && !["A", "B", "C"].includes(item.mode)) item.mode = "B";
     } else {
       item.status = "pending";
@@ -147,22 +184,49 @@ function loadReceipt() {
   return receipt;
 }
 
-function approved(item, receipt, allowBypass = false) {
-  if (item && item.status === "approved" && item.approvedAt && item.runId === receipt.runId) return true;
+function approved(key, item, receipt, allowBypass = false) {
+  if (item && item.status === "approved" && item.approvedAt && item.runId === receipt.runId) {
+    const approvalFile = path.resolve(ROOT, item.approvalReceipt || "");
+    const approvalRunId = item.approvalReceiptRunId || receipt.runId;
+    const checked = verifyApprovalFile(approvalFile, { root: ROOT, checkpoint: key, runId: approvalRunId });
+    if (checked.ok && checked.sha256 === item.approvalReceiptSha256) return true;
+  }
   return !!(allowBypass && item && item.status === "bypassed" && item.reason);
 }
 
 const checkpointOrder = ["plan", "designTermsState", "theme", "layoutBlueprint", "anchorSample", "productionMode"];
 
-function approveCheckpoint(key, value, note) {
+// Decide which checkpoints carry forward vs reset on init. Pure + deterministic so the
+// regression suite can assert it without spawning child processes. On a delta-revision only
+// `plan` reopens; carried checkpoints are re-stamped under the new runId (with provenance) so
+// approved() accepts them. A full reset (full-rebuild / first create) clears every field.
+function planCheckpointTransition(data, { deltaCarry, newRunId, fromRunId, now }) {
+  const reopen = new Set(deltaCarry ? ["plan"] : checkpointOrder);
+  const out = data && data.checkpoints ? data : { version: "checkpoint-status.v1", checkpoints: {} };
+  Object.entries(out.checkpoints).forEach(([key, item]) => {
+    const carry = deltaCarry && !reopen.has(key) && item.status === "approved" && item.approvedAt && item.approvalReceipt && item.approvalReceiptSha256;
+    if (carry) {
+      item.runId = newRunId;
+      item.carriedFromRunId = fromRunId;
+      item.carriedAt = now;
+    } else {
+      item.status = "pending";
+      ["approvedAt", "approvedBy", "runId", "approvalNote", "approvalReceipt", "approvalReceiptSha256", "approvalReceiptRunId", "reason", "carriedFromRunId", "carriedAt"]
+        .forEach(field => delete item[field]);
+    }
+  });
+  return out;
+}
+
+function approveCheckpoint(key, value, note, approvalFileArg) {
   enforceContextRotation();
   const receipt = loadReceipt();
   if (!checkpointOrder.includes(key)) {
     console.error(`Unknown checkpoint: ${key}`);
     process.exit(1);
   }
-  if (!note) {
-    console.error("Approval requires `--note` that identifies the user's explicit confirmation.");
+  if (!approvalFileArg) {
+    console.error("Approval receipt required: use --receipt state/approval-receipts/<checkpoint>.json.");
     process.exit(1);
   }
   if (key === "productionMode" && !["A", "B", "C"].includes(value)) {
@@ -172,9 +236,15 @@ function approveCheckpoint(key, value, note) {
   const data = readJson(CHECKPOINTS, { version: "checkpoint-status.v1", checkpoints: {} });
   const index = checkpointOrder.indexOf(key);
   const missingPrior = checkpointOrder.slice(0, index)
-    .filter(prior => !approved((data.checkpoints || {})[prior], receipt, false));
+    .filter(prior => !approved(prior, (data.checkpoints || {})[prior], receipt, false));
   if (missingPrior.length) {
     console.error(`Cannot approve ${key}; earlier checkpoints are pending: ${missingPrior.join(", ")}`);
+    process.exit(1);
+  }
+  const approvalFile = path.resolve(ROOT, approvalFileArg);
+  const checked = verifyApprovalFile(approvalFile, { root: ROOT, checkpoint: key, runId: receipt.runId });
+  if (!checked.ok) {
+    console.error(`Approval receipt failed: ${checked.errors.join("; ")}`);
     process.exit(1);
   }
   const item = data.checkpoints[key] || {};
@@ -182,7 +252,10 @@ function approveCheckpoint(key, value, note) {
   item.approvedAt = new Date().toISOString();
   item.approvedBy = "explicit-user-confirmation";
   item.runId = receipt.runId;
-  item.approvalNote = note;
+  item.approvalNote = note || checked.receipt.summary;
+  item.approvalReceipt = path.relative(ROOT, approvalFile).replace(/\\/g, "/");
+  item.approvalReceiptSha256 = checked.sha256;
+  item.approvalReceiptRunId = receipt.runId;
   if (key === "productionMode") item.mode = value;
   data.checkpoints[key] = item;
   writeJson(CHECKPOINTS, data);
@@ -205,7 +278,7 @@ function verify(target) {
     process.exit(1);
   }
   const data = readJson(CHECKPOINTS, { checkpoints: {} });
-  const missing = required.filter(key => !approved((data.checkpoints || {})[key], receipt, false));
+  const missing = required.filter(key => !approved(key, (data.checkpoints || {})[key], receipt, false));
   if (missing.length) {
     console.error(`LEANDER ${target.toUpperCase()} GATE FAILED: ${missing.join(", ")} not approved.`);
     console.error("Stop at the current checkpoint, present the user-facing artifact, and obtain explicit approval.");
@@ -224,23 +297,67 @@ function status() {
   console.log(`Gate 0: ${receipt && receipt.initialized ? "initialized " + receipt.runId : "missing"}`);
   ["plan", "designTermsState", "theme", "layoutBlueprint", "anchorSample", "productionMode"]
     .forEach(key => console.log(`  - ${key}: ${(cps[key] && cps[key].status) || "missing"}`));
+  bestEffort("task-portfolio.js", ["status"]);
 }
 
-const command = process.argv[2] || "status";
-if (command === "init") initialize(process.argv[3]);
-else if (command === "migrate") {
-  const noteIndex = process.argv.indexOf("--note");
-  migrateExisting(process.argv[3], noteIndex >= 0 ? process.argv[noteIndex + 1] : "");
+function selfTest() {
+  const assert = require("assert");
+  const base = () => ({
+    version: "checkpoint-status.v1",
+    checkpoints: {
+      plan: { status: "approved", approvedAt: "t0", approvedBy: "u", runId: "OLD", approvalNote: "n", approvalReceipt: "state/approval-receipts/plan.json", approvalReceiptSha256: "a".repeat(64), approvalReceiptRunId: "OLD" },
+      designTermsState: { status: "approved", approvedAt: "t0", runId: "OLD", approvalReceipt: "state/approval-receipts/designTermsState.json", approvalReceiptSha256: "a".repeat(64), approvalReceiptRunId: "OLD" },
+      theme: { status: "approved", approvedAt: "t0", runId: "OLD", approvalReceipt: "state/approval-receipts/theme.json", approvalReceiptSha256: "a".repeat(64), approvalReceiptRunId: "OLD" },
+      layoutBlueprint: { status: "approved", approvedAt: "t0", runId: "OLD", approvalReceipt: "state/approval-receipts/layoutBlueprint.json", approvalReceiptSha256: "a".repeat(64), approvalReceiptRunId: "OLD" },
+      anchorSample: { status: "approved", approvedAt: "t0", runId: "OLD", approvalReceipt: "state/approval-receipts/anchorSample.json", approvalReceiptSha256: "a".repeat(64), approvalReceiptRunId: "OLD" },
+      productionMode: { status: "approved", approvedAt: "t0", runId: "OLD", mode: "B", approvalReceipt: "state/approval-receipts/productionMode.json", approvalReceiptSha256: "a".repeat(64), approvalReceiptRunId: "OLD" }
+    }
+  });
+  // delta-revision: downstream approvals carry forward re-stamped; only `plan` reopens.
+  const carried = planCheckpointTransition(base(), { deltaCarry: true, newRunId: "NEW", fromRunId: "OLD", now: "t1" });
+  assert.equal(carried.checkpoints.plan.status, "pending", "delta must reopen plan");
+  ["designTermsState", "theme", "layoutBlueprint", "anchorSample", "productionMode"].forEach(key => {
+    assert.equal(carried.checkpoints[key].status, "approved", `delta must carry ${key}`);
+    assert.equal(carried.checkpoints[key].runId, "NEW", `carried ${key} must be re-stamped under the new runId`);
+    assert.equal(carried.checkpoints[key].carriedFromRunId, "OLD", `carried ${key} must record provenance`);
+  });
+  assert.equal(carried.checkpoints.productionMode.mode, "B", "carried productionMode keeps its mode");
+  // full reset (full-rebuild / first create): nothing carries.
+  const reset = planCheckpointTransition(base(), { deltaCarry: false, newRunId: "NEW", fromRunId: "OLD", now: "t1" });
+  checkpointOrder.forEach(key => {
+    assert.equal(reset.checkpoints[key].status, "pending", `reset must clear ${key}`);
+    assert.equal(reset.checkpoints[key].runId, undefined, `reset must strip ${key} runId`);
+    assert.equal(reset.checkpoints[key].carriedFromRunId, undefined, `reset must not add provenance to ${key}`);
+  });
+  console.log("PASS workflow-gate carry-forward self-test");
 }
-else if (command === "status") status();
-else if (command === "approve") {
-  const key = process.argv[3];
-  const value = key === "productionMode" ? process.argv[4] : "";
-  const noteIndex = process.argv.indexOf("--note");
-  approveCheckpoint(key, value, noteIndex >= 0 ? process.argv[noteIndex + 1] : "");
-}
-else if (command === "verify") verify(process.argv[3]);
+
+if (process.argv.includes("--self-test")) selfTest();
 else {
-  console.error("usage: node tools/workflow-gate.js init [intent]|migrate <stage> --note <text>|status|approve <checkpoint> [mode] --note <text>|verify anchor|production|final");
-  process.exit(1);
+  const command = process.argv[2] || "status";
+  if (command === "init") initialize(process.argv[3]);
+  else if (command === "migrate") {
+    const noteIndex = process.argv.indexOf("--note");
+    const receiptIndex = process.argv.indexOf("--receipt-dir");
+    const runIndex = process.argv.indexOf("--run-id");
+    migrateExisting(
+      process.argv[3],
+      noteIndex >= 0 ? process.argv[noteIndex + 1] : "",
+      receiptIndex >= 0 ? process.argv[receiptIndex + 1] : "",
+      runIndex >= 0 ? process.argv[runIndex + 1] : ""
+    );
+  }
+  else if (command === "status") status();
+  else if (command === "approve") {
+    const key = process.argv[3];
+    const value = key === "productionMode" ? process.argv[4] : "";
+    const noteIndex = process.argv.indexOf("--note");
+    const receiptIndex = process.argv.indexOf("--receipt");
+    approveCheckpoint(key, value, noteIndex >= 0 ? process.argv[noteIndex + 1] : "", receiptIndex >= 0 ? process.argv[receiptIndex + 1] : "");
+  }
+  else if (command === "verify") verify(process.argv[3]);
+  else {
+    console.error("usage: node tools/workflow-gate.js init [intent]|migrate <stage> --note <text> --receipt-dir <dir> --run-id <id>|status|approve <checkpoint> [mode] --receipt <file> [--note <text>]|verify anchor|production|final");
+    process.exit(1);
+  }
 }

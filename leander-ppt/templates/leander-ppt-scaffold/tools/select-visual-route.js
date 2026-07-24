@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const assert = require("assert");
 const { loadComponentRuntime, rendererStatus } = require("./component-runtime");
+const { inspectComponentContract } = require("./component-contract");
 const ROOT = path.join(__dirname, "..");
 const REGISTRY = JSON.parse(fs.readFileSync(path.join(__dirname, "component-registry.json"), "utf8").replace(/^\uFEFF/, ""));
 const RUNTIME = loadComponentRuntime();
@@ -50,18 +51,22 @@ function componentFamilyText(component) { return [component.name, component.fami
 function scoreComponent(component, context) {
   const breakdown = { relationship: 0, blueprint: 0, slots: 0, capacity: 0, evidence: 0, theme: 0, keyword: 0, risk: 0 };
   const reasons = [], rejections = [];
-  if ((component.relationships || []).includes(context.relationship) || component.relationPrimitive === context.relationship) { breakdown.relationship = 30; reasons.push("relationship.exact"); }
-  else if ((component.relationships || []).some(rel => context.relationshipAliases.includes(rel))) { breakdown.relationship = 18; reasons.push("relationship.alias"); }
+  const primaryRelationships = component.relationships || [];
+  const secondaryRelationships = component.secondaryRelationships || [];
+  if (primaryRelationships.includes(context.relationship) || component.relationPrimitive === context.relationship) { breakdown.relationship = 30; reasons.push("relationship.exact"); }
+  else if (secondaryRelationships.includes(context.relationship)) { breakdown.relationship = 22; reasons.push("relationship.component-secondary"); }
+  else if ([...primaryRelationships, ...secondaryRelationships].some(rel => context.secondaryRelationships.includes(rel))) { breakdown.relationship = 18; reasons.push("relationship.page-secondary"); }
+  else if ([...primaryRelationships, ...secondaryRelationships].some(rel => context.relationshipAliases.includes(rel))) { breakdown.relationship = 18; reasons.push("relationship.alias"); }
   else rejections.push("relationship.mismatch");
 
   const familyText = componentFamilyText(component);
-  const exactFamilyIndex = (context.candidateFamilies || []).findIndex(family => norm(component.name) === norm(family));
-  if (exactFamilyIndex >= 0) {
-    breakdown.blueprint = Math.max(12, 30 - exactFamilyIndex * 5);
-    reasons.push(`contract.family-rank.${exactFamilyIndex + 1}`);
-  } else if ((context.candidateFamilies || []).some(family => norm(familyText).includes(norm(family)))) {
-    breakdown.blueprint = 18;
-    reasons.push("contract.family");
+  const exactComponentIndex = (context.candidateComponents || []).findIndex(name => norm(component.name) === norm(name));
+  if (exactComponentIndex >= 0) {
+    breakdown.blueprint = Math.max(20, 40 - exactComponentIndex * 6);
+    reasons.push(`contract.component-rank.${exactComponentIndex + 1}`);
+  } else if ((context.patternHints || []).some(hint => norm(hint) && norm(familyText).includes(norm(hint)))) {
+    breakdown.blueprint = 6;
+    reasons.push("contract.pattern-hint");
   }
   if ((context.blueprint?.avoidSignatures || []).some(item => norm(familyText).includes(norm(item)))) { breakdown.risk -= 40; rejections.push("blueprint.avoid"); }
   if (context.blueprint?.complexityBudget === "low" && component.density === "high") { breakdown.risk -= 24; rejections.push("capacity.too-dense"); }
@@ -79,8 +84,13 @@ function scoreComponent(component, context) {
     else { breakdown.risk -= 20; rejections.push("capacity.overflow"); }
   } else { breakdown.capacity = 4; reasons.push("capacity.unproven"); }
 
-  if (context.needsEvidence && (component.relationships || []).includes("evidence")) breakdown.evidence = 8;
+  if (context.needsEvidence && [...primaryRelationships, ...secondaryRelationships].includes("evidence")) breakdown.evidence = 8;
   else if (!context.needsEvidence) breakdown.evidence = 5;
+  const chartLike = /(?:chart|pie|donut|heatmap|radar|waterfall)/i.test(familyText);
+  if (chartLike && !context.hasQuantitativeEvidence && exactComponentIndex < 0) {
+    breakdown.risk -= 45;
+    rejections.push("semantics.quantitative-evidence-missing");
+  }
   if ((component.themeCompatibility || []).includes(context.theme)) { breakdown.theme = 8; reasons.push("theme.proven"); }
   else { breakdown.theme = 2; reasons.push("theme.unproven"); }
 
@@ -89,7 +99,7 @@ function scoreComponent(component, context) {
   const rawScore = Object.values(breakdown).reduce((sum, value) => sum + value, 0);
   const confidenceCap = component.selectionConfidenceCap == null ? 0.7 : component.selectionConfidenceCap;
   const score = Math.max(0, Math.min(rawScore, 100));
-  const hardRejected = rejections.includes("blueprint.avoid") || rejections.includes("slots.insufficient") || rejections.includes("capacity.overflow") || breakdown.relationship === 0;
+  const hardRejected = rejections.includes("blueprint.avoid") || rejections.includes("slots.insufficient") || rejections.includes("capacity.overflow") || rejections.includes("semantics.quantitative-evidence-missing") || breakdown.relationship === 0;
   return { route: "component-library", name: component.name, library: component.library, level: component.level, score, confidenceCap, breakdown, reasons, rejections, hardRejected };
 }
 function nonComponentRoutes(context) {
@@ -140,6 +150,30 @@ function select(page) {
       reviewFocus: ["封面必须使用已批准主题 chrome。", "标题层级、留白和品牌位置必须符合主题合同。"]
     };
   }
+  if (relationship === "closing" || blueprint?.storyRole === "closing" || /brand-closing/.test(expressionMode)) {
+    return {
+      engineVersion: "visual-selector.v2", intent: page.takeaway || page.title || "收束演示主题", relationship: "closing",
+      relationshipSubtype: blueprint?.relationshipSubtype || "closing.brand", visualSignature: blueprint?.visualSignature || "theme-closing",
+      blueprintRef: blueprint ? `layout-blueprint.json#${blueprint.page || blueprint.id}` : null, expressionMode,
+      candidateRoutes: [
+        { route: "component-library", name: "closing", score: 92, reasons: ["theme.chrome"], rejections: [] },
+        ...nonComponentRoutes({ expressionMode, relationship: "closing", needsEvidence: false })
+      ].map(compactCandidate), selectedRoute: { route: "component-library", name: "closing", score: 92, confidence: 0.92, margin: 20 },
+      requiresCuratorReview: false, rejectedRoutes: [], implementation: { expectedBinding: { route: "component-library", name: "closing" }, pageJsMustExport: "visualBinding" },
+      reviewFocus: ["尾页必须使用已批准主题 closing chrome。", "品牌标语、中心口号和留白必须符合主题合同，补充行动内容移到相邻内容页。"]
+    };
+  }
+  const mergedContract = {
+    ...(blueprint || {}),
+    page: page.id || page.page || blueprint?.page || blueprint?.id,
+    candidateComponents: [...new Set([...(page.candidateComponents || []), ...(blueprint?.candidateComponents || [])])],
+    patternHints: [...new Set([...(page.patternHints || []), ...(blueprint?.patternHints || [])])],
+    candidateFamilies: [...new Set([...(page.candidateFamilies || []), ...(blueprint?.candidateFamilies || [])])]
+  };
+  const contractAudit = inspectComponentContract(mergedContract);
+  if (contractAudit.errors.length) {
+    throw new Error(`Invalid Gate 1.5 component contract for ${mergedContract.page || "unknown"}: ${contractAudit.errors.map(item => item.message).join("; ")}`);
+  }
   const context = {
     blueprint, text, relationship,
     relationshipAliases: relationship === "ecosystem"
@@ -148,14 +182,18 @@ function select(page) {
         ? ["sequence"]
         : [],
     expressionMode, requiredSlots: requiredSlots(page, blueprint, relationship), shape: contentShape(page),
-    candidateFamilies: [...new Set([...(page.candidateFamilies || []), ...(blueprint?.candidateFamilies || [])])],
+    candidateComponents: contractAudit.candidateComponents,
+    patternHints: contractAudit.patternHints,
+    secondaryRelationships: [...new Set([...(page.secondaryRelationships || []), ...(blueprint?.secondaryRelationships || [])])],
     needsEvidence: /evidence|screenshot|artifact|case/.test(expressionMode) || relationship === "evidence",
     hasSourceGraphic: [page.screenshotSlots, page.evidenceSlots, page.imageSlots, page.sourceGraphics].some(value => Array.isArray(value) && value.length > 0) || !!page.sourceGraphic,
+    hasQuantitativeEvidence: /metric|chart|quantitative|ratio|trend|kpi|data/i.test(`${expressionMode} ${relationship} ${text}`) || [page.metrics, page.series, page.chartData, page.dataPoints].some(value => Array.isArray(value) && value.length > 0),
     theme: require(path.join(ROOT, "deck.config.js")).theme || "leander-base"
   };
   const components = REGISTRY.components
     .map(component => ({ ...component, runtime: rendererStatus(component, RUNTIME) }))
     .filter(component => component.runtime.selectable)
+    .filter(component => !context.candidateComponents.length || context.candidateComponents.some(name => norm(name) === norm(component.name)))
     .map(component => scoreComponent(component, context))
     .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
   const viable = components.filter(item => !item.hardRejected).slice(0, 4);
@@ -174,18 +212,20 @@ function select(page) {
     : evaluatedCandidates;
   const candidates = allowedCandidates.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
-    const ai = context.candidateFamilies.findIndex(family => norm(family) === norm(a.name));
-    const bi = context.candidateFamilies.findIndex(family => norm(family) === norm(b.name));
+    const ai = context.candidateComponents.findIndex(name => norm(name) === norm(a.name));
+    const bi = context.candidateComponents.findIndex(name => norm(name) === norm(b.name));
     return (ai < 0 ? 999 : ai) - (bi < 0 ? 999 : bi);
   });
   const routeLocked = blueprint?.routeLock ? candidates.find(item => item.route === blueprint.routeLock) : null;
+  if (blueprint?.routeLock && !routeLocked) throw new Error(`routeLock ${blueprint.routeLock} has no viable candidate for ${mergedContract.page || "unknown"}`);
+  if (preferredRoutes.length && !candidates.length) throw new Error(`routePreference has no viable candidate for ${mergedContract.page || "unknown"}`);
   const customFirstWithoutFit = preferredRoutes[0] === "page-specific-custom" && !viable.some(item => (item.breakdown?.blueprint || 0) > 0);
   const customFallback = customFirstWithoutFit ? candidates.find(item => item.route === "page-specific-custom") : null;
   const selected = routeLocked
     ? { ...routeLocked, score: Math.min(100, Math.max(96, routeLocked.score)), reasons: [...(routeLocked.reasons || []), "blueprint.route-lock"] }
     : customFallback || candidates[0] || { route: "page-specific-custom", name: "custom-composition", score: 10, reasons: ["no-viable-candidate"], rejections: [] };
   const second = candidates.find(item => item.route !== selected.route || item.name !== selected.name) || { score: 0 };
-  const contractExact = (selected.reasons || []).includes("contract.family-rank.1");
+  const contractExact = (selected.reasons || []).includes("contract.component-rank.1");
   const customAsAllowedFallback = selected.route === "page-specific-custom" && !viable.length && preferredRoutes.includes("page-specific-custom");
   // Choosing bespoke composition must not trigger extra review by itself;
   // curator attention is for genuinely ambiguous component picks.
@@ -237,6 +277,17 @@ function main() {
     const mechCustom = mechanism.find(item => item.route === "page-specific-custom");
     assert(mechCustom.score >= 60, "custom composition must stay first-class for content pages");
     assert(!(mechCustom.reasons || []).includes("last-resort"), "custom composition must not be labeled last-resort");
+    const baseContext = {
+      relationship: "sequence", relationshipAliases: [], secondaryRelationships: [], candidateComponents: [], patternHints: [],
+      blueprint: {}, requiredSlots: [], shape: { maxItems: 4 }, needsEvidence: false, hasQuantitativeEvidence: false,
+      theme: "global-v2", text: "operational recovery convergence"
+    };
+    const chart = scoreComponent({ name: "pieBreakdown", relationships: ["evidence"], relationPrimitive: "evidence", tags: ["chart", "ratio"], slots: [], themeCompatibility: ["global-v2"] }, baseContext);
+    assert(chart.hardRejected && chart.rejections.includes("semantics.quantitative-evidence-missing"), "non-quantitative mechanism pages must not fall back to a chart");
+    const exact = scoreComponent({ name: "processTimeline", relationships: ["sequence"], relationPrimitive: "sequence", tags: ["process"], slots: [], themeCompatibility: ["global-v2"] }, { ...baseContext, candidateComponents: ["processTimeline"] });
+    assert(exact.reasons.includes("contract.component-rank.1") && exact.breakdown.blueprint >= 40, "exact candidateComponents must be a strong component constraint");
+    const hinted = scoreComponent({ name: "processTimeline", relationships: ["sequence"], relationPrimitive: "sequence", tags: ["process"], slots: [], themeCompatibility: ["global-v2"] }, { ...baseContext, patternHints: ["process"] });
+    assert(hinted.reasons.includes("contract.pattern-hint") && hinted.breakdown.blueprint < exact.breakdown.blueprint, "patternHints must stay weaker than exact component IDs");
     console.log("PASS visual route competition self-test");
     return;
   }

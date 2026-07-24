@@ -7,10 +7,15 @@
 const fs = require("fs");
 const path = require("path");
 const { loadComponentRuntime, rendererStatus } = require("./component-runtime");
+const { inspectOverrides, mergeMetadata } = require("./lint-component-metadata-overrides");
 
 const registryPath = path.join(__dirname, "component-registry.json");
+const overridesPath = path.join(__dirname, "component-metadata-overrides.json");
 const outPath = path.join(__dirname, "component-index.min.json");
 const registry = JSON.parse(fs.readFileSync(registryPath, "utf8").replace(/^\uFEFF/, ""));
+const overrides = JSON.parse(fs.readFileSync(overridesPath, "utf8").replace(/^\uFEFF/, ""));
+const overrideAudit = inspectOverrides(overrides, registry);
+if (overrideAudit.errors.length) throw new Error(`Component metadata overrides invalid: ${overrideAudit.errors.map(item => `${item.component}/${item.type}`).join(", ")}`);
 const runtime = loadComponentRuntime();
 
 function inferLevel(c) {
@@ -28,7 +33,8 @@ function inferComposable(c) {
   return "limited";
 }
 
-const enriched = registry.components.map(c => {
+const enriched = registry.components.map(base => {
+  const c = mergeMetadata(base, overrides.components?.[base.name] || {});
   const status = rendererStatus(c, runtime);
   return {
     name: c.name,
@@ -36,6 +42,7 @@ const enriched = registry.components.map(c => {
     route: c.route,
     library: c.library,
     relationships: c.relationships || [],
+    secondaryRelationships: c.secondaryRelationships || [],
     tags: c.tags || [],
     density: c.density || "medium",
     editable: c.editable || (c.route === "image2" ? "partial" : "yes"),
@@ -50,6 +57,8 @@ const enriched = registry.components.map(c => {
     themeCompatibility: c.themeCompatibility || [],
     metadataSource: c.metadataSource || "unknown",
     metadataReviewStatus: c.metadataReviewStatus || "pending",
+    reviewedAt: c.reviewedAt || null,
+    reviewedBy: c.reviewedBy || null,
     selectionConfidenceCap: c.selectionConfidenceCap == null ? 0.7 : c.selectionConfidenceCap,
     designStatus: c.designStatus || "usable",
     designReviewPriority: c.designReviewPriority || "P3",

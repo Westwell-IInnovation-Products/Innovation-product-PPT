@@ -4,6 +4,7 @@
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const cp = require("child_process");
 const { lintScene } = require("./blueprint-geometry");
 
 const ROOT = path.join(__dirname, "..");
@@ -65,6 +66,30 @@ function buildPoster(s) {
   addLine(s, "l3", [{ x: 1190, y: 266 }, { x: 1080, y: 266 }, { x: 1080, y: 385 }, { x: 980, y: 385 }], "k3", "focus");
   addLine(s, "l4", [{ x: 1190, y: 566 }, { x: 1080, y: 566 }, { x: 1080, y: 425 }, { x: 980, y: 425 }], "k4", "focus");
   addRect(s, "shift", 500, 640, 600, 46, "navy", { label: "CAPABILITY SHIFT" });
+}
+function buildTensionBridge(s) {
+  addRect(s, "personalArtifacts", 110, 225, 520, 470, "frame-navy", { role: "decor", label: "SCATTERED ARTIFACTS" });
+  [285, 375, 465, 555].forEach((y, i) => {
+    addRect(s, `artifact${i + 1}`, 175, y, 390, 58, i === 0 ? "soft-red" : "soft", {
+      label: `ARTIFACT ${i + 1}`,
+      peerGroup: "personal-artifacts"
+    });
+  });
+
+  addRect(s, "governedVault", 1170, 225, 320, 470, "navy", { role: "decor", label: "TEAM VAULT" });
+  [335, 445, 555].forEach((y, i) => {
+    addRect(s, `criterion${i + 1}`, 1220, y, 220, 62, "normal", {
+      label: `CRITERION ${i + 1}`,
+      peerGroup: "vault-criteria"
+    });
+  });
+
+  // The two rails deliberately stop at the red gap. They express a missing
+  // governance bridge without implying one-to-one mappings between either list.
+  addRect(s, "leftRail", 630, 424, 155, 22, "navy", { role: "decor", excludeFromCenter: true });
+  addRect(s, "rightRail", 1015, 424, 155, 22, "navy", { role: "decor", excludeFromCenter: true });
+  addRect(s, "governanceGap", 785, 350, 230, 170, "focus", { label: "MISSING BRIDGE" });
+  addRect(s, "teamCompounding", 465, 700, 670, 42, "line", { label: "TEAM COMPOUNDING" });
 }
 function buildDecisionKeywordBoard(s) {
   addRect(s, "decision", 620, 315, 360, 150, "focus", { label: "DECISION" });
@@ -303,6 +328,7 @@ const BUILDERS = {
   "brand-closing": buildClosing,
   "section-divider": buildDivider,
   "tension-radial": buildPoster,
+  "tension-bridge": buildTensionBridge,
   "decision-keyword-board": buildDecisionKeywordBoard,
   "keyword-diagnosis": buildDiagnosis,
   "big-typography-benefit": buildBenefit,
@@ -389,7 +415,7 @@ function contactSheetSvg(scenes, columns, cardW, includeReason = false) {
 
 function isRisk(contract) {
   return contract.complexityBudget === "high" || (contract.screenshotSlots || []).length > 0 ||
-    ["architecture-map", "tool-tree", "folder-zoom", "decision-funnel", "boundary-filter", "role-evidence", "feedback-loop",
+    ["architecture-map", "tool-tree", "folder-zoom", "decision-funnel", "boundary-filter", "role-evidence", "feedback-loop", "tension-bridge",
       "decision-keyword-board", "fusion-pipeline-spine", "responsibility-divider", "evidence-image-annotation",
       "stage-gate-roadmap", "image-scene-mapping", "capability-migration-map", "decision-ask-poster"].includes(contract.skeletonFamily);
 }
@@ -457,12 +483,16 @@ function main() {
   fs.writeFileSync(path.join(args.outDir, "layout-blueprint-preview-qa.json"), JSON.stringify(qa, null, 2) + "\n", "utf8");
   const md = [
     "# 蓝图预览 QA", "", `- 结论：${qa.verdict}`, `- 检查页面：${checks.length}`, `- 几何错误：${errors.length}`, `- 提醒：${warnings.length}`,
-    "", "## 用户确认", "- `output/layout-blueprint-preview.svg`：整套故事节奏与布局骨架。", "- `output/layout-blueprint-risk-preview.svg`：高风险页放大预览。",
+    "", "## 用户确认", "- `output/layout-blueprint-preview.svg`：仅几何蓝图，用于检查整套故事节奏和版面结构，不代表真实组件效果。", "- `output/layout-blueprint-risk-preview.svg`：高风险页仅几何放大预览。", "- `output/layout-blueprint-component-shortlist.svg`：当前主题下的真实组件候选预览。",
     "", "## 后续输入", "- `layout-blueprint.json`：蓝图合同。", "- `output/layout-blueprint-geometry.json`：组件选择和生产使用的几何证据。",
-    "", "## 内部证据", "- `output/layout-blueprint-preview-qa.json`：机器可读门禁结果。", "",
+    "", "## 内部证据", "- `output/layout-blueprint-preview-qa.json`：机器可读关卡结果。", "",
     "## 错误", ...(errors.length ? errors.map(item => `- [${item.page} / ${item.type}] ${item.message}`) : ["- 无。"])
   ].join("\n") + "\n";
   fs.writeFileSync(path.join(args.outDir, "layout-blueprint-preview-qa.md"), md, "utf8");
+  const defaultBlueprint = path.join(ROOT, "layout-blueprint.json");
+  if (!process.argv.includes("--skip-component-shortlist") && path.resolve(args.blueprint) === path.resolve(defaultBlueprint)) {
+    cp.execFileSync(process.execPath, [path.join(__dirname, "render-component-shortlist-preview.js")], { cwd: ROOT, stdio: "inherit" });
+  }
   console.log(`${qa.verdict} rendered ${checks.length} blueprint pages; errors=${errors.length}`);
   if (errors.length) process.exitCode = 1;
 }

@@ -8,8 +8,10 @@ const ROOT = path.join(__dirname, "..");
 function arg(name, fallback = "") { const i = process.argv.indexOf(`--${name}`); return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : fallback; }
 const THEME_NAME = arg("theme", process.argv.includes("--global") ? "leander-global" : "leander-base");
 const OUT = path.resolve(arg("out-dir", path.join(ROOT, "output", `component-library-real-preview-${THEME_NAME}`)));
+const COMPONENT_FILTER = arg("components", "").split(",").map(value => value.trim()).filter(Boolean);
 const SLIDES = path.join(OUT, "slides");
 const RENDERED = path.join(OUT, "rendered");
+const EMBEDDED_PREVIEW_COMPONENTS = new Set(["evidenceLegend", "stageGateRail", "statusLegend"]);
 
 function ensureClean(dir) {
   fs.rmSync(dir, { recursive: true, force: true });
@@ -227,6 +229,12 @@ function sampleFor(c) {
       return { ...d, corner: "Capability", columns: ["Manual", "Skill", "Harness"], focusCol: 2, rows: [{ label: "Context", cells: [false, { level: 2, of: 3 }, true] }, { label: "QA", cells: [false, "partial", true], focus: true }, { label: "Reuse", cells: ["low", "medium", "high"] }] };
     case "quadrantMatrix":
       return { ...d, xLabel: "Reuse", yLabel: "Impact", items: [{ name: "Theme", x: 0.3, y: 0.6 }, { name: "QA Gate", x: 0.75, y: 0.8, focus: true }, { name: "Custom", x: 0.25, y: 0.25 }] };
+    case "evidenceLegend":
+      return { ...d, x: 250, y: 360, w: 1420, h: 250, title: "Evidence semantics", items: [{ label: "Source", meaning: "Directly traceable evidence", colorToken: "teal" }, { label: "Derived", meaning: "Interpretation from the source", colorToken: "accent" }, { label: "Boundary", meaning: "Assumption or unverified edge", colorToken: "warn" }], sourceNote: "Legend labels and colors must match the host visual." };
+    case "stageGateRail":
+      return { ...d, x: 180, y: 335, w: 1560, h: 380, currentStage: 1, stages: [{ label: "Discover", gate: "G1", status: "complete", deliverable: "Validated intent" }, { label: "Design", gate: "G2", status: "current", deliverable: "Approved blueprint" }, { label: "Build", gate: "G3", status: "upcoming", deliverable: "Editable output" }, { label: "Review", gate: "G4", status: "upcoming", deliverable: "QA evidence" }] };
+    case "statusLegend":
+      return { ...d, x: 300, y: 370, w: 1320, h: 250, statuses: [{ label: "Complete", meaning: "Evidence is available", stateToken: "complete" }, { label: "Current", meaning: "Active focus or state", stateToken: "current" }, { label: "Partial", meaning: "Some evidence is missing", stateToken: "partial" }, { label: "Planned", meaning: "Not yet implemented", stateToken: "planned" }] };
     default:
       if (c.relationPrimitive === "contrast") return { ...d, leftTitle: "Before", rightTitle: "After", rows: [{ old: "manual", neu: "systematic" }, { old: "single page", neu: "reusable pattern" }] };
       if (c.relationPrimitive === "sequence") return { ...d, steps: steps4 };
@@ -249,8 +257,12 @@ function availabilityBadge(slide, ui, c, runtimeStatus) {
   const fill = blocked ? "FFF2F2" : "F4F8FF";
   const line = blocked ? "CF111A" : "061D58";
   const label = blocked ? `BLOCKED: ${c.designStatus || runtimeStatus.renderStatus}` : `OK: ${runtimeStatus.renderStatus}`;
-  ui.rect(slide, 1290, 158, 540, 36, { fill, line, lineWidth: 1, round: true });
-  ui.addText(slide, 1308, 169, 504, 10, label, { size: 9.5, color: line, bold: true, fontFace: "Century Gothic", fit: "shrink" });
+  const primary = (c.relationships || [])[0] || "none";
+  const secondary = (c.secondaryRelationships || (c.relationships || []).slice(1)).join("+") || "none";
+  const curator = `${c.level || "unknown"} | ${primary} | secondary=${secondary} | cap=${c.selectionConfidenceCap ?? "n/a"} | ${c.metadataSource || "unknown"} | ${c.designStatus || "usable"}`;
+  ui.rect(slide, 1110, 150, 720, 70, { fill, line, lineWidth: 1, round: true });
+  ui.addText(slide, 1128, 161, 684, 16, label, { size: 9.5, color: line, bold: true, fontFace: "Century Gothic", fit: "shrink" });
+  ui.addText(slide, 1128, 188, 684, 14, curator, { size: 8.2, color: line, fontFace: "Century Gothic", fit: "shrink" });
 }
 
 async function main() {
@@ -259,6 +271,10 @@ async function main() {
   fs.mkdirSync(RENDERED, { recursive: true });
 
   const registry = JSON.parse(fs.readFileSync(path.join(__dirname, "component-registry.json"), "utf8"));
+  const wanted = new Set(COMPONENT_FILTER.map(name => name.toLowerCase()));
+  const selectedComponents = wanted.size ? registry.components.filter(component => wanted.has(String(component.name).toLowerCase())) : registry.components;
+  const missing = COMPONENT_FILTER.filter(name => !selectedComponents.some(component => String(component.name).toLowerCase() === name.toLowerCase()));
+  if (missing.length) throw new Error(`Unknown component preview IDs: ${missing.join(", ")}`);
   const runtime = loadComponentRuntime(THEME_NAME);
   const { theme, pptx, ui, components } = runtime;
   pptx.author = "Leander PPT";
@@ -267,7 +283,7 @@ async function main() {
   pptx.title = "Leander PPT Real Component Preview";
   pptx.lang = "en-US";
   const manifest = [];
-  registry.components.forEach((c, index) => {
+  selectedComponents.forEach((c, index) => {
     const slide = pptx.addSlide();
     slide.addNotes(`${String(index + 1).padStart(2, "0")} ${c.name}`);
     const runtimeStatus = rendererStatus(c, runtime);
@@ -288,11 +304,15 @@ async function main() {
           fontFace: "Century Gothic",
         });
         ui.footer(slide);
+      } else if (EMBEDDED_PREVIEW_COMPONENTS.has(c.name)) {
+        ui.header(slide, c.name, `${c.library || "component"} / ${c.level || "layout-block"} / ${c.relationPrimitive || "visual"}`);
+        fn(slide, sampleFor(c));
+        ui.footer(slide);
       } else {
         fn(slide, sampleFor(c));
       }
       availabilityBadge(slide, ui, c, runtimeStatus);
-      manifest.push({ index: index + 1, name: c.name, status: runtimeStatus.selectable ? "rendered" : "rendered-blocked", renderStatus: runtimeStatus.renderStatus, designStatus: c.designStatus || "usable", selectable: runtimeStatus.selectable, reason: runtimeStatus.reason });
+      manifest.push({ index: index + 1, name: c.name, status: runtimeStatus.selectable ? "rendered" : "rendered-blocked", renderStatus: runtimeStatus.renderStatus, designStatus: c.designStatus || "usable", selectable: runtimeStatus.selectable, reason: runtimeStatus.reason, level: c.level, primaryRelationship: (c.relationships || [])[0] || null, secondaryRelationships: c.secondaryRelationships || (c.relationships || []).slice(1), selectionConfidenceCap: c.selectionConfidenceCap, metadataSource: c.metadataSource, metadataReviewStatus: c.metadataReviewStatus });
     } catch (err) {
       statusSlide(slide, ui, c, "RENDER FAILED", err && err.message ? err.message : String(err));
       manifest.push({ index: index + 1, name: c.name, status: "render-failed", designStatus: c.designStatus || "usable", selectable: false, error: err && err.stack ? err.stack : String(err) });
@@ -301,7 +321,7 @@ async function main() {
 
   const pptxPath = path.join(OUT, "component-library-real-preview.pptx");
   await pptx.writeFile({ fileName: pptxPath });
-  fs.writeFileSync(path.join(OUT, "preview-manifest.json"), JSON.stringify({ version: "component-theme-render.v2", generatedAt: new Date().toISOString(), theme: THEME_NAME, componentCount: registry.components.length, manifest }, null, 2));
+  fs.writeFileSync(path.join(OUT, "preview-manifest.json"), JSON.stringify({ version: "component-theme-render.v2", generatedAt: new Date().toISOString(), theme: THEME_NAME, componentCount: selectedComponents.length, requestedComponents: COMPONENT_FILTER, manifest }, null, 2));
 
   const renderTools = resolveToolchain();
   if (renderTools.soffice && renderTools.pdftoppm) {

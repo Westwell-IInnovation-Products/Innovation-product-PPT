@@ -1,0 +1,12 @@
+{
+  "version": "source-evidence-index.v2",
+  "targetPages": 0,
+  "evidenceCapacityPages": 0,
+  "expansionPolicy": "merge-pages",
+  "sources": [],
+  "claims": [],
+  "assets": [],
+  "gaps": [
+    "Source evidence must be populated before outline approval."
+  ]
+}

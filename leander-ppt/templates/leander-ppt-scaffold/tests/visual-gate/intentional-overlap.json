@@ -1,0 +1,16 @@
+{
+  "version": "visual-geometry-fixture.v1",
+  "pageId": "intentional-overlap",
+  "elements": [
+    {"id":"badge","type":"shape","role":"badge","z":1,"x":1,"y":1,"w":0.5,"h":0.5,"opaque":true},
+    {"id":"badge-text","type":"text","role":"text","z":2,"x":1,"y":1.1,"w":0.5,"h":0.2,"text":"01"}
+  ],
+  "intentionalOverlaps": [
+    {
+      "a": "badge",
+      "b": "badge-text",
+      "reason": "徽标文字必须位于徽标背景内部"
+    }
+  ],
+  "expected": []
+}

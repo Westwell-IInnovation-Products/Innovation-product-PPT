@@ -53,7 +53,7 @@ function inspectText(text, file = "<memory>") {
 
     // A stable gate must not depend on one historical renderer revision.
     if (/layout-blueprint-[^\s"'`]*-v\d+/i.test(line)) {
-      add("versioned-artifact-name", "通用门禁依赖带版本号的固定蓝图产物名。请使用稳定文件名并把版本写入文件内容。" );
+      add("versioned-artifact-name", "通用关卡依赖带版本号的固定蓝图产物名。请使用稳定文件名并把版本写入文件内容。" );
     }
 
     // Page-specific instructions are allowed only in clearly marked examples.
