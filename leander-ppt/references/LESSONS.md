@@ -1,66 +1,66 @@
-# Lessons - Active Defect Checklist
+# 教训——活跃缺陷清单
 
-This is the short active checklist for pre-flight and QA. Keep it readable in one screen. Full de-identified lessons are archived in `LESSONS-ARCHIVE.md`; raw feedback remains project-local in `state/feedback-log.md`.
+这是给 pre-flight 和 QA 用的、简短的活跃清单。保持它一屏可读。完整的去标识教训归档在 `LESSONS-ARCHIVE.md`;原始反馈保留在项目本地的 `state/feedback-log.md`。
 
-Read this file before anchor samples, production, and rendered QA. Read the archive only when a defect category is unclear or a recurring issue needs consolidation.
+在标杆样张、生产和渲染 QA 之前读本文件。只有当某个缺陷类别不清楚、或某个反复出现的问题需要归并时,才读归档。
 
-## Active Rules
+## 活跃规则
 
-### Color Semantics
+### 颜色语义
 
-- Peer or equal items use one structural color. Accent color marks only the current focus, risk, exception, or decision point.
-- Red/azure are theme-relative semantic accents, not decoration. If a color cannot be named as logic, remove it.
-- Avoid multi-color diagrams unless each color encodes a distinct category that the page explicitly explains.
+- 同级或对等的条目使用同一种结构色。强调色只标记当前的焦点、风险、例外或决策点。
+- 红色/天蓝是相对主题的语义强调色,不是装饰。如果一种颜色说不出它代表什么逻辑,就删掉它。
+- 避免多色图示,除非每种颜色都编码一个页面明确解释过的、不同的类别。
 
-### Layout And Whitespace
+### 布局与留白
 
-- Do not leave accidental dead space at the bottom or pin all content to the top. Center or fill the body deliberately.
-- Do not stretch empty frames/cards to “fill” a page. Size zones to content, then center the group.
-- Sparse pages need stronger substance, a visual metaphor, or a simpler designed layout; never inflate fonts/cards to hide weak content.
+- 不要在底部留意外的无用空白,也不要把所有内容都钉在顶部。有意地让正文居中或填满。
+- 不要把空的框/卡片拉大去"填满"页面。按内容给区块定尺寸,再把这一组居中。
+- 稀疏的页面需要更强的实质内容、一个视觉隐喻,或一个更简单的设计布局;绝不用放大字号/卡片来掩盖单薄的内容。
 
-### Typography
+### 排版
 
-- Same role uses the same type size across the deck. Dense labels can be small; titles and key numbers can be large.
-- Do not fix small text by making everything larger. Preserve hierarchy: big title/focus, medium body, small labels/captions.
-- Subtitles should state the page thesis, not repeat the title or list body categories.
+- 同一角色在整份 deck 里用同一个字号。密集的标签可以小;标题和关键数字可以大。
+- 不要靠"把所有东西都放大"来解决小字问题。保留层级:大标题/焦点、中等正文、小标签/说明。
+- 副标题应陈述页面的论点,而不是重复标题或罗列正文类别。
 
-### Text And Graphic Fusion
+### 文字与图形融合
 
-- Fuse labels, numbers, and captions into the visual when possible. Avoid “diagram on one side, paragraph block on the other” unless the split is intentional.
-- Every content page needs a real visual explanation: mechanism, process, map, timeline, matrix, chart, dashboard, image, or equivalent.
-- Text cards alone are not a diagram.
+- 尽量把标签、数字、说明融进视觉里。避免"一边图示、另一边一大段文字块",除非这种拆分是刻意的。
+- 每张内容页都需要一个真实的视觉解释:机制、流程、地图、时间线、矩阵、图表、dashboard、图片或等价物。
+- 只有文字卡片不算图示。
 
-### Connectors And Geometry
+### 连接线与几何
 
-- Orthogonal diagrams must use straight horizontal/vertical connectors. If straight lines become awkward, use intentional curves instead of accidental diagonal drift.
-- Text, labels, and chips must clear lines, nodes, icons, and page chrome.
-- Icons must represent the actual concept. If an icon cannot be explained, replace it with a simpler shape or image slot.
+- 正交图示必须用横平竖直的直连接线。如果直线变得别扭,用刻意的曲线,而不是意外的斜向漂移。
+- 文字、标签、chip 必须避开线条、节点、图标和页面 chrome。
+- 图标必须代表实际概念。如果一个图标解释不了,就换成更简单的形状或图片槽位。
 
-### Component Selection
+### 组件选择
 
-- Every content page needs a `visualSelection` contract before drawing.
-- Select by relationship primitive and expression capability, not by keyword. Components should be reusable across different semantic topics.
-- Check `component-index.min.json` before opening the full catalog. Components are blocks inside a composed page, not page templates.
-- Prefer variants/slots on existing components over near-duplicate components.
+- 每张内容页在画之前都需要一份 `visualSelection` 约束。
+- 按基本关系类型和表达能力来选,而不是按关键词。组件应该能在不同语义主题间复用。
+- 打开完整目录之前先查 `component-index.min.json`。组件是被组合进页面里的积木,不是页面模板。
+- 优先用现有组件的变体/槽位,而不是造近乎重复的组件。
 
-### Image Use
+### 图片使用
 
-- Use real images, screenshots, renders, maps, or generated images when they carry explanatory value.
-- Do not force images into pages where a diagram is clearer.
-- Image2 prompts should stay simple and compositional. Avoid complex busy generated scenes that compete with slide content.
+- 当真实图片、截图、渲染图、地图或生成图片承载解释价值时,使用它们。
+- 不要把图片硬塞进那些用图示更清楚的页面。
+- Image2 的 prompt 应保持简单、有构图感。避免复杂杂乱、与幻灯片内容争抢注意力的生成场景。
 
-### QA Process
+### QA 流程
 
-- Rendering plus a quick glance is not QA. Walk the page-specific checks and fix fail items before reporting.
-- Page `qa.md` must be fresh after `page.js/page.json` changes.
-- After shared theme/component changes, re-render and re-review the full deck.
-- Reviewer must fail obvious defects immediately, not label them as later polish.
+- 渲染加瞄一眼不算 QA。走一遍页面专属检查,报告之前修掉 fail 项。
+- 页面的 `qa.md` 在 `page.js/page.json` 变化后必须是最新的。
+- 共享 theme/组件变化之后,重渲染并重审整份 deck。
+- 审阅员必须立即把明显缺陷判为 fail,而不是标成"以后再打磨"。
 
-### Evidence Boundary
+### 证据边界
 
-- Numbers, status, and external claims must be labeled as achieved, planned, estimate, or public-reference.
-- Do not invent data, implementation maturity, customer status, or source-backed facts.
+- 数字、状态和外部说法必须标注为已达成、计划中、估算或公开引用。
+- 不要编造数据、落地成熟度、客户状态或有来源支撑的事实。
 
-## Consolidation Rule
+## 归并规则
 
-When a project-local `state/feedback-log.md` grows or a category repeats, distill only the reusable, de-identified rule here. Keep obsolete or project-specific items in the project; move only reusable but inactive rules to `LESSONS-ARCHIVE.md`. The active list should stay short enough to read every run.
+当项目本地的 `state/feedback-log.md` 变长、或某个类别反复出现时,只把可复用、去标识的规则提取到这里。把过时或项目专属的条目留在项目里;只把可复用但不活跃的规则移到 `LESSONS-ARCHIVE.md`。活跃清单应保持足够短,能每次运行都读一遍。

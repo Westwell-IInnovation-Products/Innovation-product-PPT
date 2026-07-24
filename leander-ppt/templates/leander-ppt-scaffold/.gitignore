@@ -6,5 +6,6 @@ output/*.pdf
 output/*.tmp
 pages/*/out/*.pptx
 pages/*/out/*.pdf
+state/toolchain-fingerprint.json
 ~$*.pptx
 *.log

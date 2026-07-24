@@ -8,7 +8,7 @@ const OUTPUT = path.join(ROOT, "output");
 const LOG = path.join(OUTPUT, "phase-run.log");
 const cfg = require(path.join(ROOT, "deck.config.js"));
 const { inspect: inspectChanges, compact: compactImpact } = require("./change-impact");
-const { enforceBudget: enforceContextBudget } = require("./context-budget-gate");
+const { enforceBudget: enforceContextBudget, inspect: inspectContextBudget } = require("./context-budget-gate");
 const { verify: verifyToolFreeze } = require("./tool-freeze");
 const results = [];
 let impactSummary = null;
@@ -45,6 +45,13 @@ function runContextBoundary(label) {
     reason: rotationRequired ? (lock.reason || "context budget exceeded") : "",
     nextAction: rotationRequired ? "Start a fresh Codex task, attach it with token-ledger.js, and resume from state/phase-handoff.json." : "continue"
   };
+}
+function contextWatermark() {
+  try {
+    const budget = inspectContextBudget();
+    const k = value => `${Math.round(Number(value || 0) / 1000)}K`;
+    return `累计 ${k(budget.cumulativeTotalTokens)} / 执行停 ${k((budget.thresholds || {}).executionStopTokens)} / 硬顶 ${k((budget.thresholds || {}).conversationHardTotalTokens)} / ${budget.enforcementMode} / ${budget.status}`;
+  } catch (error) { return `unavailable: ${error.message}`; }
 }
 function pageDirs() {
   const pagesRoot = path.join(ROOT, "pages");
@@ -85,7 +92,7 @@ try {
   if (command === "status") {
     run("workflow status", "workflow-gate.js", ["status"]);
     run("context budget", "context-budget-gate.js", ["--write"]);
-    run("compact context", "context-pack.js", ["--mode", "status", "--strict", "--write"]);
+    run("compact context", "context-pack.js", ["--mode", "status", "--write"]);
     run("artifact map", "artifact-map.js", ["--write"]);
   } else if (command === "prepare-pages") {
     preparePages();
@@ -94,9 +101,11 @@ try {
     const scope = arg("pages"), pageArgs = scope ? ["--pages", scope] : [];
     impactSummary = compactImpact(inspectChanges({ pages: scope ? scope.split(",") : [] }));
     run("render affected pages", "deck.js", ["render", ...pageArgs]);
-    run("contact sheet", "render-contact-sheet.js");
+    run("machine geometry audit", "render-geometry-audit.js", pageArgs);
+    run("contact sheet", "render-contact-sheet.js", ["--png"]);
     run("render-level diversity and whitespace audit", "render-diversity.js");
     run("batch QA init for affected pages", "qa-batch.js", ["init", ...pageArgs]);
+    run("compact QA evidence index", "qa-evidence-index.js", ["--write"]);
     run("capture split digests", "page-digests.js", ["capture", ...pageArgs]);
     if (["anchor-sample", "production"].includes(cfg.workflow?.stage)) run("capture render-quality evidence", "render-quality-gate.js", ["capture"]);
     run("agent event plan", "plan-agent-events.js", ["--write"]);
@@ -104,7 +113,8 @@ try {
   } else if (command === "render-review") {
     impactSummary = compactImpact(inspectChanges({ pages: [] }));
     run("render current pages", "deck.js", ["render"]);
-    run("contact sheet", "render-contact-sheet.js");
+    run("machine geometry audit", "render-geometry-audit.js");
+    run("contact sheet", "render-contact-sheet.js", ["--png"]);
     run("render-level diversity and whitespace audit", "render-diversity.js");
     if (["anchor-sample", "production"].includes(cfg.workflow?.stage)) run("capture render-quality evidence", "render-quality-gate.js", ["capture"]);
     run("candidate harvest scan", "candidate-harvest.js", ["--write"]);
@@ -121,5 +131,5 @@ try {
     rotationSummary = runContextBoundary(`phase-${command}`);
     run("phase handoff", "phase-handoff.js", ["write"]);
   }
-  console.log(JSON.stringify({ status: rotationSummary.rotationRequired ? "ROTATE_REQUIRED" : "PASS", phase: command, steps: results.length, seconds: Number(results.reduce((sum, item) => sum + item.seconds, 0).toFixed(1)), impact: impactSummary, log: "output/phase-run.log", exceptions: [], ...rotationSummary }));
+  console.log(JSON.stringify({ status: rotationSummary.rotationRequired ? "ROTATE_REQUIRED" : "PASS", phase: command, watermark: contextWatermark(), steps: results.length, seconds: Number(results.reduce((sum, item) => sum + item.seconds, 0).toFixed(1)), impact: impactSummary, log: "output/phase-run.log", exceptions: [], ...rotationSummary }));
 } catch (error) { console.error(error.message); process.exit(1); }

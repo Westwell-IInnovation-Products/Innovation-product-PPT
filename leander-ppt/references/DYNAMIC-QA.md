@@ -33,7 +33,7 @@ QA 由四层组成：
 }
 ```
 
-可使用脚手架工具生成：
+可使用框架工具生成：
 
 ```bash
 node tools/build-qa-profile.js pages/<id>/page.json --write
@@ -44,8 +44,8 @@ node tools/build-qa-profile.js pages/<id>/page.json --write
 如果页面存在 `blueprintContract` 或来自 `layout-blueprint.json` 的蓝图合同，动态 QA 必须增加以下中文检查项：
 
 - 最终页面是否符合蓝图里的 `visualSignature`，而不是退回成粗糙的通用模板。
-- 实际使用的组件或图形路线是否来自 `candidateFamilies`；如果不是，是否有明确 override 原因。
-- 页面是否避开了 `avoidSignatures` 中标记的重复或错误骨架。
+- 实际使用的组件是否来自精确 `candidateComponents`，图形意图是否符合 `patternHints`；如果不是，是否有明确 override 原因。
+- 页面是否避开了 `avoidSignatures` 中标记的重复或错误版面结构。
 - 页面复杂度是否符合 `complexityBudget`，没有把低复杂度页做成密集机制图。
 - 页面是否保持了蓝图定义的前后页承接关系和故事角色。
 
@@ -150,6 +150,13 @@ node tools/build-qa-profile.js pages/<id>/page.json --write
 - 图片是否和 PPT 背景融合，不像硬贴白卡。
 - 如果是外部图，来源和边界是否清楚。
 
+### cover / closing 主题 chrome
+
+- `cover` 必须使用所选主题的 `ui.cover()`，`closing` 必须使用 `ui.closing()`；这是机器硬门禁，不由 reviewer 的自然语言 PASS 覆盖。
+- chrome 页面必须是纯主题组件：不得通过 `page-specific-custom` 重画，不得声明局部扩展槽，也不得在组件之后追加行动、证据或解释模块。
+- 品牌 tagline 由主题继承，页面不得显式覆盖，更不能用空字符串、普通空格或 NBSP 隐藏。
+- 封面和尾页的人工 QA 仍要检查标题层级、Logo、页脚、中心口号、标语可见性与结束留白；机器只能证明组件调用合同，不能替代看图。
+
 ### decision 决策 / 判断
 
 - 判断标准是否明确。
@@ -160,7 +167,7 @@ node tools/build-qa-profile.js pages/<id>/page.json --write
 ### lifecycle 闭环 / 演进
 
 - 是否能看出循环方向或演进路径。
-- 反馈、迭代、沉淀的位置是否明确。
+- 反馈、迭代、积累的位置是否明确。
 - 是否说明从一次任务到长期能力的变化。
 
 ## 视觉路线 QA
@@ -189,7 +196,7 @@ node tools/build-qa-profile.js pages/<id>/page.json --write
 
 - 是否说明为什么不用已有组件。
 - 是否没有退化为一堆临时文本框。
-- 如果这个自定义结构可复用，是否应该沉淀为组件。
+- 如果这个自定义结构可复用，是否应该积累为组件。
 
 ## QA 输出格式
 
@@ -197,7 +204,7 @@ QA 结论必须先写入机器可读的 `qa-result.json`，再由工具生成中
 
 ```json
 {
-  "version": "qa-result.zh.v2",
+  "version": "qa-result.zh.v3",
   "pageId": "pXX",
   "verdict": "PASS",
   "renderSha256": "...",
@@ -209,7 +216,7 @@ QA 结论必须先写入机器可读的 `qa-result.json`，再由工具生成中
   },
   "reviewer": {"role": "reviewer-zh", "runId": "...", "mode": "independent-render-review"},
   "checks": [
-    {"ruleId": "u.geometry.overlap", "status": "PASS", "evidence": {"ruleId": "u.geometry.overlap", "artifact": "out/pXX.png", "location": "主体图左侧连接区", "method": "visual-full-size", "observation": "节点与连线之间保留可见间距，无非意图重叠"}}
+    {"ruleId": "u.geometry.overlap", "status": "PASS", "evidence": {"ruleId": "u.geometry.overlap", "artifact": "out/geometry-audit.json", "artifactSha256": "<sha256>", "location": "full-slide geometry scene", "method": "machine-geometry", "policyVersion": "visual-geometry-policy.v1", "findingIds": [], "observation": "0 blocking finding(s) for u.geometry.overlap"}}
   ]
 }
 ```
@@ -222,12 +229,15 @@ node tools/deck.js render
 node tools/qa-batch.js init --pages <ids>
 # reviewer 一次输出 qa-review-batch.v1，按真实 PNG 填写逐条状态、位置和证据
 node tools/qa-batch.js apply --file output/qa-review-batch.json --pages <ids>
+node tools/qa-evidence-index.js --write
 node tools/deck.js verify
 ```
 
-门禁会分别核对当前 PNG、渲染输入、选中路线结果、QA Profile、来源边界和组件运行轨迹。修改 QA 元数据不触发重渲染；候选路线证据变化但选中结果不变时不触发重渲染；主题或共享组件变化触发整套重渲染。旧项目可用 `migrate-evidence-v2.js` 迁移仍然新鲜的 PASS 证据，脚本拒绝迁移陈旧证据。
+`output/qa-evidence-index.json` 是 reviewer 的默认低 token 读取面:它保存 verdict、四类依赖摘要、逐规则 evidence digest、失败/待定 rule ID 和本次 delta。完整 `qa-result.json` 仍是事实来源和最终关卡证据,但只有该页失败、待定、发生变化或 reviewer 明确点名时才进入上下文。该索引不能代替逐条证据,只负责避免反复搬运全部证据文本。
 
-每条 PASS 证据必须包含匹配的 `ruleId`、具体 artifact/source、位置、检查方法和观察结果或数值。不同规则可以引用同一张 PNG，但不能用完全相同的一句话和“full-slide”位置证明几何、字体、颜色、事实与组件容量。跨规则族重复通用证据、或整页大量渲染规则只有一个通用位置时，`qa-batch.js apply` 和最终 QA 门禁都必须拒绝。
+关卡会分别核对当前 PNG、渲染输入、选中路线结果、QA Profile、来源边界和组件运行轨迹。修改 QA 元数据不触发重渲染；候选路线证据变化但选中结果不变时不触发重渲染；主题或共享组件变化触发整套重渲染。旧项目可用 `migrate-evidence-v2.js` 迁移仍然新鲜的 PASS 证据，脚本拒绝迁移陈旧证据。
+
+每条 PASS 证据必须包含匹配的 `ruleId`、具体 artifact/source、位置、检查方法和观察结果或数值。不同规则可以引用同一张 PNG，但不能用完全相同的一句话和“full-slide”位置证明几何、字体、颜色、事实与组件容量。跨规则族重复通用证据、或整页大量渲染规则只有一个通用位置时，`qa-batch.js apply` 和最终 QA 关卡都必须拒绝。
 
 每页 `qa.md` 建议使用中文：
 
@@ -264,7 +274,7 @@ Gate 1.5 的低保真预览也必须进入 QA，而不是只作为“看个大�
 - **几何安全**：主体区块、文字区、图形区不得重叠；页脚、标题线、logo 区域不得被内容侵入。
 - **连接线安全**：直线必须水平或垂直；如果使用斜线或曲线，必须是明确的设计选择，不允许出现意外歪斜。
 - **对齐一致**：同级卡片、阶段节点、文件夹、列表项必须尺寸一致、基线一致、间距一致。
-- **故事一致**：页面骨架必须符合 `visualSignature`，不能退回成通用卡片或通用双栏。
+- **故事一致**：页面版面结构必须符合 `visualSignature`，不能退回成通用卡片或通用双栏。
 - **颜色语义**：红色只能用于焦点、冲突、风险、当前选中、关口或关键变化；蓝色/灰色承担稳定结构和辅助信息；青色只作为品牌标记。
 - **文件分工**：面向用户确认的预览图、面向后续制作的合同 JSON、面向内部调试的渲染脚本必须分开说明。
 - **机器证据**：预览 QA 必须输出机器可读 JSON，并由 `node tools/lint-blueprint-preview.js` 读取；不要只写“人工视觉复核完成”。

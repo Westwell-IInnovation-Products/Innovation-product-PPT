@@ -1,0 +1,45 @@
+{
+  "version": "visual-geometry-fixture.v1",
+  "pageId": "reserved-zone-collision",
+  "elements": [
+    {
+      "id": "component-card",
+      "type": "shape",
+      "role": "component",
+      "z": 1,
+      "x": 0.8,
+      "y": 1.625,
+      "w": 2.7,
+      "h": 1.55,
+      "opaque": true
+    },
+    {
+      "id": "page-section-rail",
+      "type": "line",
+      "role": "decoration",
+      "z": 3,
+      "x1": 0.667,
+      "y1": 1.736,
+      "x2": 3.611,
+      "y2": 1.736,
+      "lineWidthPt": 1.2
+    }
+  ],
+  "reservedZones": [
+    {
+      "id": "component-header",
+      "owner": "component-card",
+      "x": 0.8,
+      "y": 1.625,
+      "w": 2.7,
+      "h": 0.25
+    }
+  ],
+  "expected": [
+    {
+      "ruleId": "u.geometry.reserved-zone",
+      "severity": "P0",
+      "objects": ["page-section-rail", "component-header"]
+    }
+  ]
+}

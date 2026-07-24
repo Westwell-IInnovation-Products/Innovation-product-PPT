@@ -4,9 +4,14 @@
 //   node tools/enrich-component-registry.js
 const fs = require("fs");
 const path = require("path");
+const { inspectOverrides, mergeMetadata } = require("./lint-component-metadata-overrides");
 
 const registryPath = path.join(__dirname, "component-registry.json");
 const registry = JSON.parse(fs.readFileSync(registryPath, "utf8").replace(/^\uFEFF/, ""));
+const overridesPath = path.join(__dirname, "component-metadata-overrides.json");
+const overrides = JSON.parse(fs.readFileSync(overridesPath, "utf8").replace(/^\uFEFF/, ""));
+const overrideAudit = inspectOverrides(overrides, registry);
+if (overrideAudit.errors.length) throw new Error(`Component metadata overrides invalid: ${overrideAudit.errors.map(item => `${item.component}/${item.type}`).join(", ")}`);
 
 const visualParts = new Set(["imageSlot"]);
 const layoutBlocks = new Set([
@@ -136,7 +141,8 @@ function designPriority(c, rel, level) {
   return "P3";
 }
 
-registry.components = registry.components.map(c => {
+registry.components = registry.components.map(base => {
+  const c = mergeMetadata(base, overrides.components?.[base.name] || {});
   const level = inferLevel(c);
   const rel = primaryRel(c);
   const hasExistingGovernance = !!c.designStatus;
@@ -155,7 +161,7 @@ registry.components = registry.components.map(c => {
     qaRisks: qaRisks(c, rel, level),
     themeTokensUsed: c.themeTokensUsed || ["colors.bg", "colors.surface", "colors.primary", "colors.accent", "colors.line", "fonts.cn", "fonts.en", "type.*"],
     contentCapacity: c.contentCapacity || { maxItems, maxLabelChars: 18, maxBodyChars: c.density === "high" ? 72 : 48 },
-    themeCompatibility: Array.isArray(c.themeCompatibility) ? c.themeCompatibility : [],
+    themeCompatibility: Array.isArray(c.themeCompatibility) ? [...new Set(c.themeCompatibility)] : [],
     metadataSource: c.metadataSource || "legacy-inferred",
     metadataReviewStatus: c.metadataReviewStatus || (hasExistingGovernance ? "legacy-reviewed" : "pending"),
     selectionConfidenceCap: c.selectionConfidenceCap == null ? (c.metadataSource === "manual" ? 0.95 : 0.74) : c.selectionConfidenceCap,

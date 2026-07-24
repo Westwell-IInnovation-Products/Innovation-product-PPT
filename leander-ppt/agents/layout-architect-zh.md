@@ -68,4 +68,4 @@ tools: Read, Glob, Grep
 结论：PASS / FIX-FIRST
 ```
 
-如果发现明显重叠、未覆盖 visualSignature、故事节奏断裂或重复骨架过多，结论必须是 `FIX-FIRST`。
+如果发现明显重叠、未覆盖 visualSignature、故事节奏断裂或重复版面结构过多，结论必须是 `FIX-FIRST`。

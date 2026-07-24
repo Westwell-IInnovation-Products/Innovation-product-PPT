@@ -40,5 +40,32 @@ function main() {
   fs.mkdirSync(path.dirname(output), { recursive: true });
   fs.writeFileSync(output, svg, "utf8");
   console.log(`wrote ${path.relative(ROOT, output)} (${pages.length} pages)`);
+  if (process.argv.includes("--png")) {
+    const { PNG } = require("pngjs");
+    const factor = 3, pngCols = Math.min(4, pages.length);
+    const shots = pages.map(page => PNG.sync.read(fs.readFileSync(path.join(PAGES, page.dir, "out", `${page.id}.png`))));
+    const cellW = Math.floor(shots[0].width / factor), cellH = Math.floor(shots[0].height / factor), pad = 8;
+    const pngRows = Math.ceil(shots.length / pngCols);
+    const sheet = new PNG({ width: pngCols * cellW + (pngCols + 1) * pad, height: pngRows * cellH + (pngRows + 1) * pad });
+    sheet.data.fill(120);
+    shots.forEach((src, index) => {
+      const ox = pad + (index % pngCols) * (cellW + pad), oy = pad + Math.floor(index / pngCols) * (cellH + pad);
+      for (let y = 0; y < cellH; y++) for (let x = 0; x < cellW; x++) {
+        let r = 0, g = 0, b = 0, n = 0;
+        for (let dy = 0; dy < factor; dy++) for (let dx = 0; dx < factor; dx++) {
+          const sx = x * factor + dx, sy = y * factor + dy;
+          if (sx >= src.width || sy >= src.height) continue;
+          const si = (src.width * sy + sx) << 2;
+          r += src.data[si]; g += src.data[si + 1]; b += src.data[si + 2]; n++;
+        }
+        const di = (sheet.width * (oy + y) + (ox + x)) << 2;
+        sheet.data[di] = r / n; sheet.data[di + 1] = g / n; sheet.data[di + 2] = b / n; sheet.data[di + 3] = 255;
+      }
+    });
+    const pngOutput = output.replace(/\.svg$/i, ".png");
+    fs.writeFileSync(pngOutput, PNG.sync.write(sheet));
+    console.log(`wrote ${path.relative(ROOT, pngOutput)} (${pages.length} pages, model-readable)`);
+    console.log(`reading order: ${pages.map((page, index) => `${index + 1}=${page.id}`).join(" ")}`);
+  }
 }
 main();

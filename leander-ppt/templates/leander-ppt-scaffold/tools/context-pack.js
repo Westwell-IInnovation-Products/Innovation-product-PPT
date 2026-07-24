@@ -63,10 +63,10 @@ function roleReads(roleName, pages) {
   const common = ["role-briefs.md", `agents/${roleName || "<role>"}.md`, "state/context-pack.json or this stdout packet"];
   const map = {
     "planner-zh": ["brief.md", "outline.md", "terminology.json"],
-    "layout-architect-zh": ["outline.md", "layout-blueprint.json", "output/layout-blueprint-preview.svg", "output/layout-blueprint-risk-preview.svg", "output/layout-blueprint-preview-qa.md"],
-    "visual-designer-zh": ["DESIGN.md", "visual-direction.md", "quality-target.json", "state/agent-event-plan.json", "output/render-quality-evidence.json", "output/render-diversity-audit.json", "output/anchor-samples-contact-sheet.svg", "output/full-deck-contact-sheet.png", "output/full-deck-contact-sheet.svg", ...renders],
+    "layout-architect-zh": ["outline.md", "layout-blueprint.json", "output/layout-blueprint-preview.svg", "output/layout-blueprint-risk-preview.svg", "output/layout-blueprint-component-shortlist.svg", "output/layout-blueprint-component-shortlist.md", "output/layout-blueprint-preview-qa.md"],
+    "visual-designer-zh": ["DESIGN.md", "visual-direction.md", "quality-target.json", "state/agent-event-plan.json", "output/render-quality-evidence.json", "output/render-diversity-audit.json", "output/anchor-samples-contact-sheet.png", "output/full-deck-contact-sheet.png", ...renders],
     "component-curator-zh": ["tools/component-index.min.json", "layout-blueprint.json", ...pages.filter(page => page.curatorReview).map(page => page.files.contract)],
-    "reviewer-zh": ["outline.md", "quality-target.json", "state/agent-event-plan.json", "output/render-quality-evidence.json", "output/render-diversity-audit.json", "output/anchor-samples-contact-sheet.svg", "output/full-deck-contact-sheet.png", "output/full-deck-contact-sheet.svg", "output/quality-baseline-audit.md", ...pageContracts, ...renders, ...failedPages.map(page => page.files.qaResult)],
+    "reviewer-zh": ["output/qa-evidence-index.json", "quality-target.json", "state/agent-event-plan.json", "output/render-quality-evidence.json", "output/render-diversity-audit.json", "output/anchor-samples-contact-sheet.png", "output/full-deck-contact-sheet.png", "output/quality-baseline-audit.md", ...pageContracts, ...renders, ...failedPages.map(page => page.files.qaResult)],
     "presenter-zh": ["outline.md", "speaker-notes.md", "output/full-deck-contact-sheet.png"]
   };
   return [...common, ...(map[roleName] || pageContracts)].filter((item, index, list) => item && list.indexOf(item) === index);
@@ -74,22 +74,41 @@ function roleReads(roleName, pages) {
 function readCost(item) {
   if (/context-pack\.json or this stdout packet/i.test(item)) return { path: item, exists: true, bytes: 0, estimatedTextTokens: 0 };
   const file = path.join(ROOT, item);
-  const visual = /\.(?:png|jpe?g|webp|svg)$/i.test(item);
+  const visual = /\.(?:png|jpe?g|webp)$/i.test(item);
   const bytes = exists(file) && fs.statSync(file).isFile() ? fs.statSync(file).size : 0;
   return { path: item, exists: exists(file), bytes, estimatedTextTokens: visual ? 0 : Math.ceil(bytes / 4), openMode: visual ? "visual-tool-only" : "text" };
 }
 function budgetFor() {
-  if (mode === "status") return 3000;
-  if (mode === "repair") return 10000;
-  if (mode === "agent") return 16000;
+  let cfg = {};
+  try { cfg = require(path.join(ROOT, "deck.config.js")); } catch {}
+  const budgets = cfg.executionBudget?.contextPacks || {};
+  if (mode === "status") return Number(budgets.status || 3000);
+  if (mode === "repair") return Number(budgets.repair || 10000);
+  if (mode === "qa") return Number(budgets.qa || 12000);
+  if (mode === "agent") return Number(budgets.agent || 16000);
   return 20000;
+}
+function isRequiredRead(item) {
+  return /(?:phase-handoff|context-pack|role-briefs\.md|agents\/[^/]+\.md)$/i.test(item.path || "");
+}
+function boundReadPlan(plan, maxTokens) {
+  const required = plan.filter(isRequiredRead), optional = plan.filter(item => !isRequiredRead(item));
+  const selected = [], omitted = [];
+  let used = 0;
+  for (const item of [...required, ...optional]) {
+    if (item.estimatedTextTokens === 0 || used + item.estimatedTextTokens <= maxTokens || isRequiredRead(item)) {
+      selected.push(item); used += item.estimatedTextTokens;
+    } else omitted.push(item);
+  }
+  const requiredTokens = required.reduce((sum, item) => sum + item.estimatedTextTokens, 0);
+  return { selected, omitted, used, requiredTokens, status: requiredTokens > maxTokens ? "exceeded" : omitted.length ? "pruned" : "pass" };
 }
 function recommendedReads(stage, pages) {
   if (mode === "agent") return roleReads(role, pages);
   if (mode === "status") return ["checkpoint-status.json", "state/run-state.json", "artifact-manifest.md"];
   if (stage === "layout-blueprint") return [
     "checkpoint-status.json", "layout-blueprint.md", "layout-blueprint.json",
-    "output/layout-blueprint-preview.svg", "output/layout-blueprint-risk-preview.svg",
+    "output/layout-blueprint-preview.svg", "output/layout-blueprint-risk-preview.svg", "output/layout-blueprint-component-shortlist.svg", "output/layout-blueprint-component-shortlist.md",
     "output/layout-blueprint-preview-qa.md", "output/layout-blueprint-preview-lint.md",
     "output/layout-blueprint-diversity-audit.md", "artifact-manifest.md"
   ];
@@ -115,11 +134,16 @@ function build() {
     agents: mode === "status" || mode === "agent" ? roleSummary() : undefined,
     recommendedReads: recommendedReads(stage, pages)
   };
-  pack.readPlan = pack.recommendedReads.map(readCost);
+  const originalPlan = pack.recommendedReads.map(readCost), bounded = boundReadPlan(originalPlan, budgetFor());
+  pack.readPlan = bounded.selected;
+  pack.recommendedReads = bounded.selected.map(item => item.path);
   pack.contextBudget = {
     maxEstimatedTextTokens: budgetFor(),
-    recommendedEstimatedTextTokens: pack.readPlan.reduce((sum, item) => sum + item.estimatedTextTokens, 0),
-    rule: "Start from state/phase-handoff.json in a fresh task. Do not replay task history or open visual assets as text. Expand beyond recommendedReads only after naming the missing decision or changed shared dependency."
+    recommendedEstimatedTextTokens: bounded.used,
+    requiredEstimatedTextTokens: bounded.requiredTokens,
+    status: bounded.status,
+    omittedReads: bounded.omitted.map(item => item.path),
+    rule: "The pack is strict by default and auto-prunes optional reads. Start from state/phase-handoff.json in a fresh task. Do not replay task history or open visual assets as text. Expand only after naming the missing decision or changed shared dependency."
   };
   const compact = JSON.stringify(pack);
   pack.packet = { sha256: crypto.createHash("sha256").update(compact).digest("hex"), bytes: Buffer.byteLength(compact), estimatedTokens: Math.ceil(Buffer.byteLength(compact) / 4) };
@@ -139,15 +163,31 @@ function markdown(pack) {
   return lines.join("\n") + "\n";
 }
 
-const pack = build();
-if (process.argv.includes("--strict") && pack.contextBudget.recommendedEstimatedTextTokens > pack.contextBudget.maxEstimatedTextTokens) {
-  console.error(`Context budget exceeded: ${pack.contextBudget.recommendedEstimatedTextTokens} > ${pack.contextBudget.maxEstimatedTextTokens}`);
-  process.exit(1);
+function selfTest() {
+  const plan = [
+    { path: "state/phase-handoff.json", estimatedTextTokens: 1000 },
+    { path: "optional-heavy.md", estimatedTextTokens: 4000 },
+    { path: "render.png", estimatedTextTokens: 0 }
+  ];
+  const bounded = boundReadPlan(plan, 2000);
+  if (bounded.status !== "pruned" || bounded.selected.some(item => item.path === "optional-heavy.md") || !bounded.selected.some(item => item.path === "render.png")) throw new Error("context pack pruning failed");
+  console.log("PASS context pack self-test");
 }
-if (process.argv.includes("--write")) {
-  const target = path.join(ROOT, "state", "context-pack.json");
-  fs.mkdirSync(path.dirname(target), { recursive: true });
-  fs.writeFileSync(target, JSON.stringify(pack, null, 2) + "\n", "utf8");
+function main() {
+  if (process.argv.includes("--self-test")) return selfTest();
+  const pack = build();
+  const strict = !process.argv.includes("--allow-oversize");
+  if (strict && pack.contextBudget.status === "exceeded") {
+    console.error(`Required context exceeds budget: ${pack.contextBudget.requiredEstimatedTextTokens} > ${pack.contextBudget.maxEstimatedTextTokens}`);
+    process.exit(1);
+  }
+  if (process.argv.includes("--write")) {
+    const target = path.join(ROOT, "state", "context-pack.json");
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, JSON.stringify(pack, null, 2) + "\n", "utf8");
+  }
+  if (process.argv.includes("--json")) console.log(JSON.stringify(pack, null, 2));
+  else process.stdout.write(markdown(pack));
 }
-if (process.argv.includes("--json")) console.log(JSON.stringify(pack, null, 2));
-else process.stdout.write(markdown(pack));
+if (require.main === module) main();
+module.exports = { build, boundReadPlan, selfTest };

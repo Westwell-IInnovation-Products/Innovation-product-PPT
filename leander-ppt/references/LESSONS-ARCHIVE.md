@@ -1,130 +1,130 @@
-# Lessons — Accumulated Defect Checklist
+# 教训——累积缺陷清单
 
-The distilled, deduplicated working set of everything this skill has been corrected on. **Read this every run** before anchor samples, before full production, and during QA — it is the pre-flight list of past mistakes so they are not repeated. The skill gets sharper with use precisely because this list grows.
+这是本 skill 被纠正过的一切、提取去重后的工作集。**每次运行都要读**——在标杆样张之前、在全量生产之前,以及 QA 期间——它是过往错误的 pre-flight 清单,好让它们不再重演。这个 skill 越用越锋利,正是因为这份清单在增长。
 
-- Raw feedback stays inside each deck project at `state/feedback-log.md`; the shared archive contains only de-identified, reusable lessons.
-- True theme-independent universals graduate into [`SLIDE-CRAFT.md`](SLIDE-CRAFT.md) → Universal Output Rules. Items here marked `[graduated]` are also enforced there; the rest are the live working set.
+- 原始反馈留在每个 deck 项目内部的 `state/feedback-log.md`;共享归档只包含去标识、可复用的教训。
+- 真正与主题无关的普适规则会毕业进 [`SLIDE-CRAFT.md`](SLIDE-CRAFT.md) 的 Universal Output Rules(通用输出规则)一节。这里标了 `[graduated]` 的条目在那边也被强制执行;其余的是活跃工作集。
 
-## How this list grows
+## 这份清单如何增长
 
-After each round of user feedback: append the raw item to the active deck project's `state/feedback-log.md`, then if its `Category` has recurred (≥2×) or is clearly general, add or sharpen a de-identified one-line rule here. Keep each shared lesson reusable, never a project-specific symptom. Promote anything that is a true universal into `SLIDE-CRAFT.md` and tag it `[graduated]` here.
+每一轮用户反馈之后:把原始条目追加到当前活跃 deck 项目的 `state/feedback-log.md`,然后,如果它的 `Category` 已经复发(≥2 次)或明显通用,就在这里新增或磨利一条去标识的一行规则。让每一条共享教训都可复用,绝不是某个项目专属的症状。把任何真正普适的东西提升进 `SLIDE-CRAFT.md`,并在这里给它打上 `[graduated]` 标签。
 
-## Pre-flight checklist (verify the deck against each)
+## Pre-flight 清单(拿 deck 对照每一条核查)
 
-### Color — `color-semantics`
-- [ ] Peer/equal items share **one** structural color (theme `primary`); only the single focal element gets `accent`. No decorative rainbow. `[graduated]`
-- [ ] `accent` is theme-relative: Base = Westwell red, Global = azure. Red in **Global is status-only** (✗/error), never a structural highlight. Use `colors.danger` for true error, not `accent`.
-- [ ] A second hue (`blue`) only for a genuine second category; if you can't name what it encodes, make it `primary`.
+### 颜色 — `color-semantics`
+- [ ] 同级/对等条目共享**一种**结构色(主题 `primary`);只有那一个焦点元素得到 `accent`。没有装饰性彩虹。`[graduated]`
+- [ ] `accent` 是相对主题的:Base = Westwell 红,Global = 天蓝。**Global 里红色只表状态**(✗/error),绝不是结构性高亮。真正的错误用 `colors.danger`,不是 `accent`。
+- [ ] 第二种色相(`blue`)只用于真正的第二类别;如果你说不出它编码什么,就把它设成 `primary`。
 
-### Whitespace — `whitespace-fill`
-- [ ] No content block pinned to the top with a dead band above the footer. Fill the body or center it so margins are symmetric. `[graduated]`
-- [ ] A component that stacks N variable-height rows must **measure total height first, then offset the start** so the block is centered/filled — never start at a fixed top y and let the bottom fall where it may. (archLayered fix, 2026-06-23)
-- [ ] Any text box whose height is **derived from a fixed card/row height** must clamp to a sensible minimum, or short cards collapse the body to ~6pt. Make secondary-line Y adapt to whether the optional line above it is present. (archLayered fix, 2026-06-23)
-- [ ] Sparse pages get real substance (sub-points, takeaway/caveat band), never inflated empty cards or oversized fonts. `[graduated]`
-- [ ] **Switching white fills → line frames does NOT fix fill-the-page.** A frame/zone stretched over little content (sparse top, dead bottom) reads just as AI-generated. Size each zone/card to its content (estimate line count), then **center the block** so margins are symmetric. (zoneGrid content-fit, 2026-06-25)
-- [ ] Two sanctioned layouts when a page is light: (a) **background ground + line-frame dividers**, or (b) **text zone + graphic zone** split. Never inflate cards to span the body. Designed whitespace only. (2026-06-25)
+### 留白 — `whitespace-fill`
+- [ ] 没有内容块被钉在顶部、而 footer 上方留一条死带。填满正文或让它居中,使边距对称。`[graduated]`
+- [ ] 一个堆叠 N 个可变高度行的组件,必须**先测量总高度、再偏移起点**,让整块居中/填满——绝不从一个固定的顶部 y 开始、任由底部随意落下。(archLayered 修复,2026-06-23)
+- [ ] 任何高度**由固定卡片/行高派生**的文本框都必须夹到一个合理的最小值,否则短卡片会把正文压成 ~6pt。让次行的 Y 根据它上面那条可选行是否存在来自适应。(archLayered 修复,2026-06-23)
+- [ ] 稀疏的页面要有真正的实质内容(子要点、结论/提醒带),绝不是充胀的空卡片或超大字号。`[graduated]`
+- [ ] **把白填充换成线框并不能解决"填满页面"。** 一个框/区拉在很少的内容上(顶部稀疏、底部无用空白),读起来一样有 AI 味。按内容给每个区/卡片定尺寸(估算行数),再**把整块居中**,使边距对称。(zoneGrid 内容贴合,2026-06-25)
+- [ ] 页面偏空时有两种被认可的布局:(a)**背景底 + 线框分隔**,或(b)**文字区 + 图形区**拆分。绝不把卡片充胀去撑满正文。只要刻意设计的留白。(2026-06-25)
 
-### Typography — `typography`
-- [ ] Use ONE shared **type scale** (`theme.type`: hero/h1/h2/lead/h3/bodyLg/body/bodySm/cap/micro/tiny). Same role = same size across every page; dense pages take the smaller step, airy pages the larger — never ad-hoc per-component sizes. (type-scale, 2026-06-25)
-- [ ] **It's a WIDE hierarchy, not one big body size.** "该大的大、该小的小": titles/numbers big (18–25pt), but the BULK of supporting text — labels, captions, chips, table cells, in-graphic detail — genuinely small (6.5–10.5pt). Standard body ≈ 10.5pt, dense ≈ 9pt, micro labels ≈ 7pt. Use ≥4 distinct sizes per page. (type-scale corrected, 2026-06-26)
-- [ ] **Do NOT "fix small fonts" by bumping everything to one larger size.** That flattens the hierarchy and makes supporting text "小字太大了实在太丑". The earlier mistake was pushing body to 15–16pt uniformly — wrong. The cactus look is big titles + lots of small fused detail; contrast (not uniform bigness) reads as 精致. (correction, 2026-06-26)
-- [ ] When the user cites a reference deck for typography, **open it and read the real `sz` values** (unzip .pptx → slide XML, `sz` is pt×100). Cactus measured: titles 22pt, paragraphs 18pt, but the MAJORITY of text is 6–9pt in-graphic labels — so "before it was basically 7-8pt" is correct; honor the small end. (2026-06-26)
-- [ ] A **subtitle summarizes the page's core takeaway in one concise line** (a thesis), never a colloquial restatement of the title — and don't duplicate a list that already appears in the body (e.g. dimension names). (2026-06-25)
+### 排版 — `typography`
+- [ ] 使用**一套共享字号体系**(`theme.type`:hero/h1/h2/lead/h3/bodyLg/body/bodySm/cap/micro/tiny)。同一角色 = 每一页同一尺寸;密集页取更小一档,疏朗页取更大一档——绝不是每个组件各自随手定尺寸。(type-scale,2026-06-25)
+- [ ] **这是一个宽层级,不是一个大正文尺寸。** "该大的大、该小的小":标题/数字大(18–25pt),但支撑文字的**大头**——标签、说明、chip、表格单元、图内细节——要真的小(6.5–10.5pt)。标准正文 ≈ 10.5pt,密集 ≈ 9pt,微型标签 ≈ 7pt。每页用 ≥4 种不同尺寸。(type-scale 修正,2026-06-26)
+- [ ] **不要靠"把所有东西都顶到一个更大尺寸"来"修小字"。** 那会压平层级,让支撑文字"小字太大了实在太丑"。先前的错误是把正文统一推到 15–16pt——错。cactus 的样子是大标题 + 大量融合的小细节;对比(而不是一致的大)才读作精致。(修正,2026-06-26)
+- [ ] 当用户为排版援引一份参考 deck 时,**打开它、读真实的 `sz` 值**(解压 .pptx → slide XML,`sz` 是 pt×100)。cactus 实测:标题 22pt、段落 18pt,但**大多数**文字是 6–9pt 的图内标签——所以"之前基本就是 7-8pt"是对的;尊重那个小的一端。(2026-06-26)
+- [ ] **副标题用一句凝练的话概括页面的核心结论**(一个论点),绝不是标题的口语化复述——而且不要复制正文里已经出现的清单(例如维度名)。(2026-06-25)
 
-### Text–graphic fusion — `layout-composition`
-- [ ] Fuse text INTO the graphic, don't park a text block beside it. Numbers/labels live on the visual: stat = big value + tiny label stacked & hairline-separated (not a boxed chip); milestone labels on the axis; values inside tier bands / nodes / tracks. "图形 + 旁边一块文字" reads as 死板/auto-generated. (2026-06-26)
-- [ ] Data stats are the clearest fusion win: render `值(大) / 标签(极小)` inline, hairline-divided — far better than uniform text in floating rounded chips. (tierLadder, 2026-06-26)
+### 文字—图形融合 — `layout-composition`
+- [ ] 把文字融**进**图形,别把一块文字停在它旁边。数字/标签活在视觉上:stat = 大数值 + 极小标签,堆叠并用细线分隔(不是一个盒装 chip);里程碑标签落在轴上;数值放在层带/节点/轨道里。"图形 + 旁边一块文字"读作死板/自动生成。(2026-06-26)
+- [ ] 数据统计是最清楚的融合赢面:内联渲染 `值(大) / 标签(极小)`、用细线分隔——远好过一堆浮动圆角 chip 里的匀质文字。(tierLadder,2026-06-26)
 
-### QA must actually run — `process`
-- [ ] Rendering then "glancing" is NOT the Design Review Pass. Actually walk SLIDE-CRAFT + QA + LESSONS per page (independent reviewer subagent when possible) and produce pass/fail + evidence + repairs; fix before reporting. A real review catches flat tables, false accents, dead-bottom cards, crude glyphs, placeholder text — a glance does not. (2026-06-26)
-- [ ] Connector geometry, text/shape clearance, and icon semantics are hard QA gates, not polish notes. Orthogonal tree/flow diagrams must have straight horizontal/vertical connectors; labels/chips must clear strokes and nodes; library/tool icons must visually communicate the represented asset type. (2026-07-03)
+### QA 必须真的跑 — `process`
+- [ ] 渲染然后"瞄一眼"不是设计评审(Design Review Pass)。真的按页走一遍 SLIDE-CRAFT + QA + LESSONS(尽量用独立的审阅员 subagent),产出 pass/fail + 证据 + 修复;报告前先修。真正的评审能抓住扁平表格、假强调、底部无用空白卡片、粗糙字形、占位文字——瞄一眼不能。(2026-06-26)
+- [ ] 连接线几何、文字/形状间距和图标语义是硬 QA gate,不是打磨备注。正交树/流程图必须有横平竖直的连接线;标签/chip 必须避开描边和节点;库/工具图标必须在视觉上传达它所代表的素材类型。(2026-07-03)
 
-### Visual variety — `layout-composition`
-- [ ] **Never reuse one component 3-4× across a deck** — that's visual fatigue / AI-smell. Give every page a different visual form; mix line-frame (`editorial.js`), large illustrative metaphor (`bespoke.js`), and occasional white-card. Audit the deck for repeats before shipping. (2026-06-25)
-- [ ] Avoid "every page = box with text inside" (死板). Budget **≥1 large pure-graphic page per ~3 pages** (dual-circle, hub-radial, journey, pipeline, bespoke scene line-art). Study the reference deck's actual artwork and draw per-domain glyphs from primitives, not stock icons. (bespoke.js, 2026-06-25)
-- [ ] Never draw a **full-width horizontal rule near the footer** — it collides with the footer bar into a "double line". Use short flanking ticks or a framed pill for bottom statements. (lineCompare fix, 2026-06-25)
+### 视觉多样性 — `layout-composition`
+- [ ] **绝不在一份 deck 里把一个组件复用 3-4 次**——那是视觉疲劳 / AI 味。给每一页一个不同的视觉形态;混用线框(`editorial.js`)、大型图解隐喻(`bespoke.js`)和偶尔的白卡。发货前审一遍 deck 有无重复。(2026-06-25)
+- [ ] 避免"每页 = 一个盒子里塞文字"(死板)。预算**每约 3 页 ≥1 张大型纯图形页**(双圆、hub 辐射、旅程、管线、bespoke 场景线描)。研究参考 deck 的真实美术,从图元画出分领域的字形,而不是用现成图标。(bespoke.js,2026-06-25)
+- [ ] 绝不在 footer 附近画一条**满宽横线**——它会和 footer 条撞成"双线"。底部陈述用短的两侧刻线或一个带框的胶囊。(lineCompare 修复,2026-06-25)
 
-### Brand chrome — `chrome-signature` / `logo-brand` / `background-ground`
-- [ ] Every content page sets the theme background; never default white. `[graduated]`
-- [ ] Logo is one standard size/position from `theme.brand`, identical on every page — never hand-set per page. `[graduated]`
-- [ ] Cover/header/footer/closing/**divider** all come from the active theme's **signature** (`theme.signature`), reproducing its reference template — don't hardcode one theme's look into another. On dark covers use the white wordmark, not the dark logo image.
-- [ ] A chapter/divider page is a signature-aware chrome component (`sectionDivider`), one variant per theme — Base big-number, Global white-underline. Don't hand-build a one-off divider page.
-- [ ] Derive a theme's line/footer/rule treatment by **measuring the reference deck** (exact hue, dotted vs solid, wordmark vs bar) — never invent it. (Global rules follow CTN/FMS: navy `#002060` dotted title rule + grey WESTWELL wordmark footer, 2026-06-23)
-- [ ] To "match a reference", **measure SIZE too**, not just style: cap-height→pt for titles, exact hues for subtitles/rules. The type scale (title size, subtitle color) is a per-theme **signature** dimension, not a constant. (Global title was half FMS size until measured, 2026-06-23)
-- [ ] When a specific reference detail won't match after one redraw, **open the source `.pptx`** (unzip, read slide/master XML) and take the real value or the real asset — don't eyeball-redraw a third time. A reference "line" may be a baked **image** (CTN's footer was `ppt/media/image2.png`), not a vector; its title rule had exact params (`#0070C0`/`lgDash`/0.25pt). Reuse the actual graphic. (CTN footer + title rule, 2026-06-23)
-- [ ] When a chrome dimension is theme-variable (e.g. title size), the chrome must **publish its content-bottom Y** and top-aligned components must read it — never hardcode "content starts at y=N". After changing any shared chrome size, re-render the dense/diagram pages to catch new overlaps. (header() returns content-top, 2026-06-23)
+### 品牌 chrome — `chrome-signature` / `logo-brand` / `background-ground`
+- [ ] 每张内容页都设置主题背景;绝不默认白。`[graduated]`
+- [ ] Logo 用 `theme.brand` 里一个标准尺寸/位置,每一页都相同——绝不逐页手设。`[graduated]`
+- [ ] 封面/页眉/页脚/结尾/**分隔页**都来自当前主题的 **signature**(`theme.signature`),复现它的参考模板——别把一个主题的样子硬编进另一个。深色封面上用白色字标,不是深色 logo 图。
+- [ ] 章节/分隔页是一个 signature 感知的 chrome 组件(`sectionDivider`),每个主题一个变体——Base 大数字、Global 白色下划线。别手搭一个一次性的分隔页。
+- [ ] 一个主题的线/页脚/横线处理,靠**测量参考 deck**来推导(精确色相、点线 vs 实线、字标 vs 条),绝不凭空发明。(Global 规则遵循 CTN/FMS:藏青 `#002060` 点线标题横线 + 灰色 WESTWELL 字标页脚,2026-06-23)
+- [ ] 要"匹配一份参考",**连尺寸也要量**,不只是样式:标题的 cap-height→pt、副标题/横线的精确色相。字号体系(标题尺寸、副标题颜色)是一个**逐主题的 signature** 维度,不是一个常量。(Global 标题在实测之前一直是 FMS 的一半大小,2026-06-23)
+- [ ] 当某个具体的参考细节重画一次还对不上时,**打开源 `.pptx`**(解压,读 slide/master XML),取真实值或真实素材——别第三次凭眼睛重画。一条参考"线"可能是一张烘焙进去的**图片**(CTN 的页脚是 `ppt/media/image2.png`),不是矢量;它的标题横线有精确参数(`#0070C0`/`lgDash`/0.25pt)。复用真实的图形。(CTN 页脚 + 标题横线,2026-06-23)
+- [ ] 当某个 chrome 维度随主题变化(例如标题尺寸)时,chrome 必须**公布它的内容底部 Y**、顶部对齐的组件必须读它——绝不硬编"内容从 y=N 开始"。改动任何共享 chrome 尺寸后,重渲染密集/图示页以捕捉新的重叠。(header() 返回 content-top,2026-06-23)
 
-### Architecture — `architecture`
-- [ ] Pick the right archetype: **Type A `archLayered`** for system/technical composition; **Type B `archDualEngine`** for scenario/business collaboration. A deck may use both. `[graduated]`
-- [ ] Rich, not stiff: differentiated icons (no repeated identical badges), real flow direction, a clear center; cap layers ~5; keep arrows clear of cores.
+### 架构 — `architecture`
+- [ ] 选对原型:**Type A `archLayered`** 用于系统/技术组合;**Type B `archDualEngine`** 用于场景/业务协作。一份 deck 可以两者都用。`[graduated]`
+- [ ] 丰富,而不僵硬:差异化的图标(没有重复相同的徽章)、真实的流向、一个清晰的中心;层数上限约 5;箭头避开核心。
 
-### Diagram vs text — `density` / `icon-meaning` / `layout-composition`
-- [ ] Every content page has a real visual explanation (diagram/chart/image/mechanism), not title + text cards. `[graduated]`
-- [ ] Icons map to concrete meaning (role/action/metric/status/module), never decoration. `[graduated]`
-- [ ] Don't shrink fonts to hide crowding — reduce text, split the page, or convert to a diagram. `[graduated]`
-- [ ] Generated line-art assets (e.g. a cover skyline) must be **supersampled** — draw at ≥3× then downscale (LANCZOS) for smooth strokes — and use varied, detailed elements. Uniform thick geometric shapes read as crude; study the reference deck's actual artwork. (cover art fix, 2026-06-23)
+### 图示 vs 文字 — `density` / `icon-meaning` / `layout-composition`
+- [ ] 每张内容页都有一个真实的视觉解释(图示/图表/图片/机制),不是标题 + 文字卡片。`[graduated]`
+- [ ] 图标映射到具体含义(角色/动作/指标/状态/模块),绝不装饰。`[graduated]`
+- [ ] 别靠缩小字号来掩盖拥挤——减少文字、拆分页面,或转成图示。`[graduated]`
+- [ ] 生成的线描素材(例如封面天际线)必须**超采样**——以 ≥3× 绘制、再降采样(LANCZOS)以得到平滑笔画——并使用多样、精细的元素。匀质的粗几何形状读作粗糙;研究参考 deck 的真实美术。(封面美术修复,2026-06-23)
 
-### Evidence — `data-boundary`
-- [ ] Numbers/claims carry source + boundary (achieved/planned/estimate/public-reference). No invented data, logos, or customer claims. `[graduated]`
+### 证据 — `data-boundary`
+- [ ] 数字/说法带来源 + 边界(已达成/计划中/估算/公开引用)。不编造数据、logo 或客户说法。`[graduated]`
 
-### Theme fit — `theme-fit`
-- [ ] When a bundled company theme fits, offer it first; never lead with an invented style. Internal/company → Leander Base; external/international/formal → Leander Global. `[graduated]`
-- [ ] Match font discipline: Base bilingual; Global English-first (Century Gothic), CJK via YaHei. Detect CJK before choosing the face so Chinese never renders in a Latin-only font.
+### 主题匹配 — `theme-fit`
+- [ ] 当一个内置的公司主题合适时,先提供它;绝不用一个凭空发明的样式开场。内部/公司 → Leander Base;对外/国际/正式 → Leander Global。`[graduated]`
+- [ ] 匹配字体纪律:Base 双语;Global 英文优先(Century Gothic),中日韩经由雅黑。选字面之前先检测 CJK,让中文永远不会用一个只含拉丁字符的字体渲染。
 
-### Component reuse — `component-gap`
-- [ ] **Every content page needs a `page.json.visualSelection` contract before drawing.** Classify the relationship, check the component catalog first, then evaluate external-graphic and image2/imageSlot routes; page-specific custom is last-resort. Reviewer must fail pages that hand-draw boxes while a close component exists. (2026-07-02)
-- [ ] Prefer fixing the **shared component** over a single page, so every page using it improves at once. New page-specific patterns that recur should be promoted into `components/`.
-- [ ] **Before adding ANY new component, check `COMPONENT-CATALOG.md`'s canonical map.** If the archetype already exists (table, icon-grid, hub-spoke, timeline, two-option, swimlane, tiers, before/after…), **add a `variant:"fill"|"line"` flag (+ `surface3` ground) to the existing one — do NOT fork a near-duplicate.** Root cause of the editorial/bespoke bloat: ~11 of 13 "new" components were just fill→line restyles of components that already existed. A line-frame look is a *variant*, not a new component. (2026-06-26)
-- [ ] When abstracting, parameterize counts and slots (spoke count, column count, an optional `img`/`icon` slot) instead of cloning a fixed-N component (hubRadial=hubSpoke@4, sceneColumns=fourColumn+img). One flexible component beats five rigid forks. (2026-06-26)
-- [ ] Components must not hardcode language-specific literal strings (e.g. "联动", "AI 赋能"). Every author-facing label needs a data override with a sensible default, so one component serves a CN internal deck and an EN external deck alike. (archDualEngine fix, 2026-06-23)
-- [ ] Put rendered/review deliverables in the **active deck project's `output/`** (the scaffold's output dir), never scattered at the workspace root. Don't touch the user's own files when relocating. (2026-06-23)
-- [ ] Every stacked-list / multi-row component MUST advance its Y (or X) cursor each iteration. QA any such component with **≥3 items** so a missing increment (all rows on top of each other) is visible — one test item hides it. (numberedList bug, 2026-06-24)
-- [ ] Top-anchored diagrams (trees, topologies) still obey Fill-The-Body: center the whole block vertically (or fill) rather than leaving bottom dead space. (orgTree centering, 2026-06-24)
-- [ ] When mining a library, cover the full relationship vocabulary, not just cards: positioning (quadrant), hierarchy (pyramid/tree), geo (coverage), network (topology), media (gallery), % (rings), narrative (numbered / vertical timeline), statement (quote), conversion (funnel), decision (A/B), schedule (gantt), role-process (swimlane), value-chain (chevron), bridge (waterfall), intensity (heatmap), set-overlap (venn). One decision-tree row per pattern. (2026-06-24)
-- [ ] For genuine data viz use **native** `slide.addChart("bar"|"line"|"radar"|"doughnut", …)` (editable in PPT) over hand-drawn bars; pass theme colors as `chartColors`. (2026-06-24)
-- [ ] Overlapping multi-series viz (radar, area, venn) must use outline/transparency so no series hides another; solid fill is only safe for a single series. Always QA charts with ≥2 series. (radar fix, 2026-06-24)
-- [ ] Tapered diagrams (pyramid/funnel) must use real `triangle`/`trapezoid` presets, NOT stacked rectangles (rectangles read as "方的/square"). Match band widths to the trapezoid's ~0.5 top-ratio (`base/2^(n-1-i)`) so the slanted edges align into a clean cone. Put labels in side cards — narrow apex/tip bands can't hold text. (2026-06-24)
-- [ ] Never place text inside a `chevron`'s left notch — it gets clipped/garbled. Put stage text in a card and use the chevron only as a connector arrow. (valueChain redesign, 2026-06-24)
-- [ ] For a progress %, draw a **native doughnut [value, 100−value]** (real arc) with the number cleanly overlaid in the large hole — a solid donut with a number jammed in a small hole garbles. "Too simple" feedback → add per-region detail, a callout card, and a takeaway. (ringStats/venn redesign, 2026-06-24)
-- [ ] The library has an **editorial / line-frame** counterpart (`components/editorial.js`): `lineCompare`, `milestoneTimeline`, `zoneGrid`, `splitDossier`, `panelDuo`, `lineTable`. Reach for these on "背景色+线框" / "文字+图形" requests, ugly-table complaints, or when white-card density feels AI-generated. A "节奏/计划" page often wants `milestoneTimeline` (icon nodes on an axis), not a grid/swimlane gantt. (2026-06-25)
+### 组件复用 — `component-gap`
+- [ ] **每张内容页在画之前都需要一份 `page.json.visualSelection` 约束。** 归类关系,先查组件目录,再评估外部图形和 image2/imageSlot 路线;页面专属自定义是最后手段。审阅员必须让那些"已有相近组件却仍手画盒子"的页面 fail。(2026-07-02)
+- [ ] 优先修**共享组件**,而不是单个页面,这样每个用到它的页面一次性都改进。反复出现的新页面专属模式应被提升进 `components/`。
+- [ ] **在新增任何组件之前,先查 `COMPONENT-CATALOG.md` 的规范映射。** 如果原型已存在(表格、图标网格、hub-spoke、时间线、双选项、swimlane、tiers、before/after……),就**给现有那个加一个 `variant:"fill"|"line"` 标志(+ `surface3` 底),不要 fork 一个近乎重复的**。editorial/bespoke 膨胀的根因:13 个"新"组件里有约 11 个只是已存在组件的 fill→line 换皮。线框样子是一个*变体*,不是一个新组件。(2026-06-26)
+- [ ] 抽象时,把数量和槽位参数化(spoke 数、列数、一个可选的 `img`/`icon` 槽位),而不是克隆一个固定 N 的组件(hubRadial=hubSpoke@4,sceneColumns=fourColumn+img)。一个灵活组件胜过五个僵硬的 fork。(2026-06-26)
+- [ ] 组件绝不硬编语言相关的字面字符串(例如 "联动"、"AI 赋能")。每个面向作者的标签都需要一个带合理默认值的数据 override,让一个组件既服务中文内部 deck、也服务英文外部 deck。(archDualEngine 修复,2026-06-23)
+- [ ] 把渲染/评审交付物放进**当前活跃 deck 项目的 `output/`**(框架的 output 目录),绝不散落在工作区根目录。搬移时不要动用户自己的文件。(2026-06-23)
+- [ ] 每个堆叠列表 / 多行组件都**必须**在每次迭代推进它的 Y(或 X)游标。用 **≥3 项**对任何这类组件做 QA,好让缺失的增量(所有行叠在一起)可见——一个测试项会把它藏起来。(numberedList bug,2026-06-24)
+- [ ] 顶部锚定的图示(树、拓扑)仍然遵守"填满正文":把整块垂直居中(或填满),而不是在底部留无用空白。(orgTree 居中,2026-06-24)
+- [ ] 挖掘库时,覆盖完整的关系词汇,不只是卡片:定位(象限)、层级(金字塔/树)、地理(覆盖)、网络(拓扑)、媒体(画廊)、百分比(环)、叙事(编号 / 竖向时间线)、陈述(引言)、转化(漏斗)、决策(A/B)、排期(gantt)、角色-流程(swimlane)、价值链(chevron)、桥接(瀑布)、强度(热力图)、集合重叠(venn)。每个模式一行决策树。(2026-06-24)
+- [ ] 真正的数据可视化用**原生** `slide.addChart("bar"|"line"|"radar"|"doughnut", …)`(在 PPT 里可编辑),优于手画柱子;把主题色作为 `chartColors` 传入。(2026-06-24)
+- [ ] 重叠的多系列可视化(radar、area、venn)必须用描边/透明,让任何系列都不遮住另一个;实心填充只对单系列安全。始终用 ≥2 个系列对图表做 QA。(radar 修复,2026-06-24)
+- [ ] 上宽下窄的图示(金字塔/漏斗)必须用真实的 `triangle`/`trapezoid` 预设,**不是**堆叠矩形(矩形读作"方的/square")。让带宽匹配梯形约 0.5 的顶比(`base/2^(n-1-i)`),让斜边对齐成一个干净的锥。把标签放在侧卡里——窄的顶尖带装不下文字。(2026-06-24)
+- [ ] 绝不把文字放进 `chevron` 的左侧缺口里——它会被裁切/糊掉。把阶段文字放在一张卡里,chevron 只作连接箭头用。(valueChain 重设计,2026-06-24)
+- [ ] 表进度百分比,画一个**原生 doughnut [value, 100−value]**(真实弧),数字干净地叠在大孔里——一个实心甜甜圈把数字硬塞进小孔会糊。"太简单"的反馈 → 加逐区细节、一张引注卡和一个结论。(ringStats/venn 重设计,2026-06-24)
+- [ ] 库里有一套 **editorial / 线框**对应物(`components/editorial.js`):`lineCompare`、`milestoneTimeline`、`zoneGrid`、`splitDossier`、`panelDuo`、`lineTable`。在"背景色+线框" / "文字+图形"的诉求、丑表格抱怨,或白卡密度感觉像 AI 生成时,伸手去拿它们。一个"节奏/计划"页往往想要 `milestoneTimeline`(轴上的图标节点),不是一个网格/swimlane gantt。(2026-06-25)
 
-### Process — `process`
-- [ ] **Confirm the page-by-page outline with the user before any theme/sample/production.** Present the page list and get explicit sign-off; do not assume "you decide" or silently jump to building. A correct deck built without the sync step is still a process failure. (2026-06-25)
-- [ ] **Run the Design Review Pass after EVERY render, not once at the end.** Re-tuning one knob per complaint without re-reviewing ships regressions and quality drifts down across rounds. Each iteration: render → walk the checklist → fix overlap/dead-space/fusion fails → only then show. (2026-06-26)
-- [ ] **Every new bespoke/custom component passes the same checklist before it ships** — text must never overlap a shape's stroke (integrate labels INSIDE the shape; never pin a floating chip on a circle/line), the body must fill or center, one accent focus. QA a custom graphic exactly like a library one, with ≥ real content. (fusionVenn pills-on-stroke, hubRadial sparse, 2026-06-26)
-- [ ] **Mix fills with line-frames by design** — not everything is background+outline. A filled tinted ground panel behind a glyph, or a filled center node, prevents bare line-art floating in white and adds intent. Decide per page; don't default to all-outline. (2026-06-26)
-- [ ] Tooling reality check before promising: **gpt-image-2 needs `OPENAI_API_KEY` or a host image tool** — else it's advisor-only (prompts, no raster). Don't promise generated illustrations you can't render; redraw vector or hand the user runnable prompts. (2026-06-26)
-- [ ] **Anchor samples must include the most at-risk page types** (dense table, flow, comparison, small-text-in-graphic), not just cover+content+complex — AND explicitly probe style preference (line-frame vs card, density, font scale, whether to use real imagery). Style disagreement should surface at the cheap sample stage, not after the full deck. (root cause of multiple redo rounds, 2026-06-26)
-- [ ] **Changing a shared token or component triggers a FULL re-render + review**, not just the page you were looking at. A one-knob global change (font scale, a tint, a shared component) silently alters many pages; re-review all of them. (15pt-everywhere regression, 2026-06-26)
-- [ ] **Balance vector diagrams with real imagery.** An all-vector deck (every page boxes+lines) reads stiff/工程感. Plan ≥1 real screenshot / image2 illustration / photo where it adds evidence (e.g. a colored point-cloud result, a cover scene). "Every page a diagram" ≠ "every page hand-drawn shapes". (2026-06-26)
-- [ ] **Complex/scene images use the reserve-slot + prompt-spec workflow** (`IMAGE-ASSETS.md`): build the page with `imageSlot` (transparent PNG **blends on the theme ground — NO white card**; vector fallback until it arrives) and emit a `<deck>-images.gpt-image-2.md` prompt list. Verify PNGs are truly transparent (RGBA/colorType 6) — a "keyed"/exported file may be opaque RGB. Don't hand-draw a realistic scene out of primitives. `[graduated]` (P5/P2/closing, 2026-06-26)
+### 流程 — `process`
+- [ ] **在任何主题/样张/生产之前,先和用户确认逐页大纲。** 呈现页面清单并取得明确签字;不要假设"你决定"或悄悄跳到搭建。一份没有走确认步骤而搭出来的正确 deck,仍然是流程失败。(2026-06-25)
+- [ ] **每次渲染之后都跑设计评审,而不是最后跑一次。** 每收到一条抱怨就只调一个旋钮、却不重审,会发出回归、并让质量在多轮里漂移下降。每次迭代:渲染 → 走清单 → 修重叠/无用空白/融合失败 → 然后才展示。(2026-06-26)
+- [ ] **每个新的 bespoke/自定义组件在发货前都过同一份清单**——文字绝不能压到形状描边(把标签整合**进**形状里;绝不把一个浮动 chip 钉在圆/线上),正文必须填满或居中,一个强调焦点。像评审库组件一样评审自定义图形,并带 ≥ 真实内容。(fusionVenn chip 压描边、hubRadial 稀疏,2026-06-26)
+- [ ] **按设计混用填充和线框**——不是一切都背景+描边。一块着色底填充面板衬在字形后面、或一个填充中心节点,能防止裸线描漂在白里、并增加意图。逐页决定;别默认全描边。(2026-06-26)
+- [ ] 承诺之前先做工具现实核查:**gpt-image-2 需要 `OPENAI_API_KEY` 或一个宿主图片工具**——否则它只能当顾问(给 prompt,不出栅格)。别承诺你渲染不出的生成插画;重画矢量,或把可运行的 prompt 交给用户。(2026-06-26)
+- [ ] **标杆样张必须包含最有风险的页型**(密集表格、流程、对比、图内小字),不只是封面+内容+复杂——**并且**明确探明风格偏好(线框 vs 卡片、密度、字号体系、是否用真实图片)。风格分歧应在便宜的样张阶段浮现,而不是整份 deck 完成之后。(多轮返工的根因,2026-06-26)
+- [ ] **改动一个共享 token 或组件会触发一次完整重渲染 + 评审**,不只是你正在看的那一页。一个一旋钮的全局改动(字号体系、一个着色、一个共享组件)会悄悄改变很多页;把它们全部重审。(15pt-everywhere 回归,2026-06-26)
+- [ ] **矢量图示与真实图片要平衡。** 一份全矢量 deck(每页盒子+线)读作僵硬/工程感。在能增加证据的地方规划 ≥1 张真实截图 / image2 插画 / 照片(例如一个彩色点云结果、一个封面场景)。"每页一张图示" ≠ "每页手画形状"。(2026-06-26)
+- [ ] **复杂/场景图片走预留槽位 + prompt 规格工作流**(`IMAGE-ASSETS.md`):用 `imageSlot` 搭页面(透明 PNG **融在主题底上——没有白卡**;图片到位前用矢量备用),并产出一份 `<deck>-images.gpt-image-2.md` prompt 清单。核实 PNG 真的是透明的(RGBA/colorType 6)——一个"抠像"/导出的文件可能是不透明 RGB。别用图元手画一个写实场景。`[graduated]`(P5/P2/结尾,2026-06-26)
 
-### Color / contrast — `color-semantics` (addendum)
-- [ ] **A filled panel/chip ground must visibly contrast with the page background.** Never reuse a near-bg surface tint (e.g. surface2 ≈ bg) as a fill — it looks washed out / "费力". Use a dedicated ground token (Base: `surface3 #E6EAF3`) for filled grounds, or white+border for chips. (2026-06-26)
+### 颜色 / 对比 — `color-semantics`(补遗)
+- [ ] **一块填充面板/chip 底必须与页面背景有可见对比。** 绝不复用一个接近背景的 surface 色调(例如 surface2 ≈ bg)作填充——它看着发灰/"费力"。填充底用一个专门的 ground token(Base:`surface3 #E6EAF3`),或 chip 用白+边框。(2026-06-26)
 
-### Icon footprint — `icon-meaning` (addendum)
-- [ ] Library icons have intrinsic sizes. In a small badge (<60px) pick a **contained** glyph (target/gauge/gear/shield), not a big-spoke one (`hub` draws ±42) — else the icon overflows the badge and overlaps the title/border. (P6 hub overflow, 2026-06-26)
-- [ ] Abstract asset-library icons need a domain-specific visual metaphor: theme libraries should read as swatches/style sheets, component libraries as reusable blocks/grids, and image tools as image frames or prompt slots. A generic square with a label is not an icon. (2026-07-03)
+### 图标占位 — `icon-meaning`(补遗)
+- [ ] 库图标有内在尺寸。在一个小徽章里(<60px),挑一个**收拢**的字形(target/gauge/gear/shield),不是一个大辐射的(`hub` 画 ±42)——否则图标会溢出徽章、压到标题/边框。(P6 hub 溢出,2026-06-26)
+- [ ] 抽象的素材库图标需要一个领域专属的视觉隐喻:主题库应读作色板/样式表,组件库读作可复用积木/网格,图片工具读作图片框或 prompt 槽位。一个带标签的通用方块不是图标。(2026-07-03)
 
-### Artifact Truth / Image2 / Alignment Addendum — 2026-07-03
-- [ ] Mechanism slides must match the real artifact structure. If a slide explains files/folders, inspect the actual directory before drawing; do not show conceptual files as if they exist. If a memory is embedded inside a file (e.g. `visualSelection` in `page.json`), label it that way.
-- [ ] For image2 assets, inspect the actual file mode/alpha channel before placing it. A checkerboard-looking background can be baked into an RGB image; convert/crop or regenerate before using it in PPT.
-- [ ] Repeated peer cards and paired result boxes must use the same text scale, vertical alignment, and baseline. Mismatched font sizes inside the same role are a QA fail, even if the text technically fits.
+### 产物真实性 / Image2 / 对齐 补遗 — 2026-07-03
+- [ ] 机制页必须匹配真实产物结构。如果一张幻灯片解释文件/文件夹,画之前先查看实际目录;不要把概念性文件当成存在的来展示。如果一个记忆嵌在某个文件内部(例如 `page.json` 里的 `visualSelection`),就照那样标注它。
+- [ ] 对 image2 素材,放置之前先查看实际文件模式/alpha 通道。看起来像棋盘格的背景可能被烘焙进了一张 RGB 图片;在 PPT 里用之前先转换/裁剪或重生成。
+- [ ] 重复的同级卡片和成对的结果框必须用相同的字号体系、垂直对齐和基线。同一角色里字号不一致是一个 QA fail,即便文字在技术上放得下。
 
-### Page Design Method Addendum - 2026-07-03
-- [ ] Start every slide from the one-sentence message and relationship type, not from the nearest existing component. Classify the relationship first: contrast, sequence, state, toolbox, evidence, repair scope, sharing boundary, or system map.
-- [ ] Run a four-route visual gate before drawing: component library, external graphic, image2/imageSlot, or page-specific custom. Custom is valid only after the other routes are considered and rejected.
-- [ ] Use image2 for one simple focal metaphor or real scene only. Do not ask image2 to draw dense workflows, labels, small text, many documents, tangled cables, or multi-step logic. Keep generated images text-free and low-complexity, then explain the logic with editable PPT components.
-- [ ] Build the layout skeleton before decoration: major zones, alignment rails, connector paths, peer card sizes, and text hierarchy. Decorative lines or icons that do not encode a relationship should be removed.
-- [ ] QA must check geometry and type as first-class gates: straight lines must be straight, orthogonal trees must stay orthogonal, peer text sizes must match, labels must not touch strokes, and every icon must be semantically recognizable.
-- [ ] When a slide explains a real skill scaffold, do not use a generic architecture component just because the relationship is `system-map`. If the message is "directory -> module -> responsibility/output", use or promote a dedicated correspondence component with source chips, output labels, and explicit color semantics. Generic layered architecture hides the artifact truth and forces page-specific custom work. (moduleCorrespondenceMap, 2026-07-07)
-- [ ] Rendered QA PASS is not user approval. Stage transitions must be recorded in `checkpoint-status.json`; Phase 4 requires `node tools/verify-checkpoints.js phase4` to pass, including anchor sample approval and production mode approval. (2026-07-07)
-- [ ] Production workers are not final role reviewers. Mode A/B/C only controls page-production cadence; after the full deck is integrated and rendered, production-stage decks must run real post-production `component-curator-zh`, `visual-designer-zh`, `reviewer-zh`, and `presenter-zh` reviews. Chapter workers, anchor-sample reviews, and fallback notes cannot satisfy this gate. (2026-07-07)
+### 页面设计方法 补遗 - 2026-07-03
+- [ ] 每张幻灯片都从那一句话的信息和关系类型出发,而不是从最近的现有组件出发。先归类关系:contrast、sequence、state、toolbox、evidence、修复范围、共享边界,或 system map。
+- [ ] 画之前跑一个四路线视觉 gate:组件库、外部图形、image2/imageSlot,或页面专属自定义。只有在其他路线被考虑并否决之后,自定义才成立。
+- [ ] image2 只用于一个简单的焦点隐喻或真实场景。不要让 image2 画密集工作流、标签、小字、许多文档、纠缠的线缆或多步逻辑。让生成图片无文字、低复杂度,然后用可编辑的 PPT 组件解释逻辑。
+- [ ] 装饰之前先搭版面结构:主要区块、对齐轨、连接线路径、同级卡片尺寸和文字层级。不编码关系的装饰性线条或图标应删掉。
+- [ ] QA 必须把几何和字号当作一等 gate 检查:该直的线必须直、正交树必须保持正交、同级文字尺寸必须匹配、标签不能碰描边、每个图标必须在语义上可辨认。
+- [ ] 当一张幻灯片解释一个真实 skill 框架时,不要仅因为关系是 `system-map` 就用一个通用架构组件。如果信息是"目录 -> 模块 -> 职责/输出",就用或提升一个专门的对应组件,带来源 chip、输出标签和明确的颜色语义。通用分层架构会掩盖产物真实性、并逼出页面专属自定义工作。(moduleCorrespondenceMap,2026-07-07)
+- [ ] 渲染 QA PASS 不是用户审批。阶段转换必须记录在 `checkpoint-status.json`;Phase 4 要求 `node tools/verify-checkpoints.js phase4` 通过,包括标杆样张审批和生产模式审批。(2026-07-07)
+- [ ] 生产 worker 不是最终角色审阅员。Mode A/B/C 只控制页面生产节奏;整份 deck 整合并渲染之后,生产阶段的 deck 必须跑真实的产后 `component-curator-zh`、`visual-designer-zh`、`reviewer-zh` 和 `presenter-zh` 评审。章节 worker、标杆样张评审和备用备注都不能满足这个 gate。(2026-07-07)
 
-### Agent Role And Design Gate Addendum - 2026-07-08
-- [ ] Component abstraction is relationship-first, not current-deck-semantics-first. A component used for "team collaboration" may also express context handoff or governance flow; metadata must record `relationPrimitive`, `expressionCapability`, reusable `slots`, and multiple `semanticBindings`.
-- [ ] Component curator recommendations based only on current slide keywords are invalid. Score relationship fit, structure fit, slots, composability, evidence fit, and theme fit before semantic keyword fit.
-- [ ] Obvious visual failures are `FIX-FIRST`, not "future polish": crooked or confusing lines, overlapped labels, peer typography mismatch, unexplained accent colors, and style-breaking color palettes must be repaired before the page is treated as review-ready.
-- [ ] Every red/accent element needs a declared role: current focus, risk/problem, active step, decision/exception, or before/after contrast. If no role can be named, remove the accent.
-- [ ] Every section should check for an appropriate image or external-render opportunity, but images must carry scene/evidence/metaphor value. Use image2 for simple text-free illustrations only; do not ask image2 to draw dense workflows or labeled diagrams.
-- [ ] Presenter review must include page-level supplementary knowledge, not only speaking flow. For concept-evolution pages, add current research/company-action references with source or verification notes.
+### Agent 角色与设计 Gate 补遗 - 2026-07-08
+- [ ] 组件抽象是关系优先,不是当前 deck 语义优先。一个用于"团队协作"的组件也可能表达 context 交接或治理流;元数据必须记录 `relationPrimitive`、`expressionCapability`、可复用的 `slots`,以及多个 `semanticBindings`。
+- [ ] 只基于当前幻灯片关键词的组件 curator 推荐无效。在语义关键词匹配之前,先给关系匹配、结构匹配、槽位、可组合性、证据匹配和主题匹配打分。
+- [ ] 明显的视觉失败是 `FIX-FIRST`,不是"以后打磨":歪斜或令人困惑的线、重叠的标签、同级排版不匹配、无解释的强调色,以及破坏风格的调色板,都必须在页面被当作可评审之前修好。
+- [ ] 每个红/强调元素都需要一个声明的角色:当前焦点、风险/问题、活跃步骤、决策/例外,或前后对比。如果说不出角色,就删掉强调。
+- [ ] 每个章节都应检查是否有合适的图片或外部渲染机会,但图片必须承载场景/证据/隐喻价值。image2 只用于简单、无文字的插画;不要让 image2 画密集工作流或带标签的图示。
+- [ ] presenter 评审必须包含页面级的补充知识,不只是讲述流。对概念演进页,加上当前研究/公司动作的引用,带来源或核实备注。

@@ -4,6 +4,7 @@ const path = require("path");
 const crypto = require("crypto");
 const os = require("os");
 const assert = require("assert");
+const { resolvedSourceHashes } = require("./verify-source-evidence");
 const ROOT = path.join(__dirname, "..");
 const MANIFEST = path.join(ROOT, "state", "render-dependency-manifest.json");
 
@@ -34,7 +35,11 @@ function sharedRenderFiles(root = ROOT) {
   return [
     ...listFiles(path.join(root, "theme"), file => renderExt.test(file)),
     ...listFiles(path.join(root, "components"), file => /\.(?:js|png|jpe?g|svg|webp)$/i.test(file)),
-    ...[path.join(root, "tools", "deck-ctx.js")].filter(fs.existsSync)
+    ...[
+      path.join(root, "tools", "deck-ctx.js"),
+      path.join(root, "tools", "geometry-policy.js"),
+      path.join(root, "tools", "render-geometry-audit.js")
+    ].filter(fs.existsSync)
   ];
 }
 function sharedRenderDigest(root = ROOT) {
@@ -55,6 +60,19 @@ function sourceProjection(page) {
   const keys = ["implementationStatus", "dataBoundary", "sourceEvidence", "sourceReferences", "sources", "citations", "claims", "metrics", "factBoundaries", "sourceBoundary", "evidenceBoundary", "screenshotSlots"];
   return Object.fromEntries(keys.filter(key => page[key] !== undefined).map(key => [key, page[key]]));
 }
+function renderPageProjection(page) {
+  const excluded = new Set(["qaProfile", "sourceEvidence", "sourceReferences", "sources", "citations", "claims", "metrics", "factBoundaries", "sourceBoundary", "evidenceBoundary"]);
+  return Object.fromEntries(Object.entries(page || {}).filter(([key]) => !excluded.has(key)));
+}
+function runtimeFingerprint(root = ROOT) {
+  return {
+    node: process.version,
+    platform: process.platform,
+    arch: process.arch,
+    packageLockSha256: shaFile(path.join(root, "package-lock.json")),
+    toolchain: readJson(path.join(root, "state", "toolchain-fingerprint.json"), {})
+  };
+}
 function qaResultProjection(result) {
   if (!result) return null;
   return { version: result.version || "", pageId: result.pageId || "", verdict: result.verdict || "", reviewer: result.reviewer || {}, checks: result.checks || [], remainingRisks: result.remainingRisks || [] };
@@ -65,20 +83,24 @@ function selectionOutcome(page) {
 }
 function digestPage(pageDir, root = ROOT) {
   const page = readJson(path.join(pageDir, "page.json"), {}), cfg = loadConfig(root);
+  const sourceIndex = readJson(path.join(root, "source-evidence-index.json"), { version: "", sources: [], claims: [] });
+  const sourceHashes = resolvedSourceHashes(page, sourceIndex, root);
+  const renderSourceIds = new Set((page.renderSourceIds || []).map(String));
+  const renderSourceHashes = sourceHashes.filter(([id]) => renderSourceIds.has(id));
   const dependencies = (page.renderDependencies || []).map(item => resolveDependency(root, pageDir, item));
   const shared = sharedRenderDigest(root);
-  const renderConfig = { theme: cfg.theme || "", renderContextVersion: cfg.renderContextVersion || 1 };
+  const renderConfig = { theme: cfg.theme || "", renderContextVersion: cfg.renderContextVersion || 1, runtime: runtimeFingerprint(root) };
   return {
     version: "page-digests.v1",
     pageId: String(page.id || page.page || path.basename(pageDir)),
     generatedAt: new Date().toISOString(),
     sharedRenderDigest: shared,
     renderDependencies: dependencies,
-    renderDigest: stableHash({ pageJs: shaFile(path.join(pageDir, "page.js")), renderInputs: page.renderInputs || {}, selectedVisualOutcome: selectionOutcome(page), renderDependencies: dependencies, deckRenderConfig: renderConfig, sharedRenderDigest: shared }),
+    renderDigest: stableHash({ pageJs: shaFile(path.join(pageDir, "page.js")), renderPageContract: renderPageProjection(page), selectedVisualOutcome: selectionOutcome(page), renderDependencies: dependencies, renderSourceHashes, deckRenderConfig: renderConfig, sharedRenderDigest: shared }),
     selectionDigest: stableHash(page.visualSelection || {}),
     selectionOutcomeDigest: stableHash(selectionOutcome(page)),
     qaDigest: stableHash({ qaProfile: page.qaProfile || {}, qaRules: shaFile(path.join(root, "tools", "qa-rules.zh.json")), qaResult: qaResultProjection(readJson(path.join(pageDir, "qa-result.json"))) }),
-    sourceDigest: stableHash(sourceProjection(page))
+    sourceDigest: stableHash({ projection: sourceProjection(page), sourceHashes })
   };
 }
 function pageDirs(root = ROOT) {
@@ -133,7 +155,7 @@ function selfTest() {
   page.qaProfile.pageRules = [{ id: "x" }]; fs.writeFileSync(path.join(pageDir, "page.json"), JSON.stringify(page));
   const b = digestPage(pageDir, root); assert.equal(a.renderDigest, b.renderDigest); assert.notEqual(a.qaDigest, b.qaDigest);
   page.visualSelection.candidateRoutes.push({ route: "image2", score: 1 }); fs.writeFileSync(path.join(pageDir, "page.json"), JSON.stringify(page));
-  const c = digestPage(pageDir, root); assert.equal(b.renderDigest, c.renderDigest); assert.notEqual(b.selectionDigest, c.selectionDigest); assert.equal(b.selectionOutcomeDigest, c.selectionOutcomeDigest);
+  const c = digestPage(pageDir, root); assert.notEqual(b.renderDigest, c.renderDigest); assert.notEqual(b.selectionDigest, c.selectionDigest); assert.equal(b.selectionOutcomeDigest, c.selectionOutcomeDigest);
   page.visualSelection.selectedRoute.name = "y"; fs.writeFileSync(path.join(pageDir, "page.json"), JSON.stringify(page));
   const selectedChanged = digestPage(pageDir, root); assert.notEqual(c.renderDigest, selectedChanged.renderDigest); assert.notEqual(c.selectionOutcomeDigest, selectedChanged.selectionOutcomeDigest);
   fs.writeFileSync(path.join(pageDir, "page.js"), "module.exports={id:'p01',v:2};\n"); assert.notEqual(c.renderDigest, digestPage(pageDir, root).renderDigest);
@@ -147,4 +169,4 @@ if (require.main === module) {
     else throw new Error("usage: page-digests.js capture [--pages p01,p02]; render manifest commits are owned by deck.js");
   }
 }
-module.exports = { shaText, shaFile, stableHash, sharedRenderDigest, sourceProjection, qaResultProjection, selectionOutcome, digestPage, pageDirs, selectDirs, capture, loadManifest, commitManifest, legacyContractDigest, legacyRenderContextDigest, selfTest };
+module.exports = { shaText, shaFile, stableHash, sharedRenderDigest, sourceProjection, renderPageProjection, runtimeFingerprint, qaResultProjection, selectionOutcome, digestPage, pageDirs, selectDirs, capture, loadManifest, commitManifest, legacyContractDigest, legacyRenderContextDigest, selfTest };

@@ -18,6 +18,8 @@ const BLUEPRINT = path.join(ROOT, "layout-blueprint.json");
 const QA_JSON = path.join(OUT_DIR, "layout-blueprint-preview-qa.json");
 const QA_MD = path.join(OUT_DIR, "layout-blueprint-preview-qa.md");
 const GEOMETRY_JSON = path.join(OUT_DIR, "layout-blueprint-geometry.json");
+const COMPONENT_SHORTLIST_JSON = path.join(OUT_DIR, "layout-blueprint-component-shortlist.json");
+const COMPONENT_SHORTLIST_SVG = path.join(OUT_DIR, "layout-blueprint-component-shortlist.svg");
 const REPORT_MD = path.join(OUT_DIR, "layout-blueprint-preview-lint.md");
 const REPORT_JSON = path.join(OUT_DIR, "layout-blueprint-preview-lint.json");
 
@@ -168,7 +170,7 @@ function inspectPreviewQa(findings, warnings) {
     add(findings, "error", "preview", "geometry-not-checked", "预览 QA 没有声明已执行几何检查。", "几何检查必须覆盖安全区、重叠、连线穿框、斜线和视觉中心。" );
   }
   if (Array.isArray(qa.errors) && qa.errors.length) {
-    qa.errors.forEach(item => add(findings, "error", item.page || "preview", item.type || "geometry-error", item.message || "蓝图几何检查失败。", "修复蓝图骨架或通用预览模式后重跑。"));
+    qa.errors.forEach(item => add(findings, "error", item.page || "preview", item.type || "geometry-error", item.message || "蓝图几何检查失败。", "修复蓝图版面结构或通用预览模式后重跑。"));
   }
   if (qa.verdict !== "PASS") {
     add(findings, "error", "preview", "preview-qa-not-pass", `预览 QA 结论为 ${qa.verdict || "unknown"}。`, "先修复预览 QA JSON 中的 errors，再进入用户确认。");
@@ -185,6 +187,24 @@ function inspectPreviewQa(findings, warnings) {
   }
   if (Array.isArray(qa.warnings) && qa.warnings.length) {
     qa.warnings.forEach((item) => add(warnings, "warning", "preview", "preview-warning", item, "评估是否需要在蓝图或渲染器中修复。"));
+  }
+}
+
+function inspectComponentShortlist(contracts, findings) {
+  const needsPreview = contracts.some(contract => isContent(contract) && Array.isArray(contract.candidateComponents) && contract.candidateComponents.length > 0);
+  if (!needsPreview) return;
+  const report = readJson(COMPONENT_SHORTLIST_JSON);
+  if (!report || !fs.existsSync(COMPONENT_SHORTLIST_SVG)) {
+    add(findings, "error", "component-shortlist", "missing-real-component-preview", "缺少当前主题下的真实组件候选预览。", "运行 node tools/render-component-shortlist-preview.js，不能用仅几何蓝图替代组件效果。" );
+    return;
+  }
+  const blueprintBuffer = fs.existsSync(BLUEPRINT) ? fs.readFileSync(BLUEPRINT) : null;
+  const digest = blueprintBuffer ? crypto.createHash("sha256").update(blueprintBuffer).digest("hex") : "";
+  if (report.version !== "layout-blueprint-component-shortlist.v1" || report.sourceSha256 !== digest) {
+    add(findings, "error", "component-shortlist", "stale-real-component-preview", "真实组件候选预览与当前蓝图不匹配。", "蓝图或候选组件修改后重新渲染 shortlist。" );
+  }
+  if (!Array.isArray(report.components) || !report.components.length || !Array.isArray(report.pages) || !report.pages.length) {
+    add(findings, "error", "component-shortlist", "empty-real-component-preview", "真实组件候选预览没有组件或页面映射。", "至少为标杆页或高风险页生成真实候选组件。" );
   }
 }
 
@@ -253,4 +273,5 @@ if (!contracts.length) {
   contracts.forEach((contract) => inspectContract(contract, findings, warnings));
 }
 inspectPreviewQa(findings, warnings);
+inspectComponentShortlist(contracts, findings);
 writeReport(findings, warnings);

@@ -1,10 +1,20 @@
 {
-  "version": "0.6.0-beta.9",
-  "qualityLock": "render-quality-evidence.v2",
-  "contextPack": "leander-context-pack.v3",
-  "tokenLedger": "leander-token-report.zh.v2",
+  "version": "0.6.0-beta.17",
+  "qualityLock": "render-quality-evidence.v4+visual-geometry-policy.v1+final-artifact-lock.v2",
+  "contextPack": "leander-context-pack.v3-strict",
+  "tokenLedger": "leander-token-report.zh.v2-conversations",
   "pageDigests": "page-digests.v1",
   "agentCollaboration": "agent-collaboration.v3",
   "renderDiversity": "render-diversity-audit.v1",
-  "contextRotation": "leander-context-rotation-lock.v1"
+  "contextRotation": "leander-context-rotation-lock.v2",
+  "taskPortfolio": "leander-task-portfolio.v1",
+  "qaEvidenceIndex": "leander-qa-evidence-index.v1",
+  "revisionContract": "leander-revision-contract.v2",
+  "sourceEvidence": "source-evidence-index.v2",
+  "approvalReceipt": "leander-approval-receipt.v1",
+  "agentRunReceipt": "leander-agent-run-receipt.v1",
+  "finalArtifactReceipt": "leander-final-artifact-receipt.v2",
+  "geometryAudit": "render-geometry-audit.v1",
+  "userFeedback": "user-feedback.v1",
+  "qaResult": "qa-result.zh.v3"
 }

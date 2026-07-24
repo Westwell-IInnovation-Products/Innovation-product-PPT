@@ -16,7 +16,7 @@
   "contentShape": {
     "maxItems": 4
   },
-  "candidateFamilies": [
+  "candidateComponents": [
     "hubRadial"
   ],
   "visualSelection": {

@@ -14,10 +14,12 @@ function build() {
   const context = readJson(path.join(ROOT, "state", "context-pack.json"), {});
   const contextBudget = readJson(path.join(ROOT, "state", "context-budget.json"), {});
   const rotationLock = readJson(path.join(ROOT, "state", "context-rotation-lock.json"), {});
+  const portfolio = readJson(path.join(ROOT, "state", "task-portfolio.json"), {});
   const cfg = fs.existsSync(path.join(ROOT, "deck.config.js")) ? require(path.join(ROOT, "deck.config.js")) : {};
   const candidates = ["brief.md", "outline.md", "DESIGN.md", "visual-direction.md", "theme-contract.md", "layout-blueprint.json", "checkpoint-status.json", "agent-collaboration.json", "output/render-quality-evidence.json"];
   const artifactDigests = Object.fromEntries(candidates.map(item => [item, sha(path.join(ROOT, item))]).filter(([, digest]) => digest));
   const approvedDecisions = Object.entries(checkpoints.checkpoints || {}).filter(([, item]) => item.status === "approved").map(([name, item]) => ({ name, mode: item.mode || "", approvedAt: item.approvedAt || "" }));
+  const activeJob = (portfolio.jobs || []).find(item => item.status === "active") || null;
   const handoff = {
     version: "leander-phase-handoff.v1",
     generatedAt: new Date().toISOString(),
@@ -29,7 +31,8 @@ function build() {
     changedPages: (context.selectedPages || []).map(page => page.id),
     openIssues: runState.openIssues || [],
     nextAction: runState.nextAction || "Run context-pack status and continue from the current approved gate.",
-    resumeCommand: "node tools/token-ledger.js attach-thread && node tools/run-phase.js status",
+    activeJob: activeJob ? { id: activeJob.id, label: activeJob.label, scope: activeJob.scope, goal: activeJob.goal, commands: activeJob.commands } : null,
+    resumeCommand: "node tools/resume-job.js",
     recommendedReads: context.recommendedReads || ["checkpoint-status.json", "state/run-state.json", "artifact-manifest.md"],
     contextRotation: {
       budgetStatus: contextBudget.status || "unknown",
@@ -37,7 +40,7 @@ function build() {
       reason: rotationLock.reason || contextBudget.reason || "",
       blockedRootThreadIds: rotationLock.status === "pending" ? (rotationLock.blockedRootThreadIds || []) : []
     },
-    continuationPolicy: { replayConversationHistory: false, attachFreshTaskToTokenLedger: true, preserveWorkflowReceipt: true, expandReadsOnlyForNamedGap: true, maxEstimatedTokens: 3000 }
+    continuationPolicy: { replayConversationHistory: false, attachFreshTaskToTokenLedger: true, preserveWorkflowReceipt: true, expandReadsOnlyForNamedGap: true, adaptiveCalls: true, fixedSubagentCap: null, maxEstimatedTokens: 3000 }
   };
   const serialized = JSON.stringify(handoff);
   handoff.packet = { sha256: crypto.createHash("sha256").update(serialized).digest("hex"), bytes: Buffer.byteLength(serialized), estimatedTokens: Math.ceil(Buffer.byteLength(serialized) / 4) };

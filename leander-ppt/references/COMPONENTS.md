@@ -1,14 +1,14 @@
-# PPT Component Library
+# PPT 组件库
 
-Reusable components prevent every deck from being redesigned from zero.
+可复用组件防止每份 deck 都从零重新设计。
 
-## When To Read
+## 何时读
 
-Read this file when creating anchor samples, extending a template, or extracting reusable patterns from existing PPT materials.
+在创建标杆样张、扩展模板,或从已有 PPT 素材里抽取可复用模式时,读本文件。
 
-After reading this file, use `COMPONENT-CATALOG.md` as the current menu of reusable page components extracted from internal decks. The catalog is intentionally generic: source PPTs are references, not one-off case rules.
+读完本文件后,把 `COMPONENT-CATALOG.md` 当作从内部 deck 抽取的、可复用页面组件的当前菜单。这个目录是刻意通用的:源 PPT 是参考,不是一次性的场景规则。
 
-For routine route selection or repair, prefer the scaffold's compact `tools/component-index.min.json` first. Read the full catalog only after candidates are shortlisted. For component evolution, also read `COMPONENT-LIBRARY-DESIGN.md`.
+对常规的路线选择或修复,优先先用框架的紧凑 `tools/component-index.min.json`。只有在候选入围之后,才读完整目录。做组件演进时,还要读 `COMPONENT-LIBRARY-DESIGN.md`。
 
 ## Maintenance Tools
 
@@ -16,6 +16,8 @@ For routine route selection or repair, prefer the scaffold's compact `tools/comp
 
 ```bash
 node tools/enrich-component-registry.js
+node tools/lint-component-metadata-overrides.js
+node tools/component-metadata-audit.js
 node tools/build-component-index.js
 node tools/lint-component-library.js --strict
 ```
@@ -23,125 +25,129 @@ node tools/lint-component-library.js --strict
 输出文件：
 
 - `tools/component-registry.json`：组件管理员维护的完整注册表，给组件库治理使用。
+- `tools/component-metadata-overrides.json`：人工审核后的语义覆盖层；它对关系、表达能力、槽位、避免条件和风险等字段具有优先权。
 - `tools/component-index.min.json`：日常选组件优先读取的轻量索引，给后续生产流程使用。
+- `output/component-metadata-audit.md`：重点组件的人工元数据覆盖率与指纹重复审计。
 - `output/component-library-lint.json`：组件库维护证据，给维护者看，不需要用户每轮确认。
 
 组件维护必须遵循“可运行基线 -> 小步修改 -> 立即检查”。不要用全局替换盲目改组件源文件；先确认 `node tools/lint-component-library.js --strict` 通过，再进入真实 PPT 生产。
 
-## Component Types
+自动 enrich 只负责补缺和生成候选信息，不能覆盖人工结论。若组件长期因为关系、槽位或风险描述相同而反复入选，先修 `component-metadata-overrides.json`，不要靠继续堆关键词修补选择器。人工覆盖不得改写运行时事实字段，例如渲染器存在性、可选状态或真实主题兼容结果。
 
-Leander PPT should accumulate components in three layers.
+## 组件类型
 
-Use the library model in `COMPONENT-LIBRARY-DESIGN.md`: page patterns, layout blocks, and visual parts. Do not treat every useful drawing as a new full-page component.
+Leander PPT 应分三层积累组件。
 
-### 1. Editable PPT Components
+用 `COMPONENT-LIBRARY-DESIGN.md` 里的库模型:整页版式、局部版块和小部件。不要把每一处有用的绘制都当作一个新的整页组件。
 
-Preferred for final deck output.
+### 1. 可编辑 PPT 组件
 
-- Cover hero.
-- Section divider.
-- Big-word + card matrix.
-- Four-column mechanism.
-- Three metric cards.
-- Timeline / roadmap.
-- Flow / process.
-- Layered architecture.
-- Hub-and-spoke system map.
-- Evidence board with caveat band.
-- Dashboard mockup.
-- Before/after comparison.
-- Risk / priority stack.
-- Image-led product page.
+最终 deck 输出的首选。
 
-These should be built from PowerPoint text, shapes, lines, icons, tables, and images wherever possible.
+- 封面 hero。
+- 章节分隔。
+- 大字 + 卡片矩阵。
+- 四列机制。
+- 三张指标卡。
+- 时间线 / 路线图。
+- 流程 / process。
+- 分层架构。
+- hub-and-spoke 系统图。
+- 带提醒带的证据板。
+- dashboard mockup。
+- 前后对比。
+- 风险 / 优先级堆叠。
+- 图片主导的产品页。
 
-### 2. Static Render Components
+这些应尽可能用 PowerPoint 的文字、形状、线条、图标、表格和图片来搭建。
 
-Use when the visual is too complex for editable PPT shapes or when fidelity matters more than editability.
+### 2. 静态渲染组件
 
-- ECharts charts.
-- Mapbox maps.
-- Three.js / Spline 3D scenes.
-- Rive animation still frames.
-- Canvas / SVG diagrams.
-- Complex simulation renderings.
+当视觉对可编辑 PPT 形状来说太复杂、或保真度比可编辑性更重要时使用。
 
-Render them to high-resolution PNG/SVG, insert into PPT, and keep source files in the working folder. Label the component as non-editable or partially editable.
+- ECharts 图表。
+- Mapbox 地图。
+- Three.js / Spline 3D 场景。
+- Rive 动画定格。
+- Canvas / SVG 图示。
+- 复杂仿真渲染。
 
-### 3. Reference Mock Components
+把它们渲染成高分辨率 PNG/SVG,插入 PPT,并把源文件保留在工作文件夹里。把该组件标为不可编辑或部分可编辑。
 
-Use only during design exploration.
+### 3. 参考 Mock 组件
 
-- HTML/CSS mockups.
-- Spline scene previews.
-- Rive animation previews.
-- Three.js prototypes.
+只在设计探索期间使用。
 
-Do not treat reference mocks as final PPT unless exported and QA checked.
+- HTML/CSS mockup。
+- Spline 场景预览。
+- Rive 动画预览。
+- Three.js 原型。
 
-## External Library Policy
+不要把参考 mock 当作最终 PPT,除非导出并做过 QA 检查。
 
-| Library | Best use in PPT workflow | Final output |
+## 外部库政策
+
+| 库 | 在 PPT 工作流里的最佳用途 | 最终输出 |
 |---|---|---|
-| ECharts | Charts, dashboards, trend comparisons, sankey, radar | PNG/SVG; sometimes editable via reconstructed PPT shapes |
-| Three.js | 3D product, spatial scene, port/yard simulation, camera perspective | PNG sequence/still; source retained |
-| Spline | Polished 3D object/scene mockup | PNG still; source retained |
-| Rive | Animated icon/state machine concept | still frame or exported video/gif only if PPT context supports it |
-| Matter.js | Physics-style explanatory mockups | mostly reference; still frame if useful |
-| Mapbox | Geographic route, network, port map | PNG; attribution and map style retained |
+| ECharts | 图表、dashboard、趋势对比、sankey、radar | PNG/SVG;有时可通过重建 PPT 形状变为可编辑 |
+| Three.js | 3D 产品、空间场景、港口/堆场仿真、相机透视 | PNG 序列/定格;保留源 |
+| Spline | 精致的 3D 物体/场景 mockup | PNG 定格;保留源 |
+| Rive | 动画图标/状态机概念 | 仅当 PPT 情境支持时,用定格或导出的视频/gif |
+| Matter.js | 物理风格的解释性 mockup | 多为参考;有用时用定格 |
+| Mapbox | 地理路线、网络、港口地图 | PNG;保留署名和地图样式 |
 
-Rule: external components are welcome when they add information. They are not a substitute for PPT structure, hierarchy, or claim boundaries.
+规则:当外部组件增加信息时,欢迎使用。它们不是 PPT 结构、层级或主张边界的替代品。
 
-## Component Source Decision
+## 组件来源决策
 
-Choose the component source based on the page relationship, not on what is easiest to draw. Record the decision in `page.json.visualSelection` before implementing the page; see `VISUAL-SELECTION.md`.
+按页面关系选择组件来源,而不是按什么最容易画。在实现页面之前把决策记录在 `page.json.visualSelection` 里;见 `VISUAL-SELECTION.md`。
 
-| Page need | Prefer | Final PPT form |
+| 页面需求 | 优先 | 最终 PPT 形态 |
 |---|---|---|
-| Logic, mechanism, comparison, process, roadmap | Existing PPT component | Editable PPT shapes/text |
-| Data pattern, dashboard, trend, sankey, radar | ECharts or data render | PNG/SVG plus source retained |
-| Spatial scene, device, port/yard system, 3D product relation | Three.js / Spline / image2 | High-resolution image plus source/prompt retained |
-| Geographic route, network, region, port map | Mapbox | PNG with attribution/source retained |
-| State transition or motion concept | Rive or frame sequence | Still frame unless animation is explicitly needed |
-| Missing cover/scene/product visual | image2/generated image | Image with prompt and usage note |
+| 逻辑、机制、对比、流程、路线图 | 现有 PPT 组件 | 可编辑 PPT 形状/文字 |
+| 数据模式、dashboard、趋势、sankey、radar | ECharts 或数据渲染 | PNG/SVG 并保留源 |
+| 空间场景、设备、港口/堆场系统、3D 产品关系 | Three.js / Spline / image2 | 高分辨率图片并保留源/prompt |
+| 地理路线、网络、区域、港口地图 | Mapbox | PNG 并保留署名/来源 |
+| 状态转换或运动概念 | Rive 或帧序列 | 定格,除非明确需要动画 |
+| 缺失的封面/场景/产品视觉 | image2/生成图片 | 图片,带 prompt 和使用备注 |
 
-Use mixed sources when useful: for example, an editable PPT architecture frame plus an image2 scene thumbnail, or an ECharts chart inside a PPT evidence board.
+有用时混用多种来源:例如,一个可编辑的 PPT 架构框 + 一个 image2 场景缩略图,或一张 PPT 证据板里的 ECharts 图表。
 
-Before finalizing a mixed-source page, run `VISUAL-COMPOSITION.md`. The page must look designed, not assembled. QA must be able to see why the selected route is better than component-library, external-graphic, image2/imageSlot, or page-specific-custom alternatives.
+在敲定一个多来源页面之前,跑 `VISUAL-COMPOSITION.md`。页面必须看起来是设计出来的,而不是拼凑出来的。QA 必须能看出为什么选定路线优于组件库、外部图形、image2/imageSlot 或页面专属自定义这几个备选。
 
-## Icon Library Policy
+## 图标库政策
 
-Build an icon language from existing internal decks and reusable vector patterns:
+从已有内部 deck 和可复用矢量模式里建立一套图标语言:
 
-- Keep one stroke style per deck.
-- Prefer simple line or filled vector icons.
-- Every icon must map to a concrete concept: role, action, metric, module, risk, status, asset, location.
-- Do not mix emoji, stock icons, and hand-drawn icons in one deck.
-- Store reusable icons as SVG or as pptxgenjs shape helper functions.
+- 每份 deck 保持一种描边风格。
+- 优先简单的线条或填充矢量图标。
+- 每个图标都必须映射到一个具体概念:角色、动作、指标、模块、风险、状态、素材、位置。
+- 不要在一份 deck 里混用 emoji、现成图标和手绘图标。
+- 把可复用图标存为 SVG,或存为 pptxgenjs 的形状 helper 函数。
 
-## Extracting Components From Existing PPTX
+## 从已有 PPTX 抽取组件
 
-For each source deck, inspect exported thumbnails and collect:
+对每一份源 deck,查看导出的缩略图并收集:
 
-- Repeated page layouts.
-- Header / section styles.
-- Card styles.
-- Number badges.
-- Diagrams.
-- Icon treatment.
-- Chart styles.
-- Image placement.
-- Color and font usage.
+- 重复的页面布局。
+- 页眉 / 章节样式。
+- 卡片样式。
+- 数字徽章。
+- 图示。
+- 图标处理。
+- 图表样式。
+- 图片摆放。
+- 颜色和字体使用。
 
-Then classify each pattern:
+然后给每个模式归类:
 
-| Status | Meaning |
+| 状态 | 含义 |
 |---|---|
-| `adopt` | Good enough to become a reusable component |
-| `adapt` | Useful idea, needs cleanup or generalization |
-| `avoid` | Too case-specific, visually weak, or unstable |
+| `adopt` | 足够好,可以成为一个可复用组件 |
+| `adapt` | 想法有用,需要清理或泛化 |
+| `avoid` | 太场景专属、视觉薄弱或不稳定 |
 
-## Component Spec Format
+## 组件规格格式
 
 ```markdown
 ## <component-name>
@@ -157,16 +163,16 @@ Then classify each pattern:
 - QA risks:
 ```
 
-## Self Check
+## 自检
 
-- [ ] Component solves a recurring slide problem.
-- [ ] Component is not tied to one case or one page title.
-- [ ] Inputs are clear enough for another agent to reuse.
-- [ ] Editable/non-editable status is explicit.
-- [ ] External assets or source files are retained when needed.
-- [ ] QA risks are known before production.
+- [ ] 组件解决一个反复出现的幻灯片问题。
+- [ ] 组件不绑定到一个场景或一个页面标题。
+- [ ] 输入清楚到另一个 agent 能复用。
+- [ ] 可编辑/不可编辑状态是明确的。
+- [ ] 需要时,外部素材或源文件被保留。
+- [ ] 生产之前就知道 QA 风险。
 
-## Renderer Availability Gate
+## 渲染器可用性 Gate
 
 组件注册表不是“可用证明”。一个组件只有同时满足下面条件，才能进入日常页面选型：
 
@@ -192,3 +198,11 @@ node tools/render-component-library-preview.js
 ```
 
 图册输出中的 `NO RENDERER` 和 `BLOCKED` 都是组件库治理信号，不是最终 PPT 页面。遇到这类条目，先修组件机制或组件设计，再让它回到候选池。
+
+维护者可以用 `--components` 生成小批量策展图册，例如：
+
+```bash
+node tools/render-component-library-preview.js --theme global-v2 --components evidenceLegend,stageGateRail,statusLegend
+```
+
+图册右上角的策展徽章应同时显示层级、主/次关系、置信度上限、元数据来源和审核状态。它用于判断“组件表达什么”，不是展示某个项目的业务文案。

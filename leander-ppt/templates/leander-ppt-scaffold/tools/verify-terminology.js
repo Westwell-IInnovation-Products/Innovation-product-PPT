@@ -24,11 +24,11 @@ function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function listPageJson() {
+function listPageFiles(name) {
   const pages = path.join(ROOT, "pages");
   if (!fs.existsSync(pages)) return [];
   return fs.readdirSync(pages)
-    .map(dir => path.join("pages", dir, "page.json"))
+    .map(dir => path.join("pages", dir, name))
     .filter(rel => fs.existsSync(path.join(ROOT, rel)));
 }
 
@@ -37,7 +37,9 @@ function defaultTargets() {
     "outline.md",
     "layout-blueprint.md",
     "layout-blueprint.json",
-    ...listPageJson()
+    ...listPageFiles("page.json"),
+    ...listPageFiles("page.js"),
+    "speaker-notes.md"
   ].filter(rel => fs.existsSync(path.join(ROOT, rel)));
 }
 

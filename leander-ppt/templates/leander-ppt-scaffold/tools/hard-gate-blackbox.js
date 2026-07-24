@@ -33,7 +33,12 @@ function selfTest() {
     fs.cpSync(SOURCE, staleRoot, { recursive: true, filter: source => path.basename(source) !== "node_modules" });
     ["workflow-receipt.json", path.join("state", "token-ledger.json"), path.join("state", "context-rotation-lock.json")].forEach(rel => fs.rmSync(path.join(staleRoot, rel), { force: true }));
     rollout(path.join(sessions, `rollout-${staleId}.jsonl`), staleId, "2026-01-01T00:00:00.000Z", staleRoot, [row("2026-01-01T00:00:01.000Z", 190000, 190000)]);
-    const sharedEnv = { ...process.env, NODE_PATH: path.join(SOURCE, "node_modules"), CODEX_SESSIONS_ROOT: sessions };
+    const sourceModules = path.join(SOURCE, "node_modules");
+    const sharedEnv = {
+      ...process.env,
+      NODE_PATH: fs.existsSync(sourceModules) ? sourceModules : (process.env.NODE_PATH || ""),
+      CODEX_SESSIONS_ROOT: sessions
+    };
     expectBlocked(run(staleRoot, [path.join(staleRoot, "tools", "workflow-gate.js"), "init", "review"], { ...sharedEnv, CODEX_THREAD_ID: staleId }), /FRESH TASK REQUIRED/, "Gate 0 on an over-limit existing task");
 
     ["workflow-receipt.json", path.join("state", "token-ledger.json"), path.join("state", "context-rotation-lock.json")].forEach(rel => fs.rmSync(path.join(root, rel), { force: true }));
@@ -42,12 +47,37 @@ function selfTest() {
     const baseEnv = { ...sharedEnv, CODEX_THREAD_ID: oldId };
     let result = run(root, [path.join(root, "tools", "workflow-gate.js"), "init", "review"], baseEnv);
     assert.equal(result.status, 0, `Gate 0 failed: ${result.output}`);
-    for (const checkpoint of ["plan", "designTermsState", "theme", "layoutBlueprint"]) {
-      result = run(root, [path.join(root, "tools", "workflow-gate.js"), "approve", checkpoint, "--note", "blackbox"], baseEnv);
+    const workflowRunId = readJson(path.join(root, "workflow-receipt.json")).runId;
+    for (const checkpoint of ["plan", "designTermsState", "theme", "layoutBlueprint", "anchorSample", "productionMode"]) {
+      const artifact = path.join(root, "state", "approval-artifacts", `${checkpoint}.txt`);
+      const message = path.join(root, "state", "approval-messages", `${checkpoint}.txt`);
+      const approvalReceipt = path.join(root, "state", "approval-receipts", `${checkpoint}.json`);
+      fs.mkdirSync(path.dirname(artifact), { recursive: true });
+      fs.mkdirSync(path.dirname(message), { recursive: true });
+      fs.writeFileSync(artifact, `approved ${checkpoint}\n`, "utf8");
+      fs.writeFileSync(message, `User approved ${checkpoint}.\n`, "utf8");
+      result = run(root, [
+        path.join(root, "tools", "approval-receipt.js"), "create",
+        "--checkpoint", checkpoint,
+        "--run-id", workflowRunId,
+        "--thread-id", oldId,
+        "--message-id", `message-${checkpoint}`,
+        "--message-file", message,
+        "--artifact", path.relative(root, artifact),
+        "--summary", `Black-box approval for ${checkpoint}.`,
+        "--out", path.relative(root, approvalReceipt)
+      ], baseEnv);
+      assert.equal(result.status, 0, `${checkpoint} receipt creation failed: ${result.output}`);
+      result = run(root, [
+        path.join(root, "tools", "workflow-gate.js"), "approve", checkpoint,
+        ...(checkpoint === "productionMode" ? ["B"] : []),
+        "--receipt", path.relative(root, approvalReceipt),
+        "--note", "blackbox"
+      ], baseEnv);
       assert.equal(result.status, 0, `${checkpoint} approval failed: ${result.output}`);
     }
     const configFile = path.join(root, "deck.config.js");
-    fs.writeFileSync(configFile, fs.readFileSync(configFile, "utf8").replace('stage: "outline-reset"', 'stage: "anchor-sample"'), "utf8");
+    fs.appendFileSync(configFile, "\nmodule.exports.workflow = { ...(module.exports.workflow || {}), stage: \"production\" };\nmodule.exports.executionBudget = { ...(module.exports.executionBudget || {}), enforcementMode: \"enforce\" };\n", "utf8");
     fs.appendFileSync(oldFile, row("2026-01-01T00:00:06.000Z", 190000, 191000) + "\n", "utf8");
 
     result = run(root, [path.join(root, "tools", "deck.js"), "render"], baseEnv);
