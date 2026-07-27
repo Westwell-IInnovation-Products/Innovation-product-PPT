@@ -1,0 +1,10 @@
+{
+  "version": "leander-quality-target.v1",
+  "minimumOverallScore": 8,
+  "minimumDimensionScore": 7,
+  "dimensions": ["content", "story", "visual", "readability", "evidence", "talkability"],
+  "referenceMode": "rubric-and-approved-anchor",
+  "referenceArtifacts": [],
+  "requireBlindFinalReview": true,
+  "anchorCoverage": ["tone-or-cover", "modal-content", "complex-structure", "evidence-or-image"]
+}

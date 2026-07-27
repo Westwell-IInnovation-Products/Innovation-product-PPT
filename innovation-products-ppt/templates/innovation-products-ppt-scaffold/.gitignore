@@ -1,0 +1,11 @@
+node_modules/
+output/
+pages/*/out/
+output/_*/
+output/*.pdf
+output/*.tmp
+pages/*/out/*.pptx
+pages/*/out/*.pdf
+state/toolchain-fingerprint.json
+~$*.pptx
+*.log

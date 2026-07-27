@@ -1,0 +1,150 @@
+{
+  "id": "p01",
+  "title": "封面",
+  "component": "cover",
+  "dataBoundary": "—",
+  "assetNeed": "none",
+  "relationship": "cover",
+  "expressionMode": "brand-cover",
+  "implementationStatus": "implemented",
+  "colorIntent": "强调色只用于封面主标题，其他信息服从主题 chrome。",
+  "visualSelection": {
+    "engineVersion": "visual-selector.v2",
+    "intent": "封面",
+    "relationship": "cover",
+    "relationshipSubtype": "cover.brand",
+    "visualSignature": "theme-cover",
+    "blueprintRef": null,
+    "expressionMode": "brand-cover",
+    "candidateRoutes": [
+      {
+        "route": "component-library",
+        "name": "cover",
+        "score": 92,
+        "reasons": [
+          "theme.chrome"
+        ],
+        "rejections": []
+      },
+      {
+        "route": "page-specific-custom",
+        "name": "custom-composition",
+        "score": 72,
+        "reasons": [
+          "expression.custom-fit"
+        ],
+        "rejections": []
+      },
+      {
+        "route": "external-graphic",
+        "name": "source-evidence",
+        "score": 28,
+        "reasons": [
+          "evidence.not-required"
+        ],
+        "rejections": []
+      },
+      {
+        "route": "image2",
+        "name": "imageSlot",
+        "score": 22,
+        "reasons": [
+          "image.not-primary"
+        ],
+        "rejections": []
+      }
+    ],
+    "selectedRoute": {
+      "route": "component-library",
+      "name": "cover",
+      "score": 92,
+      "confidence": 0.92,
+      "margin": 20
+    },
+    "requiresCuratorReview": false,
+    "rejectedRoutes": [],
+    "implementation": {
+      "expectedBinding": {
+        "route": "component-library",
+        "name": "cover"
+      },
+      "pageJsMustExport": "visualBinding"
+    },
+    "reviewFocus": [
+      "封面必须使用已批准主题 chrome。",
+      "标题层级、留白和品牌位置必须符合主题合同。"
+    ]
+  },
+  "qaProfile": {
+    "version": "qa-profile.zh.v2",
+    "rulesVersion": "qa-rules.zh.v2",
+    "scope": "theme-chrome-page",
+    "relationship": "cover",
+    "selectedRoute": {
+      "route": "component-library",
+      "name": "cover"
+    },
+    "blueprintRef": null,
+    "componentRef": "tools/component-index.min.json#cover",
+    "ruleSets": [
+      "universal",
+      "relationship.cover",
+      "route.component-library",
+      "evidence.implementation"
+    ],
+    "pageRules": [
+      {
+        "id": "page.p01.route.1",
+        "severity": "P1",
+        "text": "封面必须使用已批准主题 chrome。"
+      },
+      {
+        "id": "page.p01.route.2",
+        "severity": "P1",
+        "text": "标题层级、留白和品牌位置必须符合主题合同。"
+      },
+      {
+        "id": "page.p01.component-risk.1",
+        "severity": "P1",
+        "text": "decorative image"
+      },
+      {
+        "id": "page.p01.component-risk.2",
+        "severity": "P1",
+        "text": "generated image too complex"
+      },
+      {
+        "id": "page.p01.component-risk.3",
+        "severity": "P1",
+        "text": "image/text mismatch"
+      },
+      {
+        "id": "page.p01.component-risk.4",
+        "severity": "P1",
+        "text": "hard-coded semantics instead of reusable relationship"
+      },
+      {
+        "id": "page.p01.component-avoid.1",
+        "severity": "P1",
+        "text": "only a small local visual part is needed"
+      },
+      {
+        "id": "page.p01.component-avoid.2",
+        "severity": "P1",
+        "text": "the image would be decorative rather than explanatory"
+      },
+      {
+        "id": "page.p01.message",
+        "severity": "P1",
+        "text": "核心信息必须由视觉结构支撑：封面"
+      }
+    ],
+    "requiredEvidence": [
+      "render-sha256",
+      "visual-location",
+      "component-trace",
+      "source-reference"
+    ]
+  },
+  "schemaVersion": "leander-page.v2"
+}

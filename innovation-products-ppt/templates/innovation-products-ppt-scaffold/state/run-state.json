@@ -1,0 +1,10 @@
+{
+  "version": "leander-run-state.v1",
+  "deck": "Innovation-Products_ppt deck",
+  "currentPhase": "brief",
+  "currentGate": "Gate 1 pending",
+  "lastUserConfirmed": [],
+  "activeDecisions": [],
+  "nextAction": "Create or confirm brief and outline.",
+  "updatedAt": ""
+}
