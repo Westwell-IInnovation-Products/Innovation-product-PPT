@@ -16,8 +16,9 @@ const head = value("head");
 const base = value("base", "main");
 const title = value("title");
 const bodyFile = value("body-file");
+const draft = !process.argv.includes("--ready");
 if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository) || !head || !title) {
-  fail("Usage: node team-sharing/scripts/create-draft-pr.js --repo owner/name --head branch --base main --title title [--body-file file]");
+  fail("Usage: node team-sharing/scripts/create-draft-pr.js --repo owner/name --head branch --base main --title title [--body-file file] [--ready]");
 }
 
 const credential = cp.spawnSync("git", ["credential", "fill"], {
@@ -38,7 +39,7 @@ const headers = {
   Accept: "application/vnd.github+json",
   Authorization: `Bearer ${token}`,
   "X-GitHub-Api-Version": "2022-11-28",
-  "User-Agent": "leander-team-sharing"
+  "User-Agent": "iinnovation-products-ppt-team-sharing"
 };
 
 async function request(url, options = {}) {
@@ -61,7 +62,7 @@ async function main() {
   const created = await request(`https://api.github.com/repos/${repository}/pulls`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title, head, base, body, draft: true, maintainer_can_modify: true })
+    body: JSON.stringify({ title, head, base, body, draft, maintainer_can_modify: true })
   });
   console.log(JSON.stringify({ status: "created", number: created.number, url: created.html_url, draft: created.draft }, null, 2));
 }
