@@ -2,6 +2,21 @@
 
 这个仓库是 Leander 相关 Codex Skills 的团队正式源。`main` 和 `leander-ppt-v*` Release 保存经过审核、自动检查和可回滚的稳定版本；个人本地 Skill 不再整目录直接覆盖 `main`。
 
+## Leander PPT 分享版
+
+当前分享版基于 `0.6.0-beta.20`，公开提供 `leander-base`、`base2`、`leander-global` 三个主题。README、安装说明、Git 操作说明、主题 PPT 和总览图均保存在仓库内，可从下表直接进入。
+
+| 内容 | 链接 |
+|---|---|
+| 完整使用说明与 Skill 设计思路 | [打开 Leander PPT README](leander-ppt/README.md) |
+| 下载、安装位置与首次使用 | [打开 GitHub 使用指南](leander-ppt/docs/GitHub-使用指南.md) |
+| 分支、提交、推送、更新与回滚 | [打开 Git 操作说明](leander-ppt/docs/Git-操作说明.md) |
+| 三个主题材料说明 | [打开主题材料目录](leander-ppt/docs/theme-samples/README.md) |
+| `leander-base` | [27 页参考 PPT](leander-ppt/docs/theme-samples/01-leander-base-reference.pptx) · [总览图](leander-ppt/docs/theme-samples/01-leander-base-contact-sheet.jpg) |
+| `base2` | [17 页参考 PPT](leander-ppt/docs/theme-samples/02-base2-reference.pptx) · [总览图](leander-ppt/docs/theme-samples/02-base2-contact-sheet.jpg) |
+| `leander-global` | [13 页分享样稿](leander-ppt/docs/theme-samples/03-leander-global-sample-13p.pptx) · [总览图](leander-ppt/docs/theme-samples/03-leander-global-contact-sheet.png) |
+| 文件完整性校验 | [SHA-256 清单](leander-ppt/docs/theme-samples/MANIFEST.sha256) |
+
 ## Leander PPT 团队共享试点
 
 项目完成后，Leander 的现有 Component Curator 可自动发现复用信号、脱敏抽象并生成候选组件包；本地定时任务再创建独立分支和 Draft PR：
