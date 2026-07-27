@@ -4,7 +4,7 @@
 
 当前团队分享版基于 `0.6.0-beta.20`，公开提供 `leander-base`、`base2`、`leander-global` 三个主题。
 
-> 快速入口：[安装与首次使用](docs/GitHub-使用指南.md) · [Git 操作说明](docs/Git-操作说明.md) · [主题材料说明](docs/theme-samples/README.md) · [Skill 入口](SKILL.md) · [版本记录](CHANGELOG.md)
+> 快速入口：[安装与首次使用](docs/GitHub-使用指南.md)
 
 ## 一、使用说明
 
@@ -129,12 +129,6 @@ Mode C 只能在标杆样张审批后启用。主 Agent 始终负责主题一致
 | `base2` | 机制说明、证据板、状态治理、决策路径 | Base 品牌语义、分级圆角、浅层面板、单层轻阴影 | [下载 17 页参考 PPT](docs/theme-samples/02-base2-reference.pptx) | [查看整套总览图](docs/theme-samples/02-base2-contact-sheet.jpg) |
 | `leander-global` | 对外、国际、客户与正式技术说明 | 白底、藏青结构、天蓝信号色、英文优先标题体系 | [下载 13 页分享样稿](docs/theme-samples/03-leander-global-sample-13p.pptx) | [查看整套总览图](docs/theme-samples/03-leander-global-contact-sheet.png) |
 
-关联材料入口：
-
-- [主题材料说明与使用边界](docs/theme-samples/README.md)
-- [主题文件 SHA-256 清单](docs/theme-samples/MANIFEST.sha256)
-- [三个主题文件目录](docs/theme-samples/)
-
 `leander-base` 与 `base2` 的 PPT 是团队提供的参考材料，用于研究版式、密度、配色、图示和图片布局；`leander-global` 是使用当前工作流制作的 13 页分享样稿。参考材料用于主题选型和设计对照，不代表 Skill 会自动复刻其中的业务内容。
 
 主题选择建议：
@@ -163,18 +157,14 @@ Mode C 只能在标杆样张审批后启用。主 Agent 始终负责主题一致
 - 主题 token 变化：重检受到相关 token 影响的页面；
 - 叙事结构、页序或需求范围变化：重新打开规划阶段。
 
-### 1.9 安装、Git 与分享材料目录
+### 1.9 安装与分享材料目录
 
 #### 使用者入口
 
 | 内容 | 跳转 |
 |---|---|
 | 安装位置、下载方式和首次使用 | [GitHub 使用指南](docs/GitHub-使用指南.md) |
-| 分支、提交、推送、更新和回滚 | [Git 操作说明](docs/Git-操作说明.md) |
 | 三个主题的 PPT 与总览图 | [主题样例目录](docs/theme-samples/) |
-| 主题材料来源和边界 | [主题材料 README](docs/theme-samples/README.md) |
-| Skill 的正式入口规则 | [SKILL.md](SKILL.md) |
-| 当前版本变更 | [CHANGELOG.md](CHANGELOG.md) |
 
 #### `docs/` 目录
 
@@ -689,5 +679,3 @@ node tools/deck.js render
 node tools/deck.js verify --final
 node tools/deck.js build
 ```
-
-完整的团队 Git 操作、更新和回滚方式见[Git 操作说明](docs/Git-操作说明.md)。

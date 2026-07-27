@@ -4,18 +4,15 @@
 
 ## Leander PPT 分享版
 
-当前分享版基于 `0.6.0-beta.20`，公开提供 `leander-base`、`base2`、`leander-global` 三个主题。README、安装说明、Git 操作说明、主题 PPT 和总览图均保存在仓库内，可从下表直接进入。
+当前分享版基于 `0.6.0-beta.20`，公开提供 `leander-base`、`base2`、`leander-global` 三个主题。README、安装说明、主题 PPT 和总览图均保存在仓库内，可从下表直接进入。
 
 | 内容 | 链接 |
 |---|---|
 | 完整使用说明与 Skill 设计思路 | [打开 Leander PPT README](leander-ppt/README.md) |
 | 下载、安装位置与首次使用 | [打开 GitHub 使用指南](leander-ppt/docs/GitHub-使用指南.md) |
-| 分支、提交、推送、更新与回滚 | [打开 Git 操作说明](leander-ppt/docs/Git-操作说明.md) |
-| 三个主题材料说明 | [打开主题材料目录](leander-ppt/docs/theme-samples/README.md) |
 | `leander-base` | [27 页参考 PPT](leander-ppt/docs/theme-samples/01-leander-base-reference.pptx) · [总览图](leander-ppt/docs/theme-samples/01-leander-base-contact-sheet.jpg) |
 | `base2` | [17 页参考 PPT](leander-ppt/docs/theme-samples/02-base2-reference.pptx) · [总览图](leander-ppt/docs/theme-samples/02-base2-contact-sheet.jpg) |
 | `leander-global` | [13 页分享样稿](leander-ppt/docs/theme-samples/03-leander-global-sample-13p.pptx) · [总览图](leander-ppt/docs/theme-samples/03-leander-global-contact-sheet.png) |
-| 文件完整性校验 | [SHA-256 清单](leander-ppt/docs/theme-samples/MANIFEST.sha256) |
 
 ## Leander PPT 团队共享试点
 
@@ -48,7 +45,7 @@ GitHub Free 私有仓库使用本地安全阀：自动化只允许推送 `agent/
 | `axi-front-design` | 以 HTML 为媒介产出高保真设计稿，适合落地页、海报、幻灯片、交互原型、动画和设计系统等视觉设计任务。 |
 | `find-skills` | 帮助发现和安装适合某类任务的 Codex skill，适合在不确定该用哪个能力时检索可用 skill。 |
 | `humanizer-zh` | 优化中文文本表达，降低 AI 写作痕迹，让内容更自然、更像人工写作。 |
-| [`leander-ppt`](leander-ppt/) | 使用带检查点的 Leander PPT 工作流创建、重设计、规范化或润色可编辑 PPTX；团队分享版内置三个主题，并附主题参考材料、安装指南和 Git 操作说明。 |
+| [`leander-ppt`](leander-ppt/) | 使用带检查点的 Leander PPT 工作流创建、重设计、规范化或润色可编辑 PPTX；团队分享版内置三个主题，并附可下载的主题 PPT、总览图和安装指南。 |
 | `pm-roadmap-planner` | 面向产品版本规划与路线图设计，输出里程碑、依赖风险、缓冲策略和阶段成功指标。 |
 | `roadmap-planning` | 将战略目标拆解为可执行路线图，覆盖优先级、史诗拆分、干系人对齐和发布节奏规划。 |
 | `web-design-engineer` | 构建高质量网页视觉产物，适合页面、仪表盘、原型、动效、数据可视化和浏览器端交互体验。 |
