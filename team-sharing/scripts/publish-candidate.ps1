@@ -35,8 +35,8 @@ $batchGuard = Join-Path $repo 'team-sharing\scripts\check-automation-batch.js'
 & node $batchGuard --root $candidate --max 1 --include-published
 if ($LASTEXITCODE -ne 0) { throw "Independent Agent review evidence is required before publishing." }
 
-$registry = Join-Path $repo 'leander-ppt\templates\leander-ppt-scaffold\tools\component-registry.json'
-$contributions = Join-Path $repo 'contributions\leander-ppt\components'
+$registry = Join-Path $repo 'iinnovation-products-ppt\templates\iinnovation-products-ppt-scaffold\tools\component-registry.json'
+$contributions = Join-Path $repo 'contributions\iinnovation-products-ppt\components'
 $assessmentFile = Join-Path $candidate 'automation-review.json'
 $assessmentJson = & node (Join-Path $repo 'team-sharing\scripts\assess-candidate.js') $candidate --registry $registry --contributions $contributions --write $assessmentFile
 $assessmentExit = $LASTEXITCODE
@@ -52,7 +52,7 @@ $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 $branch = "contrib/$Contributor/$($metadata.id)-$stamp"
 Invoke-Git @('switch', '-c', $branch)
 
-$relativeTarget = "contributions/leander-ppt/components/$Contributor/$($metadata.id)"
+$relativeTarget = "contributions/iinnovation-products-ppt/components/$Contributor/$($metadata.id)"
 $target = [System.IO.Path]::GetFullPath((Join-Path $repo $relativeTarget))
 if (-not $target.StartsWith($repoPrefix, [System.StringComparison]::OrdinalIgnoreCase)) { throw "Unsafe contribution target." }
 New-Item -ItemType Directory -Force -Path (Split-Path $target -Parent) | Out-Null
@@ -64,7 +64,7 @@ Invoke-Git @('add', '--', $relativeTarget)
 $scopeGuard = Join-Path $repo 'team-sharing\scripts\check-publish-scope.js'
 & node $scopeGuard --repo $repo --allowed-root $relativeTarget --expected-branch-prefix "contrib/$Contributor/$($metadata.id)-"
 if ($LASTEXITCODE -ne 0) { throw "Candidate publish scope validation failed." }
-Invoke-Git @('commit', '-m', "Contribute Leander component $($metadata.id)")
+Invoke-Git @('commit', '-m', "Contribute IInnovation-Products_ppt component $($metadata.id)")
 Invoke-Git @('push', '-u', $Remote, $branch)
 
 if ($CreateDraftPullRequest) {
@@ -72,7 +72,7 @@ if ($CreateDraftPullRequest) {
   if ($remoteUrl -notmatch 'github\.com[/:](?<repo>[^/]+/[^/.]+)(?:\.git)?$') { throw "Cannot derive GitHub repository from remote URL." }
   $repoFullName = $Matches.repo
   $bodyFile = Join-Path $repo '.github\pull_request_template.md'
-  & node (Join-Path $repo 'team-sharing\scripts\create-draft-pr.js') --repo $repoFullName --head $branch --base $BaseBranch --title "Contribute Leander component $($metadata.id)" --body-file $bodyFile
+  & node (Join-Path $repo 'team-sharing\scripts\create-draft-pr.js') --repo $repoFullName --head $branch --base $BaseBranch --title "Contribute IInnovation-Products_ppt component $($metadata.id)" --body-file $bodyFile
   if ($LASTEXITCODE -ne 0) { throw "Branch was pushed, but Draft PR creation failed." }
 }
 

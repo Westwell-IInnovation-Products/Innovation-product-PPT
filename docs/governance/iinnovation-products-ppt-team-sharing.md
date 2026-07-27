@@ -1,0 +1,225 @@
+# IInnovation-Products_ppt 团队共享与晋升制度
+
+## 1. 唯一正式源
+
+`Westwell-IInnovation-Products/Leander` 的 `main` 和 `iinnovation-products-ppt-v*` Release 是正式源。个人 `.codex/skills/iinnovation-products-ppt` 是安装副本，不允许整目录自动覆盖 `main`。
+
+## 2. 三条通道
+
+1. **候选通道**：个人成果进入 `contributions/iinnovation-products-ppt/components/<github-user>/<candidate-id>/`，一人一目录、一候选一 PR。
+2. **晋升通道**：组件 curator 脱敏、去重、双主题渲染后，使用 `promote-candidate.js` 加入扩展运行时与注册表。
+3. **核心通道**：`SKILL.md`、Gate、Agent、Theme 和工具修改走单独 PR；不兼容变更先建 Issue/RFC，再由会议确认。
+
+自动上传只是提交候选，不等于进入正式组件库。只有 `metadataReviewStatus=manual-reviewed`、`designStatus=usable`、真实渲染器存在且双主题验证通过，组件才允许进入自动选型。
+
+## 3. 角色
+
+| 角色 | 责任 |
+|---|---|
+| Contributor | 把项目成果脱敏、抽象为候选包；不得直接修改正式注册表 |
+| Component Curator | 去重、判断复用层级、晋升组件、检查双主题预览 |
+| Skill Owner | 审核 Skill 核心、Gate、Agent、权限和 Major 版本 |
+| Release Owner | 创建 Tag/Release、确认回滚点和飞书通知 |
+| Consumer | 只安装 Release，不从候选分支更新 |
+
+试点阶段由 `@caijiahui0426` 同时承担 Curator、Skill Owner 和 Release Owner，稳定后应拆分为 GitHub Teams。
+
+## 4. 候选包标准
+
+每个候选必须包含：
+
+```text
+candidate.json
+component.js
+preview.svg
+README.md
+```
+
+候选必须：
+
+- 使用通用关系能力命名，不使用客户、项目或页面语义。
+- 不包含本地绝对路径、密钥、原始反馈、客户资料或生成状态。
+- 初始状态固定为 `review-required` 和 `pending`。
+- 声明内容容量、主题、输入槽位、风险、避免条件和可编辑性。
+
+## 5. 每周运行节奏
+
+| 时间 | 动作 |
+|---|---|
+| 周一至周四 | Contributor 本地积累候选，定时任务创建 Draft PR |
+| 周五上午 | Curator 查看预览、去重、退回或晋升 |
+| 周五下午 | 合并晋升 PR，运行完整双主题检查 |
+| 周五 18:00 | Release Owner 发布 Patch/Minor 版本并通知团队 |
+| 下周一 | Consumer 定时任务安装最新允许版本 |
+
+## 6. 冲突处理
+
+- 不同人员写入不同候选目录，Git 自动合并。
+- 相同 `id` 或相同组件 `name` 由 CI 阻断，不能覆盖。
+- 同一正式组件被多人修改时，以最早打开的 PR 为基线，后续 PR 更新 `main` 后重新验证。
+- 二进制 PPTX 不作为正式组件源；组件源使用 JS/JSON/SVG，PPTX 只作为参考产物。
+
+## 7. 版本与审批
+
+- Patch：文档、Bug、兼容性修复；Owner 审批。
+- Minor：新增向后兼容组件或能力；Curator＋Owner 审批。
+- Major：Gate、目录协议、权限、输入输出发生不兼容变化；Issue/RFC＋会议批准。
+- Beta/RC：只进入试点用户，不作为全员自动更新目标。
+
+Tag 使用 `iinnovation-products-ppt-v0.6.0-beta.8` 形式。安装前保留旧目录备份；发现质量回退时恢复上一 Tag，不在个人电脑上临时修正式版本。
+
+## 8. 实际命令
+
+验证个人候选：
+
+```powershell
+node team-sharing/scripts/validate-candidate.js <候选目录>
+```
+
+发布个人候选：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File team-sharing/scripts/publish-candidate.ps1 `
+  -RepositoryRoot <Leander仓库> `
+  -CandidatePath <个人候选目录> `
+  -Contributor <GitHub用户名> `
+  -CreateDraftPullRequest
+```
+
+Curator 晋升：
+
+```powershell
+node team-sharing/scripts/promote-candidate.js <仓库候选目录> `
+  --skill-root iinnovation-products-ppt `
+  --curator caijiahui0426 `
+  --approve-production
+```
+
+推荐使用单命令准备晋升分支、版本更新和 Draft PR：
+
+```powershell
+node team-sharing/scripts/prepare-promotion.js `
+  --repo <Leander仓库> `
+  --candidate <仓库内候选目录> `
+  --curator caijiahui0426 `
+  --release-type prerelease `
+  --preid beta `
+  --create-draft-pr
+```
+
+该命令自动准备所有变更，但不会批准或合并 PR；人工只需查看预览、风险摘要和差异后确认正式晋升。
+
+安装正式版本工作树：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File team-sharing/scripts/install-iinnovation-products-ppt.ps1 `
+  -RepositoryRoot <检出的Release目录>
+```
+
+## 9. 定时任务
+
+每名 Contributor 只设置一个任务，扫描 `%USERPROFILE%\.codex\iinnovation-products-ppt-contributions`。任务调用 `team-sharing/scripts/sync-scheduled.ps1`，不会镜像完整 Skill，也不会直接推送 `main`。
+
+正式启用前必须运行 `team-sharing/scripts/install-safety-guard.ps1`，让本地 Git 仅允许自动化推送 `agent/*`、`contrib/*` 和 `promote/*`。能够使用 GitHub Team 时，再在服务端保护 `main`，要求 PR、CI、对话解决和 CODEOWNERS 审批。私有仓库套餐无法强制保护时，只有维护者保留写权限，其他成员通过候选分支提交。
+
+## 10. Agent 自动候选提取
+
+PPT 项目在最终渲染复核时运行 `candidate-harvest.js --write`，从页面专属自定义路线、低置信组件选型、项目本地候选渲染器和重复组件问题中收集信号。现有 `component-curator-zh` 使用候选提取模式完成：
+
+1. 判断 `submit / skip / observe`。
+2. 把页面代码抽为通用 `{ name, create }` 组件。
+3. 去掉项目、客户、页码、数据、截图和本地路径。
+4. 与正式组件索引做关系、槽位和表达能力对比。
+5. 写入 `state/component-candidate-proposals.json`，并取得独立复核摘要。
+
+`final-verify` 会把通过独立复核的 `submit` 提案自动物化到 `%USERPROFILE%\.codex\iinnovation-products-ppt-contributions`。自动化只生成 `review-required / pending` 候选，不得直接修改正式注册表。
+
+## 11. 风险分流与低人力审核
+
+候选上传前自动生成 `automation-review.json`：
+
+| Lane | 处理 |
+|---|---|
+| `auto-intake` | 自动建立分支和 Draft PR；只允许进入候选区 |
+| `curator-review` | 自动建立 Draft PR并标出近似正式组件，等待 Curator 判断 |
+| `blocked` | 同 ID、同候选名、冲突正式组件名或规范失败；建分支前停止 |
+
+候选区的自动入库不等于正式可用。正式组件仍需人工批准一次晋升 PR；AI 和定时脚本不得调用 Merge、Auto-merge、Force Push、删除分支或删除 Tag，最终合并只由人工在 GitHub 页面执行。
+
+## 12. 飞书通知
+
+在仓库 Actions Secret 中配置 `FEISHU_WEBHOOK_URL` 后，由 `IInnovation-Products_ppt Feishu Notifications` 可信工作流统一发送飞书卡片。PR 验证工作流本身不读取飞书 Secret；可信通知工作流固定检出 `main`，不得检出或执行 PR Head 中的脚本。
+
+| 事件 | 飞书卡片 | 人工动作 |
+|---|---|---|
+| 候选 PR 检查通过 | 候选入库审批；显示风险通道、评分和最多三项关注原因 | 查看差异后合并或退回 |
+| 正式晋升 PR 检查通过 | 正式组件晋升审批 | Curator 与 Owner 确认后合并 |
+| 核心/治理 PR 检查通过 | Skill 核心变更或治理变更审批 | 核心变更按版本制度审批；Major 仍需 RFC/会议 |
+| PR 检查失败 | 红色检查失败卡片 | 查看 Actions 日志并修复 |
+| Review approved / changes requested | 审批结果或要求修改卡片 | 维护者合并，或作者修订 |
+| PR merged / closed | 绿色合并闭环或灰色关闭卡片 | 确认后续发布或停止处理 |
+| Tag/Release 工作流完成 | 发布成功或失败卡片 | Release Owner 检查 Release 和回滚点 |
+| 本地候选安全阻断 | 红色本地自动化卡片 | 检查对应电脑的审计日志 |
+| 本地稳定版更新失败 | 红色更新失败卡片 | 检查对应电脑的计划任务日志 |
+| 本地紧急停止开关生效 | 橙色自动化停止卡片 | 确认风险解除后人工恢复 |
+
+正常的空候选周期、已是最新稳定版等无需动作的成功事件不通知，避免群消息噪音。本地电脑不保存飞书 Webhook；本地脚本只使用现有 Git 凭据发送 `repository_dispatch`，且仅允许固定事件类型和固定说明，不上传原始异常、候选内容、本地路径或凭据。
+
+Webhook 只能提供链接按钮；如需在飞书内直接执行“批准/拒绝”，还需要单独部署带回调验签的飞书应用，不能仅靠自定义机器人 Webhook 完成。
+
+## 13. 自动发布与消费端更新
+
+批准的晋升 PR 使用下面的命令统一提升版本：
+
+```powershell
+node team-sharing/scripts/bump-iinnovation-products-ppt-version.js --root iinnovation-products-ppt --type minor --note "Promote reviewed components"
+```
+
+Beta 试点的连续修订使用 `--type prerelease --preid beta`；正式新增组件通常使用 `minor`，兼容性修复使用 `patch`。
+
+版本变更合并到 `main` 后，`iinnovation-products-ppt-tag-approved-version.yml` 自动创建缺失的 `iinnovation-products-ppt-v<version>` Tag；现有 Release 工作流生成压缩包和 SHA-256 文件。
+
+每台电脑的统一周期入口为：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File team-sharing/scripts/team-cycle.ps1 `
+  -RepositoryRoot <Leander仓库> `
+  -ContributionRoot "$env:USERPROFILE\.codex\iinnovation-products-ppt-contributions" `
+  -CreateDraftPullRequest `
+  -UpdateChannel stable
+```
+
+`stable` 只安装正式版本；试点成员可使用 `beta`。更新器通过现有 Git 获取 Tag、核对 Tag 与 `manifest.json`、在临时 worktree 调用安全安装器，并保留旧版本回滚备份；不会降级已经安装的较新版本。
+
+## 14. GitHub Free 本地安全阀
+
+GitHub Free 的组织私有仓库不能强制执行 `main` Ruleset，因此自动化使用“双重校验＋人工钥匙”模型：
+
+```text
+Agent/定时任务：候选、白名单分支、Draft PR
+人工维护者：审核并在 GitHub 页面合并 main
+```
+
+首次配置每台参与发布的电脑：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File team-sharing/scripts/install-safety-guard.ps1 `
+  -RepositoryRoot <Leander仓库>
+```
+
+安全边界：
+
+- Git Hook 和发布脚本同时拒绝 `main`、`master`、`release/*`、Tag、删除操作和未知分支前缀。
+- 每次定时任务最多处理 3 个未发布候选；超过上限时一个也不发布。
+- 定时候选必须包含 `.agent-review.json`，且 `status=pass`、`evidenceDigest=sha256:...`。
+- 每次 Commit 前只允许暂存当前候选目录；发现 `SKILL.md`、工作流或其他目录被意外暂存时立即停止。
+- 定时消费端默认只跟随 `stable`；`beta` 只由 Curator 手动开启。
+- 审计日志写入 `%USERPROFILE%\.codex\iinnovation-products-ppt-logs\team-sharing-audit.jsonl`，不记录凭据和多行原始内容。
+
+紧急停止所有本地团队周期：
+
+```powershell
+New-Item -ItemType File -Force "$env:USERPROFILE\.codex\iinnovation-products-ppt-automation.disabled"
+```
+
+确认问题解决后，人工删除该单文件即可恢复。计划任务本身也可以在 Windows 任务计划程序中保持禁用。Git Hook 是本地防线，Git 的 `--no-verify` 可以绕过它，因此团队制度必须明确禁止 AI 和日常脚本使用 `--no-verify`；GitHub Team 服务端规则仍是更强的最终防线。

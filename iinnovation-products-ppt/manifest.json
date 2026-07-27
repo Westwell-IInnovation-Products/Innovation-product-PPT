@@ -1,0 +1,9 @@
+{
+  "name": "iinnovation-products-ppt",
+  "version": "0.6.0-beta.20",
+  "category": "Presentation / Internal Reporting",
+  "description": "Turn source material into a formal editable PPTX through the mandatory IInnovation-Products_ppt gated workflow. Uses one continuous task per deck, explicit user checkpoints, strict context packs, delta-scoped QA evidence, deterministic phase runners, risk-tiered review, and fresh independent final roles.",
+  "compat": [
+    "codex"
+  ]
+}

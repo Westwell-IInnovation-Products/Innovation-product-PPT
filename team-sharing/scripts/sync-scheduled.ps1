@@ -1,9 +1,9 @@
 [CmdletBinding()]
 param(
   [Parameter(Mandatory = $true)][string]$RepositoryRoot,
-  [string]$ContributionRoot = "$env:USERPROFILE\.codex\leander-contributions",
+  [string]$ContributionRoot = "$env:USERPROFILE\.codex\iinnovation-products-ppt-contributions",
   [ValidateRange(1, 20)][int]$MaxCandidates = 3,
-  [string]$AuditLog = "$env:USERPROFILE\.codex\leander-logs\team-sharing-audit.jsonl",
+  [string]$AuditLog = "$env:USERPROFILE\.codex\iinnovation-products-ppt-logs\team-sharing-audit.jsonl",
   [switch]$CreateDraftPullRequest
 )
 

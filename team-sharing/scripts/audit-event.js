@@ -18,7 +18,7 @@ function safe(input, limit = 500) {
 }
 
 function main(argv = process.argv) {
-  const log = path.resolve(value(argv, "log", path.join(os.homedir(), ".codex", "leander-logs", "team-sharing-audit.jsonl")));
+  const log = path.resolve(value(argv, "log", path.join(os.homedir(), ".codex", "iinnovation-products-ppt-logs", "team-sharing-audit.jsonl")));
   const record = {
     schemaVersion: "leander-team-sharing-audit.v1",
     at: new Date().toISOString(),

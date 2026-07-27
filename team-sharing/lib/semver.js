@@ -1,5 +1,5 @@
 function parseVersion(input) {
-  const value = String(input || "").replace(/^leander-ppt-v/, "");
+  const value = String(input || "").replace(/^iinnovation-products-ppt-v/, "");
   const match = value.match(/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z.-]+))?$/);
   if (!match) return null;
   return { raw: value, major: Number(match[1]), minor: Number(match[2]), patch: Number(match[3]), prerelease: match[4] ? match[4].split(".") : [] };

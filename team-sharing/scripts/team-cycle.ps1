@@ -1,12 +1,12 @@
 [CmdletBinding()]
 param(
   [Parameter(Mandatory = $true)][string]$RepositoryRoot,
-  [string]$ContributionRoot = "$env:USERPROFILE\.codex\leander-contributions",
-  [string]$Destination = "$env:USERPROFILE\.codex\skills\leander-ppt",
+  [string]$ContributionRoot = "$env:USERPROFILE\.codex\iinnovation-products-ppt-contributions",
+  [string]$Destination = "$env:USERPROFILE\.codex\skills\iinnovation-products-ppt",
   [ValidateSet('stable', 'beta')][string]$UpdateChannel = 'stable',
   [ValidateRange(1, 20)][int]$MaxCandidates = 3,
-  [string]$KillSwitchFile = "$env:USERPROFILE\.codex\leander-automation.disabled",
-  [string]$AuditLog = "$env:USERPROFILE\.codex\leander-logs\team-sharing-audit.jsonl",
+  [string]$KillSwitchFile = "$env:USERPROFILE\.codex\iinnovation-products-ppt-automation.disabled",
+  [string]$AuditLog = "$env:USERPROFILE\.codex\iinnovation-products-ppt-logs\team-sharing-audit.jsonl",
   [switch]$CreateDraftPullRequest,
   [switch]$SkipUpload,
   [switch]$DryRun,
@@ -28,7 +28,7 @@ if (Test-Path -LiteralPath $KillSwitchFile) {
   if (Test-Path -LiteralPath $auditScript) {
     & node $auditScript --log $AuditLog --event 'team-cycle' --status 'disabled' --details "Kill switch is present: $KillSwitchFile" | Out-Null
   }
-  Send-TeamAlert 'automation-disabled' 'Automation disabled' 'The local Leander kill switch prevented the team cycle.'
+  Send-TeamAlert 'automation-disabled' 'Automation disabled' 'The local IInnovation-Products_ppt kill switch prevented the team cycle.'
   Write-Output 'AUTOMATION_STATUS=disabled'
   Write-Output "KILL_SWITCH_FILE=$KillSwitchFile"
   exit 0
@@ -51,17 +51,17 @@ if ($DryRun) {
     & $sync @arguments
     if ($LASTEXITCODE -ne 0) { throw 'Candidate upload cycle failed.' }
   } catch {
-    Send-TeamAlert 'candidate-cycle-blocked' 'Candidate cycle blocked' 'Candidate upload or safety validation did not complete; inspect the local Leander audit log.'
+    Send-TeamAlert 'candidate-cycle-blocked' 'Candidate cycle blocked' 'Candidate upload or safety validation did not complete; inspect the local IInnovation-Products_ppt audit log.'
     throw
   }
 }
 
-$updater = Join-Path $repo 'team-sharing\scripts\update-leander.ps1'
+$updater = Join-Path $repo 'team-sharing\scripts\update-iinnovation-products-ppt.ps1'
 try {
   if ($DryRun) { & $updater -RepositoryRoot $repo -Destination $Destination -Channel $UpdateChannel -DryRun }
   else { & $updater -RepositoryRoot $repo -Destination $Destination -Channel $UpdateChannel }
   if ($LASTEXITCODE -ne 0) { throw 'Consumer update cycle failed.' }
 } catch {
-  Send-TeamAlert 'consumer-update-failed' 'Stable update failed' 'The local Leander release check or installation failed; inspect the scheduled-task log.'
+  Send-TeamAlert 'consumer-update-failed' 'Stable update failed' 'The local IInnovation-Products_ppt release check or installation failed; inspect the scheduled-task log.'
   throw
 }

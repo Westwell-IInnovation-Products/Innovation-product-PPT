@@ -32,7 +32,7 @@ test("blocks protected refs, releases, tags, and deletions", () => {
     "refs/heads/main",
     "refs/heads/master",
     "refs/heads/release/0.7",
-    "refs/tags/leander-ppt-v0.7.0"
+    "refs/tags/iinnovation-products-ppt-v0.7.0"
   ]) assert.equal(evaluatePushUpdates([line(ref)]).ok, false, ref);
   const deletion = `refs/heads/local ${ZERO} refs/heads/contrib/analyst-a/old ${SHA}`;
   assert.equal(evaluatePushUpdates([deletion]).ok, false);
@@ -46,7 +46,7 @@ test("rejects the whole batch above the maximum", () => {
 });
 
 test("requires independent review evidence for scheduled candidates", () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "leander-review-policy-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "iin-ppt-review-policy-"));
   assert.equal(hasIndependentReview(root).ok, false);
   fs.writeFileSync(path.join(root, ".agent-review.json"), JSON.stringify({ status: "pass", evidenceDigest: "sha256:review-1" }));
   assert.equal(hasIndependentReview(root).ok, true);
@@ -55,13 +55,13 @@ test("requires independent review evidence for scheduled candidates", () => {
 });
 
 test("confines staged files to the selected candidate directory", () => {
-  const root = "contributions/leander-ppt/components/analyst-a/component-one";
+  const root = "contributions/iinnovation-products-ppt/components/analyst-a/component-one";
   assert.equal(validateStagedPaths([
     `${root}/candidate.json`,
     `${root}/component.js`,
     `${root}/preview.svg`
   ], root).ok, true);
-  const result = validateStagedPaths([`${root}/candidate.json`, "leander-ppt/SKILL.md"], root);
+  const result = validateStagedPaths([`${root}/candidate.json`, "iinnovation-products-ppt/SKILL.md"], root);
   assert.equal(result.ok, false);
   assert.ok(result.findings.some(item => item.rule === "staged-path-outside-allowlist"));
 });
@@ -76,7 +76,7 @@ test("local alert dispatches redact paths and tokens", () => {
   const safe = sanitizeAlert("C:\\private\\deck.pptx ghp_12345678901234567890 /Users/alice/private.txt");
   assert.doesNotMatch(safe, /private|ghp_|alice/i);
   const dispatch = buildDispatch("candidate-cycle-blocked", "候选处理被阻断", safe, "https://github.com/acme/repo/actions", "alice");
-  assert.equal(dispatch.event_type, "leander_local_alert");
+  assert.equal(dispatch.event_type, "iinnovation_products_ppt_local_alert");
   assert.equal(dispatch.client_payload.kind, "candidate-cycle-blocked");
   assert.equal(dispatch.client_payload.source, "alice");
   assert.throws(() => buildDispatch("arbitrary-event", "x", "y", "https://github.com"));

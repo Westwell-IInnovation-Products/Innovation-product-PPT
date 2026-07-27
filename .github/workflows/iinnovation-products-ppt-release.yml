@@ -1,0 +1,41 @@
+name: Release IInnovation-Products_ppt Skill
+
+on:
+  push:
+    tags:
+      - "iinnovation-products-ppt-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate release package
+        working-directory: iinnovation-products-ppt
+        run: |
+          node scripts/release-hygiene.js
+          node templates/iinnovation-products-ppt-scaffold/tools/lint-scope-hygiene.js --skill-root .
+      - name: Build clean archive
+        run: |
+          tar -czf "iinnovation-products-ppt-${GITHUB_REF_NAME}.tar.gz" iinnovation-products-ppt
+          sha256sum "iinnovation-products-ppt-${GITHUB_REF_NAME}.tar.gz" > "iinnovation-products-ppt-${GITHUB_REF_NAME}.tar.gz.sha256"
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          args=(--generate-notes)
+          if [[ "$GITHUB_REF_NAME" == *beta* || "$GITHUB_REF_NAME" == *rc* ]]; then args+=(--prerelease); fi
+          archive="iinnovation-products-ppt-${GITHUB_REF_NAME}.tar.gz"
+          checksum="${archive}.sha256"
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "$archive" "$checksum" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "$archive" "$checksum" "${args[@]}"
+          fi

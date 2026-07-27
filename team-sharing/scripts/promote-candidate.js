@@ -27,7 +27,7 @@ const curator = value("curator");
 const approveForProduction = process.argv.includes("--approve-production");
 const skipGates = process.argv.includes("--skip-gates");
 if (!candidateArg || !skillArg || !curator) {
-  fail("Usage: node team-sharing/scripts/promote-candidate.js <candidate-dir> --skill-root <leander-ppt> --curator <github-login> [--approve-production] [--skip-gates]");
+  fail("Usage: node team-sharing/scripts/promote-candidate.js <candidate-dir> --skill-root <iinnovation-products-ppt> --curator <github-login> [--approve-production] [--skip-gates]");
 }
 
 const candidateDir = path.resolve(candidateArg);
@@ -39,7 +39,7 @@ if (!result.ok) {
 }
 if (!/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/.test(curator)) fail("Invalid curator login.");
 
-const scaffold = path.join(skillRoot, "templates", "leander-ppt-scaffold");
+const scaffold = path.join(skillRoot, "templates", "iinnovation-products-ppt-scaffold");
 const extensionDir = path.join(scaffold, "components", "extensions");
 const extensionFile = path.join(extensionDir, `${result.metadata.name}.js`);
 const registryFile = path.join(scaffold, "tools", "component-registry.json");
@@ -64,7 +64,7 @@ registry.maintenance = {
 };
 
 const repoRoot = path.dirname(skillRoot);
-const auditDir = path.join(repoRoot, "contributions", "leander-ppt", "promotions");
+const auditDir = path.join(repoRoot, "contributions", "iinnovation-products-ppt", "promotions");
 const auditFile = path.join(auditDir, `${result.metadata.id}.json`);
 fs.mkdirSync(auditDir, { recursive: true });
 const previousAudit = fs.existsSync(auditFile) ? fs.readFileSync(auditFile) : null;

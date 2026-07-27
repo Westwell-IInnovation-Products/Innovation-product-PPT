@@ -1,0 +1,62 @@
+name: Tag Approved IInnovation-Products_ppt Version
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "iinnovation-products-ppt/manifest.json"
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate approved package
+        working-directory: iinnovation-products-ppt
+        run: |
+          node scripts/release-hygiene.js
+          node templates/iinnovation-products-ppt-scaffold/tools/lint-scope-hygiene.js --skill-root .
+      - name: Create missing version tag
+        shell: bash
+        run: |
+          version="$(node -p "require('./iinnovation-products-ppt/manifest.json').version")"
+          tag="iinnovation-products-ppt-v${version}"
+          echo "IINNOVATION_PRODUCTS_PPT_VERSION=${version}" >> "$GITHUB_ENV"
+          echo "IINNOVATION_PRODUCTS_PPT_TAG=${tag}" >> "$GITHUB_ENV"
+          if git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null 2>&1; then
+            echo "Tag already exists: ${tag}"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "${tag}" -m "Release IInnovation-Products_ppt ${version}"
+            git push origin "${tag}"
+          fi
+      - name: Build clean archive and checksum
+        shell: bash
+        run: |
+          tar -czf "iinnovation-products-ppt-${IINNOVATION_PRODUCTS_PPT_TAG}.tar.gz" iinnovation-products-ppt
+          sha256sum "iinnovation-products-ppt-${IINNOVATION_PRODUCTS_PPT_TAG}.tar.gz" > "iinnovation-products-ppt-${IINNOVATION_PRODUCTS_PPT_TAG}.tar.gz.sha256"
+      - name: Create or refresh GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          archive="iinnovation-products-ppt-${IINNOVATION_PRODUCTS_PPT_TAG}.tar.gz"
+          checksum="${archive}.sha256"
+          if gh release view "${IINNOVATION_PRODUCTS_PPT_TAG}" >/dev/null 2>&1; then
+            gh release upload "${IINNOVATION_PRODUCTS_PPT_TAG}" "$archive" "$checksum" --clobber
+          else
+            args=(--generate-notes --target "${GITHUB_SHA}")
+            if [[ "${IINNOVATION_PRODUCTS_PPT_VERSION}" == *-* ]]; then args+=(--prerelease); fi
+            gh release create "${IINNOVATION_PRODUCTS_PPT_TAG}" "$archive" "$checksum" "${args[@]}"
+          fi

@@ -23,7 +23,7 @@ function safeGithubUrl(input, fallback = "https://github.com") {
 function buildDispatch(kind, title, details, url, source = "team-member") {
   if (!ALLOWED_KINDS.has(kind)) throw new Error(`Unsupported local alert kind: ${kind}`);
   return {
-    event_type: "leander_local_alert",
+    event_type: "iinnovation_products_ppt_local_alert",
     client_payload: {
       kind,
       title: sanitizeAlert(title, 120),
@@ -63,7 +63,7 @@ async function main() {
   const token = githubCredential();
   const response = await fetch(`https://api.github.com/repos/${repository}/dispatches`, {
     method: "POST",
-    headers: { Accept: "application/vnd.github+json", Authorization: `Bearer ${token}`, "Content-Type": "application/json", "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "leander-local-alert" },
+    headers: { Accept: "application/vnd.github+json", Authorization: `Bearer ${token}`, "Content-Type": "application/json", "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "iinnovation-products-ppt-local-alert" },
     body: JSON.stringify(payload)
   });
   if (!response.ok) throw new Error(`GitHub repository dispatch failed: HTTP ${response.status}`);

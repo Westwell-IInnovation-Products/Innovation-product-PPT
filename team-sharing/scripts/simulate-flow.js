@@ -5,7 +5,7 @@ const path = require("path");
 const cp = require("child_process");
 
 const repoRoot = path.resolve(__dirname, "..", "..");
-const outputRoot = path.join(os.tmpdir(), "leander-team-sharing-simulations");
+const outputRoot = path.join(os.tmpdir(), "iin-ppt-team-sharing-simulations");
 const evidenceRoot = path.join(repoRoot, "team-sharing", "output");
 const runId = new Date().toISOString().replace(/[:.]/g, "-");
 const runRoot = path.join(outputRoot, `simulation-${runId}`);
@@ -13,7 +13,7 @@ const remote = path.join(runRoot, "remote.git");
 const seed = path.join(runRoot, "seed");
 const maintainer = path.join(runRoot, "maintainer");
 const consumer = path.join(runRoot, "consumer");
-const installDestination = path.join(runRoot, "consumer-installed", "leander-ppt");
+const installDestination = path.join(runRoot, "consumer-installed", "iinnovation-products-ppt");
 const logs = [];
 
 function run(command, args, cwd, options = {}) {
@@ -87,10 +87,10 @@ async function main() {
   fs.mkdirSync(seed, { recursive: true });
   git(seed, "init");
   configureGit(seed, "seed-maintainer");
-  copyTree(path.join(repoRoot, "leander-ppt"), path.join(seed, "leander-ppt"));
+  copyTree(path.join(repoRoot, "iinnovation-products-ppt"), path.join(seed, "iinnovation-products-ppt"));
   copyTree(path.join(repoRoot, "team-sharing"), path.join(seed, "team-sharing"));
   git(seed, "add", ".");
-  git(seed, "commit", "-m", "Seed Leander sharing simulation");
+  git(seed, "commit", "-m", "Seed IInnovation-Products_ppt sharing simulation");
   git(seed, "branch", "-M", "main");
   git(seed, "remote", "add", "origin", remote);
   git(seed, "push", "-u", "origin", "main");
@@ -108,12 +108,12 @@ async function main() {
   git(maintainer, "merge", "--no-ff", `origin/${branchB}`, "-m", "Merge analyst-b candidate");
   git(maintainer, "push", "origin", "main");
 
-  const scaffold = path.join(maintainer, "leander-ppt", "templates", "leander-ppt-scaffold");
+  const scaffold = path.join(maintainer, "iinnovation-products-ppt", "templates", "iinnovation-products-ppt-scaffold");
   run(process.env.ComSpec || "cmd.exe", ["/d", "/s", "/c", "npm.cmd ci --no-audit --no-fund"], scaffold, { echo: true });
   const promoter = path.join(maintainer, "team-sharing", "scripts", "promote-candidate.js");
-  const skillRoot = path.join(maintainer, "leander-ppt");
-  const candidateA = path.join(maintainer, "contributions", "leander-ppt", "components", "analyst-a", "multi-actor-contribution-pool");
-  const candidateB = path.join(maintainer, "contributions", "leander-ppt", "components", "analyst-b", "evidence-metric-band");
+  const skillRoot = path.join(maintainer, "iinnovation-products-ppt");
+  const candidateA = path.join(maintainer, "contributions", "iinnovation-products-ppt", "components", "analyst-a", "multi-actor-contribution-pool");
+  const candidateB = path.join(maintainer, "contributions", "iinnovation-products-ppt", "components", "analyst-b", "evidence-metric-band");
   run(process.execPath, [promoter, candidateA, "--skill-root", skillRoot, "--curator", "component-curator", "--approve-production", "--skip-gates"], maintainer, { echo: true });
   run(process.execPath, [promoter, candidateB, "--skill-root", skillRoot, "--curator", "component-curator", "--approve-production", "--skip-gates"], maintainer, { echo: true });
 
@@ -134,23 +134,23 @@ async function main() {
   run(process.execPath, [path.join(scaffold, "tools", "build-component-index.js")], scaffold);
   run(process.execPath, [path.join(scaffold, "tools", "lint-component-library.js"), "--strict"], scaffold);
 
-  git(maintainer, "add", "leander-ppt", "contributions");
-  git(maintainer, "commit", "-m", "Promote two reviewed Leander components");
-  const tag = "leander-ppt-sim-v0.1.0";
-  git(maintainer, "tag", "-a", tag, "-m", "Simulated Leander component release");
+  git(maintainer, "add", "iinnovation-products-ppt", "contributions");
+  git(maintainer, "commit", "-m", "Promote two reviewed IInnovation-Products_ppt components");
+  const tag = "iinnovation-products-ppt-sim-v0.1.0";
+  git(maintainer, "tag", "-a", tag, "-m", "Simulated IInnovation-Products_ppt component release");
   git(maintainer, "push", "origin", "main", tag);
 
   run("git", ["clone", "--branch", tag, remote, consumer], runRoot);
   const shell = findPowerShell();
   run(shell, [
     "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
-    path.join(consumer, "team-sharing", "scripts", "install-leander.ps1"),
+    path.join(consumer, "team-sharing", "scripts", "install-iinnovation-products-ppt.ps1"),
     "-RepositoryRoot", consumer,
     "-Destination", installDestination,
     "-AllowCustomDestination"
   ], consumer, { echo: true });
 
-  const installedIndex = JSON.parse(fs.readFileSync(path.join(installDestination, "templates", "leander-ppt-scaffold", "tools", "component-index.min.json"), "utf8"));
+  const installedIndex = JSON.parse(fs.readFileSync(path.join(installDestination, "templates", "iinnovation-products-ppt-scaffold", "tools", "component-index.min.json"), "utf8"));
   const expectedNames = ["multiActorContributionPool", "evidenceMetricBand"];
   const installed = expectedNames.map(name => installedIndex.components.find(component => component.name === name));
   if (installed.some(component => !component || !component.selectable)) {

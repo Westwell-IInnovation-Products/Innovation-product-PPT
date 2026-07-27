@@ -10,11 +10,11 @@ function discover(root, found = []) {
   return found;
 }
 try {
-  const contributions = path.resolve(process.argv[2] || "contributions/leander-ppt/components");
-  const registry = path.resolve(value("registry", "leander-ppt/templates/leander-ppt-scaffold/tools/component-registry.json"));
+  const contributions = path.resolve(process.argv[2] || "contributions/iinnovation-products-ppt/components");
+  const registry = path.resolve(value("registry", "iinnovation-products-ppt/templates/iinnovation-products-ppt-scaffold/tools/component-registry.json"));
   const results = discover(contributions).map(dir => assessCandidate(dir, { registry, contributionsRoot: contributions }));
   const counts = results.reduce((acc, item) => { acc[item.lane] = (acc[item.lane] || 0) + 1; return acc; }, {});
-  const lines = ["## Leander candidate assessment", "", `Candidates: ${results.length}`, "", "| Candidate | Lane | Risk | Closest formal component |", "| --- | --- | ---: | --- |"];
+  const lines = ["## IInnovation-Products_ppt candidate assessment", "", `Candidates: ${results.length}`, "", "| Candidate | Lane | Risk | Closest formal component |", "| --- | --- | ---: | --- |"];
   for (const result of results) lines.push(`| ${result.candidate?.contributor || "-"}/${result.candidate?.id || "invalid"} | ${result.lane} | ${result.score} | ${result.similar?.[0]?.name || "none"} |`);
   if (!results.length) lines.push("| none | - | - | - |");
   const summary = value("summary");

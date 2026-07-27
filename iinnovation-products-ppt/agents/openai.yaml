@@ -1,0 +1,8 @@
+interface:
+  display_name: "IInnovation-Products_ppt"
+  short_description: "用不可跳过的门禁和内容视觉质量基线生成、打磨可编辑 PPTX。"
+  brand_color: "#C51516"
+  default_prompt: "请使用 $iinnovation-products-ppt。先初始化 Gate 0，读取当前门禁状态，并从 brief 和逐页大纲开始；未经我明确确认，不要跳到蓝图、样页或完整 PPT。"
+
+policy:
+  allow_implicit_invocation: true

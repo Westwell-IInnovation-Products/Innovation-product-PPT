@@ -18,7 +18,7 @@ function repositoryParts(repository) {
 }
 async function github(pathname, token, repository) {
   if (!token) throw new Error("GITHUB_TOKEN is required for GitHub event enrichment");
-  const response = await fetch(`https://api.github.com/repos/${repository}${pathname}`, { headers: { Accept: "application/vnd.github+json", Authorization: `Bearer ${token}`, "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "leander-feishu-notifier" } });
+  const response = await fetch(`https://api.github.com/repos/${repository}${pathname}`, { headers: { Accept: "application/vnd.github+json", Authorization: `Bearer ${token}`, "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "iinnovation-products-ppt-feishu-notifier" } });
   const data = await response.json();
   if (!response.ok) throw new Error(`GitHub metadata request failed: HTTP ${response.status}`);
   return data;
@@ -42,7 +42,7 @@ async function assessmentFromFiles(files, token, repository) {
 async function versionAt(ref, token, repository) {
   if (!ref) return "";
   try {
-    const file = await github(`/contents/leander-ppt/manifest.json?ref=${encodeURIComponent(ref)}`, token, repository);
+    const file = await github(`/contents/iinnovation-products-ppt/manifest.json?ref=${encodeURIComponent(ref)}`, token, repository);
     if (file.encoding !== "base64") return "";
     return String(JSON.parse(Buffer.from(file.content.replace(/\s/g, ""), "base64").toString("utf8")).version || "");
   } catch { return ""; }
@@ -55,12 +55,12 @@ async function enrich(eventName, event, env = process.env) {
     const run = event.workflow_run || {};
     const input = { eventName, workflowName: run.name, conclusion: run.conclusion, runUrl: run.html_url || runUrl };
     const summary = Array.isArray(run.pull_requests) ? run.pull_requests[0] : null;
-    if (run.name === "Leander Team Sharing" && summary && summary.number) {
+    if (run.name === "IInnovation-Products_ppt Team Sharing" && summary && summary.number) {
       input.pullRequest = await github(`/pulls/${summary.number}`, token, repository);
       input.files = await pullFiles(summary.number, token, repository);
       input.assessment = await assessmentFromFiles(input.files, token, repository);
     }
-    if (["Tag Approved Leander Version", "Release Leander PPT Skill"].includes(run.name)) input.version = await versionAt(run.head_sha, token, repository);
+    if (["Tag Approved IInnovation-Products_ppt Version", "Release IInnovation-Products_ppt Skill"].includes(run.name)) input.version = await versionAt(run.head_sha, token, repository);
     return input;
   }
   if (eventName === "pull_request_review") return { eventName, reviewState: event.review && event.review.state, pullRequest: event.pull_request, runUrl };

@@ -30,7 +30,7 @@ try {
     const result = guard(fs.readFileSync(0, "utf8"));
     if (!result.ok) {
       audit("blocked", result);
-      console.error("BLOCKED: Leander automation may push only agent/*, contrib/*, or promote/* branches.");
+      console.error("BLOCKED: IInnovation-Products_ppt automation may push only agent/*, contrib/*, or promote/* branches.");
       for (const finding of result.findings) console.error(`- ${finding.rule}: ${finding.ref || finding.value || "unknown"}`);
       process.exit(1);
     }

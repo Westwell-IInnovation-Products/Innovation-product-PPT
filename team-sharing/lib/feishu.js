@@ -6,7 +6,7 @@ function buildReviewCard(input = {}) {
     ? "red"
     : normalized === "closed" ? "grey"
       : ["success", "passed", "ready", "approved", "merged"].includes(normalized) ? "green" : "orange";
-  const title = safe(input.title || "Leander 组件候选状态更新");
+  const title = safe(input.title || "IInnovation-Products_ppt 组件候选状态更新");
   const details = safe(input.details || "请在 GitHub 中查看检查结果和审核信息。");
   const url = /^https:\/\//i.test(input.url || "") ? input.url : "https://github.com";
   const actionUrl = /^https:\/\//i.test(input.actionUrl || "") ? input.actionUrl : url;
