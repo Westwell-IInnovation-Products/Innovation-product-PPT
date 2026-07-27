@@ -6,12 +6,10 @@ Record role outputs here. Keep this short and factual; detailed artifacts live i
 
 | Role | Status | Role Brief | Artifact | Verdict | Notes |
 |---|---|---|---|---|---|
-| planner-zh | pending | role-briefs.md#planner-zh | outline.md |  |  |
-| layout-architect-zh | pending | role-briefs.md#layout-architect-zh | layout-blueprint.md |  |  |
+| planner-zh | pending | role-briefs.md#planner-zh | outline.md + layout-blueprint.md |  |  |
 | visual-designer-zh | pending | role-briefs.md#visual-designer-zh | qa.md |  |  |
 | component-curator-zh | pending | role-briefs.md#component-curator-zh | pages/*/page.json |  |  |
 | reviewer-zh | pending | role-briefs.md#reviewer-zh | qa.md |  |  |
-| presenter-zh | optional | role-briefs.md#presenter-zh | speaker-notes.md |  |  |
 
 ## Reviewer Verdicts
 

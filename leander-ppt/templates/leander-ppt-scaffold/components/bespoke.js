@@ -37,11 +37,15 @@ function makeBespoke({ ui, theme, pptx }) {
       const sx = cx + (rightCard ? R : -R) * 0.62, sy = cy + (p.y < cy ? -R : R) * 0.62;
       ui.line(slide, sx, sy, tx, ty, { color: C.line, width: 1.4 });
     });
-    // 中心机制圆（填充藏蓝 + 浅色光环）——填充与线框混搭
+    // 中心机制圆:结构填充按主题自适应(solid=实底藏蓝白字;soft/outline=浅底描边深字,避免高键/线框主题发黑)
+    const ss = (theme.signature && theme.signature.structStyle) || "solid";
     circle(slide, cx, cy, R + 16, C.surface, C.line, 1.2);
-    circle(slide, cx, cy, R, C.primary, null);
-    ui.addText(slide, cx - R, cy - 42, 2 * R, 46, (data.center || {}).name || "融合价值", { size: T.h2, color: "FFFFFF", bold: true, align: "center", fontFace: cjk((data.center || {}).name) });
-    ui.addText(slide, cx - R + 12, cy + 10, 2 * R - 24, 56, (data.center || {}).sub || "", { size: T.micro, color: "DDE5FF", align: "center", lineSpacingMultiple: 1.2, fontFace: cjk((data.center || {}).sub) });
+    let cFill = C.primary, cLine = null, cText = "FFFFFF", cSub = "DDE5FF";
+    if (ss === "soft") { cFill = C.surface2; cLine = C.primary; cText = C.primary; cSub = C.mute; }
+    else if (ss === "outline") { cFill = C.surface; cLine = C.primary; cText = C.primary; cSub = C.mute; }
+    circle(slide, cx, cy, R, cFill, cLine, cLine ? 2.4 : null);
+    ui.addText(slide, cx - R, cy - 42, 2 * R, 46, (data.center || {}).name || "融合价值", { size: T.h2, color: cText, bold: true, align: "center", fontFace: cjk((data.center || {}).name) });
+    ui.addText(slide, cx - R + 12, cy + 10, 2 * R - 24, 56, (data.center || {}).sub || "", { size: T.micro, color: cSub, align: "center", lineSpacingMultiple: 1.2, fontFace: cjk((data.center || {}).sub) });
     // 四向价值卡（线框 + 图标徽章，单点焦点描红）
     spokes.forEach((s, i) => {
       const p = pos[i], foc = s.focus, ink = foc ? C.accent : C.primary;
@@ -221,7 +225,8 @@ function makeBespoke({ ui, theme, pptx }) {
       const foc = t.focus, ink = foc ? C.accent : C.primary;
       if (foc) ui.rect(slide, X, y, W, laneH, { fill: C.accentSoft });
       ui.rect(slide, X, y, W, laneH, { line: ink, lineWidth: foc ? 1.8 : 1.3, round: true });
-      ui.rect(slide, X, y, 6, laneH, { fill: ink });
+      const rr = (theme.shape && theme.shape.radius) ? (theme.shape.radius.card ?? 18) : ((theme.container && theme.container.radius) ?? 8);
+      ui.rect(slide, X, y + rr, 6, laneH - 2 * rr, { fill: ink }); // inset by lane radius so the accent bar never overshoots the rounded corners
       circle(slide, X + 56, y + laneH / 2, 28, foc ? C.accentSoft : C.surface2, ink, 1.6); icon(pptx, slide, U, X + 56, y + laneH / 2, t.icon || "target", { color: ink, soft: foc ? C.accentSoft : C.surface2 });
       ui.addText(slide, X + 100, y + laneH / 2 - 20, 250, 40, t.name, { size: T.h3, color: ink, bold: true, valign: "middle", fontFace: cjk(t.name) });
       ui.addText(slide, X + 372, y + 16, W - 372 - 474, laneH - 32, t.action, { size: T.body, color: C.text, valign: "middle", lineSpacingMultiple: 1.2, fontFace: cjk(t.action) });

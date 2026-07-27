@@ -10,9 +10,6 @@
 
 ```bash
 node <skill-root>/scripts/sync-scaffold-tools.js <project-root>
-# 新根任务:
-node tools/resume-job.js
-# 仍在已绑定的活跃根任务:
 node tools/run-phase.js status
 node tools/context-pack.js --mode status
 node tools/context-pack.js --mode repair --pages p11,p12
@@ -23,17 +20,11 @@ node tools/context-pack.js --mode agent --role reviewer-zh --pages p09,p11
 
 ## 重历史边界
 
-- 每个新 deck 用一个新的 Codex 任务。不要在用来改 Skill 的那个任务里跑 Token A/B deck。
+- 一个 deck 在一个 Codex 任务里做完(不按 token 拆任务、不轮换、无 token 上限)。不要在用来改 Skill 的那个任务里跑 deck。
 - Gate 0 在建立基线之前会检查根任务已有的用量。它拒绝一个已经很重、已 compact 或不可观测的任务,而不是用新基线把旧历史藏起来。
-- 在每个已审批的 Gate 和成功的、会产生改动的 `run-phase` 边界,先记录 Token 检查点和 context 预算决策,再刷新 `state/phase-handoff.json`。
-- 当前会话预算包含活跃根任务及它派生的全部 subagent;非活跃历史根单独记账,不能掩盖或触发当前任务预算。
-- 在每个受保护的 `run-phase` 和 `deck.js render|verify|build` 命令之前,重新评估当前预算。直接用 deck 入口不是一种绕过。
-- 如果当前活跃根 rollout 不可读、或它的 Gate 0 基线无法重建,阻塞受保护命令,而不是把缺失的用量当成零。
-- 预算看当前根任务及其后代子智能体的累计 `total_tokens`:180k 完成当前 job 后停、220k 只写验证与 handoff、260k 为合同硬顶;最近调用异常和 compact 仍是防爆信号。默认 report-only 只记录 would-rotate,切到 `enforce` 后才创建待决锁。详见 `TOKEN-BUDGET.md`。
-- 开一个新任务,跑 `node tools/resume-job.js`;它会完成 `attach-thread`、handoff 校验、严格 context pack 和当前 job 定位。被 attach 的 rollout 必须是当前的 `CODEX_THREAD_ID`,而且在 enforce 锁存在时必须是在锁产生之后创建的。历史真实 ID、伪造 ID 和上一个根都会被拒绝。attach 之后,旧任务仍处于阻塞,因为每个生产命令都必须匹配 ledger 的活跃根任务。
-- 不要把整段旧对话粘贴或概括进新任务。项目产物及其哈希才是续做约束。
-- 不要把 `context-pack.js` 当成宿主历史的删除。它限制的是项目文件的读取;只有开新任务才能移除重复的宿主对话历史。
-- 任务轮换绝不靠散文携带审批:同样的 workflow receipt 和检查点哈希仍然是强制的。
+- 在每个已审批的 Gate 和成功的、会产生改动的 `run-phase` 边界,记录 Token 成本检查点,再刷新 `state/phase-handoff.json`。Token 账本只度量成本、不设上限、不轮换。
+- 不要把整段旧对话粘贴或临时概括进任务。先把原始消息/历史任务保存为项目内快照,并由 `requirements-contract.json` 提炼且哈希绑定;合同、coverage 和项目产物才是续做约束。
+- 绝不靠散文携带审批:同样的 workflow receipt 和检查点哈希仍然是强制的。
 
 用数据包来决定打开哪些文件。把 `recommendedReads` 当作默认的 context 边界;只有当数据包显示路线过期、QA 缺失、故事改变、主题改变或共享组件受影响时才扩大。
 
@@ -71,7 +62,7 @@ node tools/artifact-map.js --write
 用于在检查点已存在之后续做一份已有 deck。
 
 从这里开始:
-- 新根任务用 `node tools/resume-job.js`;同一活跃根任务用 `node tools/context-pack.js --mode status`
+- 用 `node tools/context-pack.js --mode status` 拿紧凑数据包(跨会话重开旧项目时可先 `node tools/resume-job.js`)
 - 只有当数据包显示审批缺失时,才读 `checkpoint-status.json`
 - 只读受影响的 `page.json/page.js/qa.md` 文件
 - 只有当布局节奏或视觉特征变化时,才读 `layout-blueprint.json`

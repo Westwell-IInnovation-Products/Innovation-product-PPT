@@ -1,11 +1,21 @@
 # Changelog
 
+## 0.6.0-beta.20 - 2026-07-23
+
+- Single-task mode: a whole deck is produced in one Codex task. `task-portfolio.js` now plans exactly one job (was 3–6 adaptive root tasks); `deck.config.js` sets `preferredRootTasks`/`maxPlannedRootTasks` to 1 and zeroes the budget thresholds.
+- Retire the token budget ceiling, rotation, and active-task/observability fail-closed enforcement. `context-budget-gate.js` no longer blocks: no 260k/180k/220k limit, no rotation lock, no INACTIVE-TASK/observability block, no `[水位]` water-line. The Token ledger stays for cost measurement only.
+- User-approval checkpoints (plan/blueprint/anchor/production-mode) and every quality gate (Gate 0 freshness, tool-freeze, quality baseline, geometry audit, user-feedback, source-evidence, agent receipts, final-gate pixel compare, cover/closing chrome) are unchanged — the retired stops are only the token-based task-splitting ones.
+- Trim `hard-gate-contract.js` and `hard-gate-blackbox.js` to the still-active workflow contracts (drop the retired budget/rotation/task-binding assertions); update `context-budget-gate` / `task-portfolio` self-tests. Rewrite SKILL.md, README.md, TOKEN-BUDGET.md, FAST-RUN.md, HARD-GATE.md, SCAFFOLD.md accordingly.
+
+## 0.6.0-beta.18 - 2026-07-23
+
+- Cut the agent roster from 6 to 4. Merge `layout-architect-zh` into `planner-zh`: story/outline and the whole-deck layout blueprint are one planning decision, produced in a single pass (`planner-zh` now triggers on both `storyChanged` and `layoutChanged`).
+- Remove `presenter-zh` as a role. Speaker notes (`speaker-notes.md`) become a main-agent deliverable step, so the capability is kept without spending a fresh-fork review pass; the `rehearsalRequested` event is retired.
+- Update the role wiring end to end: `deck.config.js` triggers/events, `context-pack.js` role reads, `plan-agent-events.js` input digests and fresh-review scope, `artifact-map.js` speaker-notes labelling (now file-existence based), and `migrate-agent-collaboration-v3.js` active-role list. Historical evidence in existing projects is still preserved — `migrate()` copies pre-existing role entries through verbatim.
+- Route `references/QUALITY-LOCK.md` from the SKILL phase map so it is reachable instead of orphaned.
+
 ## 0.6.0-beta.17 - 2026-07-23
 
-- Integrate the published beta.9 team-sharing automation line with the cumulative beta.10-beta.17 core workflow changes while preserving Agent candidate harvesting, risk triage, Feishu lifecycle notifications, approved-version tagging, and consumer updates.
-- Add `Base3` ("Minimalist") as a fifth built-in theme: a flat, sharp, graphics-driven derivative of Leander Base with a navy/red/teal tri-accent, white ground, cool-grey panels, and greige hairline chrome. Distilled from an internal WellOcean business-plan deck.
-- Base3 tokens capture the identity beyond colour — zero radius / zero elevation (flat-sharp), hairline strokes, colour-coded card top edges (teal → red lead → navy), thin-line mono-colour icons, teal flow-arrows, numbered status timelines, statement-title chrome, and a running "· MINIMALIST" footer.
-- Register `base3` in `theme/tokens.js` with `base3` / `base-3` aliases; add an `assertBase3Contract` regression check locking the palette, flat geometry, and signature.
 
 ## 0.6.0-beta.15 - 2026-07-23
 
@@ -61,9 +71,8 @@ Cost + design-repetition round, driven by the first complete beta.9 field run (t
 - Threshold ladder unchanged from beta.9 (nag 120k / plan-handoff 180k / hard 260k).
 - Review-budget follow-on (config + docs only, no tool change, no re-sync): the template `deck.config.js` drops `fullDeckRendered` from `visual-designer-zh`'s triggers, so final review defaults to reviewer-only — opening `fullDeckRendered` no longer pulls a redundant full-deck visual re-review (the anchor already locks style and the final reviewer covers visual/composition/shape-class). Field evidence: the team-skill deck ran a 3-role final (reviewer+visual+presenter) purely because it opened `fullDeckRendered` and `rehearsalRequested`; the visual-final alone cost ~2.78M. SKILL.md + deck.config comments now state that each opened event adds a fresh-fork review role (real token cost) and presenter is a deliverable step, not a gate.
 
-## 0.6.0-beta.9 - 2026-07-20
+## 0.6.0-beta.9 - 2026-07-17
 
-- Automate Agent candidate harvesting, risk triage, Feishu review notification, approved-version tagging, and consumer updates.
 - Cost round (evidence: beta8 field run, 9 threads / 683 calls / 100.65M raw input; one mixed-job thread burned 40%): pace by one-job sessions instead of thresholds.
 - Auto token checkpoints inside `enforceBudget` so `deck.js render/verify/build` and `run-phase.js` phases record gate-level deltas without manual `token-ledger.js checkpoint` calls (fixes the post-blueprint accounting gap).
 - Context watermark surfaced everywhere: `context-budget-gate.js --tail` advisory line after every `deck.js` verb and a `watermark` field in every `run-phase.js` summary.

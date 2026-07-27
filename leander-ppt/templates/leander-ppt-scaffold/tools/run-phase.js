@@ -38,19 +38,13 @@ function runContextBoundary(label) {
     process.exit(result.status || 1);
   }
   results.push({ label: "context budget boundary", seconds: Number(((Date.now() - started) / 1000).toFixed(1)) });
-  const lock = readJson(path.join(ROOT, "state", "context-rotation-lock.json"), {});
-  const rotationRequired = result.status === 2 || lock.status === "pending";
-  return {
-    rotationRequired,
-    reason: rotationRequired ? (lock.reason || "context budget exceeded") : "",
-    nextAction: rotationRequired ? "Start a fresh Codex task, attach it with token-ledger.js, and resume from state/phase-handoff.json." : "continue"
-  };
+  // Single-task mode: no rotation. The boundary still records a measurement checkpoint.
+  return { rotationRequired: false, reason: "", nextAction: "continue" };
 }
 function contextWatermark() {
   try {
     const budget = inspectContextBudget();
-    const k = value => `${Math.round(Number(value || 0) / 1000)}K`;
-    return `累计 ${k(budget.cumulativeTotalTokens)} / 执行停 ${k((budget.thresholds || {}).executionStopTokens)} / 硬顶 ${k((budget.thresholds || {}).conversationHardTotalTokens)} / ${budget.enforcementMode} / ${budget.status}`;
+    return `累计 ${Math.round(Number(budget.cumulativeTotalTokens || 0) / 1000)}K（仅度量，单任务无上限）`;
   } catch (error) { return `unavailable: ${error.message}`; }
 }
 function pageDirs() {
@@ -117,11 +111,9 @@ try {
     run("contact sheet", "render-contact-sheet.js", ["--png"]);
     run("render-level diversity and whitespace audit", "render-diversity.js");
     if (["anchor-sample", "production"].includes(cfg.workflow?.stage)) run("capture render-quality evidence", "render-quality-gate.js", ["capture"]);
-    run("candidate harvest scan", "candidate-harvest.js", ["--write"]);
     run("agent event plan", "plan-agent-events.js", ["--write"]);
   } else if (command === "final-verify") {
     run("final gated verification", "deck.js", ["verify", "--final"]);
-    run("candidate harvest", "candidate-harvest.js", ["--write", "--materialize"]);
     run("artifact map", "artifact-map.js", ["--write"]);
   } else {
     throw new Error("usage: run-phase.js status|prepare-pages|page-cycle|render-review|final-verify [--pages p01,p02] [--force-route]");

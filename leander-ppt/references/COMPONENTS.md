@@ -202,7 +202,6 @@ node tools/render-component-library-preview.js
 维护者可以用 `--components` 生成小批量策展图册，例如：
 
 ```bash
-node tools/render-component-library-preview.js --theme global-v2 --components evidenceLegend,stageGateRail,statusLegend
 ```
 
 图册右上角的策展徽章应同时显示层级、主/次关系、置信度上限、元数据来源和审核状态。它用于判断“组件表达什么”，不是展示某个项目的业务文案。

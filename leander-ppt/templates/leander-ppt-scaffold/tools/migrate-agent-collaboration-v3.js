@@ -4,18 +4,19 @@ const path = require("path");
 const ROOT = path.join(__dirname, "..");
 const file = path.join(ROOT, "agent-collaboration.json");
 const check = process.argv.includes("--check");
-const roles = ["planner-zh", "layout-architect-zh", "visual-designer-zh", "component-curator-zh", "reviewer-zh", "presenter-zh"];
+// Active roles. Legacy names (layout-architect-zh, presenter-zh) are intentionally
+// absent: they are no longer triggered, and migrate() copies any pre-existing role
+// entry through verbatim, so historical evidence in old projects is still preserved.
+const roles = ["planner-zh", "visual-designer-zh", "component-curator-zh", "reviewer-zh"];
 const artifacts = {
   "planner-zh": "outline.md",
-  "layout-architect-zh": "layout-blueprint.md",
   "visual-designer-zh": "agent-reviews/visual-designer-zh.md",
   "component-curator-zh": "agent-reviews/component-curator-zh.md",
-  "reviewer-zh": "agent-reviews/reviewer-zh.md",
-  "presenter-zh": "speaker-notes.md"
+  "reviewer-zh": "agent-reviews/reviewer-zh.md"
 };
 function read() { try { return JSON.parse(fs.readFileSync(file, "utf8").replace(/^\uFEFF/, "")); } catch { return {}; } }
 function blank(role) {
-  return { status: "pending", action: "", event: "", phase: "", threadId: "", forkTurns: ["visual-designer-zh", "reviewer-zh", "presenter-zh"].includes(role) ? "none" : "", contextPolicy: ["visual-designer-zh", "component-curator-zh", "reviewer-zh", "presenter-zh"].includes(role) ? "compact-pack" : "", runId: "", eventDigest: "", inputDigest: "", outputDigest: "", artifact: artifacts[role], verdict: "", summary: "", reason: "", runs: [] };
+  return { status: "pending", action: "", event: "", phase: "", threadId: "", forkTurns: ["visual-designer-zh", "reviewer-zh"].includes(role) ? "none" : "", contextPolicy: ["visual-designer-zh", "component-curator-zh", "reviewer-zh"].includes(role) ? "compact-pack" : "", runId: "", eventDigest: "", inputDigest: "", outputDigest: "", artifact: artifacts[role], verdict: "", summary: "", reason: "", runs: [] };
 }
 function needsMigration(data) { return data.version !== "agent-collaboration.v3" || data.policy !== "event-driven.v3" || roles.some(role => !Array.isArray(data.roles?.[role]?.runs)); }
 function migrate(data) {

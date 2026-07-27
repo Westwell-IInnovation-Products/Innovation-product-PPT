@@ -18,6 +18,7 @@
       "u.color.semantic",
       "u.visual.explanation",
       "u.summary.rationale",
+      "u.title.voice",
       "u.truth.boundary"
     ],
     "blueprint.contract": [
@@ -58,7 +59,8 @@
     "u.type.font": {"severity":"P1","label":"中英文字体遵守主题合同，不混用未知字体","evidence":"render-location"},
     "u.color.semantic": {"severity":"P1","label":"非中性色承担明确逻辑或设计意义","evidence":"render-location"},
     "u.visual.explanation": {"severity":"P1","label":"主体是视觉解释，不是平均铺开的文字卡片","evidence":"render-location"},
-    "u.summary.rationale": {"severity":"P1","label":"底部总结或方框只在承担结论、证据、状态或转折时出现","evidence":"render-location"},
+    "u.summary.rationale": {"severity":"P1","label":"页面论点写在副标题；底部总结带默认不用，仅在新增综合判断/边界、或作为少数过渡页的引导句时才出现","evidence":"render-location"},
+    "u.title.voice": {"severity":"P1","label":"标题是书面/学术陈述，不是口语；页面论点在副标题，不在标题或底部复述","evidence":"render-location"},
     "u.truth.boundary": {"severity":"P0","label":"结论、状态、数据和实现边界不虚构","evidence":"source-reference"},
     "b.signature": {"severity":"P1","label":"最终表达保持蓝图视觉签名","evidence":"contract-compare"},
     "b.expression": {"severity":"P1","label":"表达模式与页面任务一致","evidence":"contract-compare"},

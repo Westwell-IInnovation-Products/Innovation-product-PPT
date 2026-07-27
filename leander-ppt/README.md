@@ -1,358 +1,808 @@
-# Leander PPT · 目录说明(README)
+# Leander PPT
 
-本文件说明 `leander-ppt` 这个 skill 的文件夹结构,以及每个文件的作用,方便快速定位。
+## 受控式演示文稿生产框架说明
 
-`leander-ppt` 是一套通过分阶段 harness 产出正式、可编辑 `.pptx` 的 skill。核心分工:
+| 文档属性 | 内容 |
+|---|---|
+| 适用版本 | `0.6.0-beta.20` |
+| 主要读者 | 演示文稿需求方、内容策划者、视觉设计者、Skill 维护者 |
+| 主要产物 | 可编辑 `.pptx`、逐页渲染图、质量证据与流程回执 |
+| 分享版主题 | `leander-base`、`base2`、`leander-global` |
+| 运行形态 | 单任务、分阶段、显式审批、证据化质量控制 |
 
-- **`SKILL.md`** = 路由/入口(每次先读)。
-- **`references/`** = 分阶段的详细规则文档,由模型按当前阶段加载(是"散文规则")。
-- **`templates/leander-ppt-scaffold/`** = 项目框架模板;每个新 deck 从这里复制出真实工作目录。其中 **`tools/`** 才是真正被 `node` 执行的代码。
-- **`agents/`** = 事件触发的 subagent 角色人设。
-- **`scripts/`** = skill 级脚本(初始化、同步、回归、发布检查)。
+## 摘要
 
-> 阅读约定:文件名、命令、JSON 字段、组件名等标识符保持英文;其余说明为中文。本文件反映当前快照,新增文件后可能需要补充。
+`leander-ppt` 是一套面向正式演示文稿生产的工程化 Skill。其目标不是在单次生成中快速拼接若干幻灯片，而是将需求理解、叙事规划、视觉设计、页面实现、渲染评审和终版构建组织为一条可审查、可回溯、可增量修订的生产链。
 
-## 结构速览
+框架以三个原则为核心：
 
-```text
-leander-ppt/
-├── SKILL.md                 路由 / 强制流程约束
-├── CHANGELOG.md             版本变更
-├── manifest.json            skill 清单元数据
-├── README.md                本文件
-├── agents/                  6 个 -zh 角色人设 + openai.yaml(Codex 界面配置)
-├── references/              32 个分阶段规则文档(A 流程 / B 规划 / C 设计 / D 制作 / E 组件 / F QA / G 协作)
-├── scripts/                 init / sync / regression / release-hygiene
-└── templates/leander-ppt-scaffold/   项目框架模板
-    ├── (根)                 deck.config.js · DESIGN.md · role-briefs.md · *.json · qa.md …
-    ├── theme/               4 主题 tokens + assets/
-    ├── components/          ppt-components / editorial / bespoke / icons …
-    ├── tools/               ~55 个可执行工具(workflow / render / verify / qa …)
-    ├── pages/               逐页文件夹(page.js · page.json · qa.md)
-    ├── state/               轻量任务记忆
-    ├── output/              生成物(运行时填充)
-    └── agent-reviews/       角色评审证据(运行时填充)
-```
+1. **渐进式承诺**：先确认成本较低的语义与结构产物，再进入成本较高的页面实现和渲染。
+2. **证据化关卡**：关键阶段必须形成可验证的产物、哈希和审批回执，不能以口头描述替代实际完成状态。
+3. **最小影响修订**：页面是独立的生产与验证单元，局部变更原则上只重建受影响页面；全局主题、共享组件或叙事结构发生变化时，才扩大影响范围。
+
+这套方法将演示文稿视为一种同时包含内容结构、视觉语法、可执行代码和质量证据的复合型交付物。最终输出仍是标准、可编辑的 PowerPoint 文件，但其生成过程具有明确的阶段边界和审计依据。
 
 ---
 
-## 运行流程
+## 一、适用范围与基本概念
 
-一次完整成片是一条**分阶段、带关卡**的流水线:每个阶段先产出便宜、可检查的产物,在四个 `✋` 检查点停下等用户确认,贵的渲染永远排在便宜的结构决策之后。
+### 1.1 适用任务
+
+本 Skill 适用于以下类型的工作：
+
+- 根据文档、数据、访谈记录或结构化要点创建新演示文稿。
+- 对既有 `.pptx` 进行视觉重设计、结构调整或规范化处理。
+- 在既定主题下制作内部汇报、管理报告、培训材料、客户演示和技术介绍。
+- 对已生成演示文稿执行局部修订，并保留未受影响页面。
+- 建立可复用的主题、组件、页面合同和质量检查规则。
+
+下列情况不属于默认能力边界：
+
+- 未经审批直接把参考 PPT 中的业务内容、图片或数据复制到外部材料。
+- 以静态图片替代可编辑 PowerPoint，却仍将其描述为可编辑交付物。
+- 绕过用户检查点、渲染 QA 或终版像素核验，直接声明正式交付完成。
+- 将本地 Skill 的 Gate 误解为操作系统级安全沙箱。Gate 约束的是 Leander 的正式生产路径，不能阻止拥有文件系统权限的其他程序另行创建文件。
+
+### 1.2 术语定义
+
+| 术语 | 规范含义 |
+|---|---|
+| Deck | 一份完整演示文稿及其项目级配置、来源、页面和质量证据。 |
+| Scaffold | 创建 Deck 时复制得到的标准项目框架，包含主题、组件、页面目录和执行工具。 |
+| Page Contract | 单页的机器可读约束，通常记录页面意图、视觉路线、数据边界、素材需求与 QA 规则。 |
+| Gate | 在阶段转换或正式构建前执行的阻断式校验；失败时不得继续受保护操作。 |
+| Checkpoint | 需要使用者明确确认的阶段节点，例如大纲、布局蓝图和标杆样张。 |
+| Receipt | 将审批、角色运行或终版构建与具体输入、产物和哈希绑定的结构化回执。 |
+| Layout Blueprint | 在正式绘制前建立的低保真布局约束，用于验证全稿节奏、页面关系和视觉差异。 |
+| Anchor Sample | 从全稿中选取 2–3 个代表性页面完成真实绘制和渲染，用于确认视觉方向。 |
+| Visual Route | 页面采用的表达路径，例如共享组件、外部图形、Image2 资产或页面专属构图。 |
+| Theme | 控制颜色、字体、容器、标题系统、封面与封底等视觉 token 的统一样式系统。 |
+| QA Evidence | 与当前渲染结果绑定的几何、视觉、语义和可读性检查证据。 |
+
+### 1.3 运行前提
+
+正式使用前应具备以下条件：
+
+- 已在 Codex 环境中安装本 Skill。安装方式见 [`docs/GitHub-使用指南.md`](docs/GitHub-使用指南.md)。
+- 本机存在可用的 Node.js 运行环境。
+- 本机具备 PowerPoint 渲染能力；Windows 环境通常使用 Microsoft PowerPoint。
+- 已提供可识别的需求输入，包括受众、目标、场景、内容来源和交付边界。
+- 如页面要求使用真实图片、截图、数据或业务证据，应提供相应素材或明确其获取状态。
+
+输入的完整性直接影响规划质量。最小输入可以只有任务目标，但推荐同时说明：
+
+- 谁将观看这份演示文稿；
+- 演示发生在什么场景；
+- 希望受众理解、相信或采取什么行动；
+- 哪些事实必须出现，哪些内容不得公开；
+- 是否存在既有模板、参考 PPT 或品牌规范；
+- 页数、语言、演讲时长与交付时间是否有限制。
+
+### 1.4 启动与交互方式
+
+使用者可以通过自然语言启动任务，例如：
+
+- “使用 leander-ppt 将这份项目材料整理为管理层汇报。”
+- “基于现有 PPT 重设计第 3、5、8 页，其他页面保持不变。”
+- “制作一份面向海外客户的英文技术介绍，采用 `leander-global`。”
+
+框架会先初始化项目 Scaffold，并建立 Gate 0 基线。之后按照需求合同、大纲、设计系统、主题、布局蓝图、标杆样张和全量生产的顺序推进。需要使用者确认的阶段会停止，收到明确审批后才进入下一阶段。
+
+### 1.5 正式输出与修订原则
+
+正式交付物是可编辑的 `.pptx`，通常位于项目 `output/` 目录。完整项目还会保留：
+
+- 逐页 PNG 渲染结果；
+- Deck 总览图；
+- 页面合同与 QA 结果；
+- 来源证据与需求覆盖记录；
+- 用户审批、角色运行和终版构建回执；
+- 变更影响和增量修订记录。
+
+修订遵循最小影响原则：
+
+- 文案、数据或局部构图变化：只修改并重渲染对应页面。
+- 共享组件变化：重检所有调用该组件的页面。
+- 主题 token 变化：重检使用该主题且受相关 token 影响的页面。
+- 叙事结构、页序或需求范围变化：重新打开规划阶段，并更新需求合同、蓝图和相关审批。
+
+---
+
+## 二、分享版主题体系
+
+主题选择不是装饰性决策，而是对受众、信息密度、证据类型和品牌语义的综合约束。主题决定颜色语义、标题系统、容器层级、封面与封底形式；页面关系和内容结构仍由大纲、布局蓝图和视觉路线决定。
+
+### 2.1 三个公开主题
+
+| 主题 ID | 适用场景 | 视觉语法 | 主要约束 | 参考材料 |
+|---|---|---|---|---|
+| `leander-base` | 常规内部汇报、管理沟通、方法介绍 | 暖米白底、藏青结构、Westwell 红作为主要信号色；线性分隔和克制容器 | 容器保持扁平、无阴影；红色承担重点和品牌识别，不用于无意义装饰 | [27 页参考 PPT](docs/theme-samples/01-leander-base-reference.pptx) · [总览图](docs/theme-samples/01-leander-base-contact-sheet.jpg) |
+| `base2` | 机制说明、证据板、状态治理、决策路径 | 延续 Base 品牌语义，增加分级圆角、浅层面板和单层轻阴影 | 淡红仅表示当前态、Gate、阻塞、风险或结论；层级依赖尺寸、位置、描边与色彩共同表达 | [17 页参考 PPT](docs/theme-samples/02-base2-reference.pptx) · [总览图](docs/theme-samples/02-base2-contact-sheet.jpg) |
+| `leander-global` | 对外、国际、客户与正式技术说明 | 白底、藏青结构、天蓝信号色、英文优先的标题体系 | 红色降级为异常或风险状态；封面使用白色极简方案，或由项目注入已审批图片 | [13 页分享样稿](docs/theme-samples/03-leander-global-sample-13p.pptx) · [总览图](docs/theme-samples/03-leander-global-contact-sheet.png) |
+
+### 2.2 选择准则
+
+主题选择应至少回答四个问题：
+
+1. **受众属性**：内部管理者、跨部门团队、客户还是国际受众。
+2. **信息结构**：内容以叙事、机制、证据、状态还是技术架构为主。
+3. **表达正式度**：是否需要对外传播、英文优先或更严格的品牌一致性。
+4. **素材条件**：是否具备经过授权的真实图片、截图、数据和品牌资产。
+
+建议的默认路由如下：
+
+- 常规内部沟通优先 `leander-base`。
+- 机制、证据、治理和状态类页面占比较高时优先 `base2`。
+- 对外、国际或正式技术说明优先 `leander-global`。
+
+只有在三个主题均不适用时，才建立项目专属主题方案。新主题必须说明字体、颜色语义、容器规则、标题系统、封面、封底和图片策略，不得仅给出若干颜色值。
+
+### 2.3 参考材料的使用边界
+
+`leander-base` 与 `base2` 的材料是团队提供的参考 PPT，用于研究版式、密度、配色、图示和图片布局；`leander-global` 为使用当前工作流制作的 13 页分享样稿，用于展示现有实现能力。
+
+参考材料具有以下边界：
+
+- 它们用于主题选型和设计对照，不代表 Skill 会自动复刻原业务内容。
+- 版式可以抽象为通用设计模式，业务事实、图片、数据、备注和链接不得在未审查的情况下复用。
+- 三套材料页数不要求一致。评价重点是主题特征的覆盖程度，而不是形式上的页数对齐。
+- 文件完整性由 [`docs/theme-samples/MANIFEST.sha256`](docs/theme-samples/MANIFEST.sha256) 记录。
+
+更多说明见 [`docs/theme-samples/README.md`](docs/theme-samples/README.md)。
+
+---
+
+## 三、受控生产流程
+
+### 3.1 方法论原则
+
+Leander 采用“先语义、后结构；先约束、后实现；先代表性验证、后规模化生产”的渐进式流程。其依据是：需求和叙事错误对全稿具有系统性影响，而页面局部误差通常可以在隔离单元内修复。因此，应在低成本阶段识别高影响问题，把高成本渲染推迟到结构和视觉方向已得到确认之后。
 
 ```mermaid
 flowchart TD
-    A["用户请求"] --> G0{{"Gate 0 · init-scaffold<br/>建框架 + context 预算检查"}}
-    G0 --> B["Phase 1 · Brief<br/>来源 / 受众 / 目标 / 边界"]
-    B --> O["Phase 1 · Outline<br/>逐页大纲 + 视觉意图"]
-    O --> C1{{"✋ Gate 1 · plan<br/>用户审批"}}
-    C1 --> D["Phase 1.1 · 设计 / 术语 / State<br/>DESIGN.md · terminology"]
-    D --> T["Phase 1.3 · Theme<br/>选主题 + 颜色语义"]
-    T --> L["Phase 1.5 · 布局蓝图<br/>节奏矩阵 + 蓝图→组件约束"]
-    L --> C2{{"✋ Gate 1.5 · layoutBlueprint<br/>用户审批"}}
-    C2 --> AN["Phase 3 · 标杆样张<br/>2-3 页真实渲染 + 视觉评审"]
-    AN --> C3{{"✋ Gate 5 · anchorSample<br/>用户审批"}}
-    C3 --> PM["Phase 5.5 · 生产模式 A / B / C"]
-    PM --> C4{{"✋ Gate 5.5 · productionMode<br/>用户审批"}}
-    C4 --> P["Phase 4 · 全量生产<br/>逐页 page.js · 选路 · 动态 QA · preflight"]
-    P --> R["render · contact sheet"]
-    R --> QA{"渲染 QA<br/>reviewer-zh 独立评审"}
-    QA -->|"FIX-FIRST"| FIX["最小单位修复<br/>只改受影响页"]
-    FIX --> R
-    QA -->|"SHIP"| FV["final-verify<br/>质量锁 + 角色证据 + 设计/术语关卡"]
-    FV --> BUILD["deck.js build<br/>过 workflow gate"]
-    BUILD --> DONE(["交付 .pptx"])
+    A["用户需求与来源材料"] --> G0["Gate 0：初始化 Scaffold、环境与成本基线"]
+    G0 --> B["Brief：受众、目标、范围与来源"]
+    B --> O["Outline：叙事结构、逐页任务与证据映射"]
+    O --> C1{{"Checkpoint 1：需求与大纲审批"}}
+    C1 --> D["设计系统、术语、主题与项目状态"]
+    D --> L["Layout Blueprint：全稿节奏与逐页布局约束"]
+    L --> C2{{"Checkpoint 2：布局蓝图审批"}}
+    C2 --> S["Anchor Sample：2–3 页真实可编辑样张"]
+    S --> C3{{"Checkpoint 3：标杆样张审批"}}
+    C3 --> M["选择生产方式 A / B / C"]
+    M --> C4{{"Checkpoint 4：生产方式审批"}}
+    C4 --> P["全量生产：页面合同、视觉路线与逐页实现"]
+    P --> R["渲染、几何审计与总览图"]
+    R --> Q{"独立评审与动态 QA"}
+    Q -->|"FIX-FIRST"| I["变更影响分析与最小范围修复"]
+    I --> R
+    Q -->|"SHIP"| F["终版 Gate：需求覆盖、证据新鲜度与像素一致性"]
+    F --> X["正式构建可编辑 PPTX"]
 ```
 
-**图例:** `✋` = 停下等用户明确审批的检查点(用 `workflow-gate.js approve` 记录);其余为自动步骤或自动关卡。
+### 3.2 阶段与主要产物
 
-贯穿全程的三条机制(图里没画,但一直在起作用):
+| 阶段 | 核心问题 | 主要产物 | 阻断条件 |
+|---|---|---|---|
+| Gate 0 | 项目是否具备可重复运行的基线 | Scaffold、运行 ID、工具链指纹、Token 账本 | 环境不可验证、基线不可观测 |
+| Brief | 为什么制作、面向谁、边界是什么 | `brief.md`、来源索引、原始消息快照 | 目标、受众或事实边界不明确 |
+| Outline | 全稿讲述什么、各页承担什么任务 | `outline.md`、需求合同、页面映射 | 必须需求未进入规划 |
+| 设计与主题 | 全稿采用何种视觉语言和术语体系 | `DESIGN.md`、`visual-direction.md`、`terminology.json`、主题记录 | 颜色语义、字体或品牌规则未定义 |
+| Layout Blueprint | 页面结构、全稿节奏和视觉差异是否成立 | `layout-blueprint.md/json`、组件候选短名单、可选低保真预览 | 相邻页面同构、容量不合理、布局签名缺失 |
+| Anchor Sample | 规划是否能转化为真实可编辑页面 | 2–3 页样张 PPTX、逐页 PNG、视觉评审 | 主题、排版或表达路线未通过 |
+| Production | 如何规模化实现全部活跃页面 | `page.js`、`page.json`、素材与逐页 QA | 页面合同、素材或视觉路线不完整 |
+| Render & QA | 当前页面是否在真实像素层面可交付 | PNG、总览图、几何报告、`qa-result.json` | 重叠、溢出、误导、低可读性或证据过期 |
+| Final Verify & Build | 正式 PPTX 是否与已评审版本一致 | staging PPTX、正式 PPTX、终版回执 | 需求未覆盖、反馈未关闭、像素不一致 |
 
-- **唯一出片通路 + 硬关卡**:所有 `render / verify / build` 只走 `deck.js`,且必须持有有效 `workflow-receipt.json`,无法绕过(见 `HARD-GATE.md`)。
-- **任务组合与预算**:标准 16–30 页 deck 先规划成约 4 个有界 job,根据真实 token 预测自适应扩到 3–6 个任务。累计量包含根任务及其后代子智能体;180K 停止开新重活、220K 只交接、260K 为合同硬顶。首轮默认 report-only,调用数/子智能体数只做观测。
-- **反馈修复回路**:用户反馈走同一条"定位最小单位 → 只改受影响页 → 重渲 → 重跑 QA"的回路,共享 token/组件的改动才触发整片重渲。
+### 3.3 四个用户检查点
+
+用户检查点用于确认具有主观判断或范围决策性质的产物。自动校验不能替代这些确认。
+
+| 检查点 | 审批对象 | 使用者应重点判断 |
+|---|---|---|
+| `plan` | Brief、大纲、需求合同 | 目标是否正确，页序与详略是否合理，必须内容是否完整 |
+| `layoutBlueprint` | 全稿节奏、逐页布局签名、候选组件 | 页面关系是否清晰，相邻页面是否具有必要差异，信息密度是否可讲 |
+| `anchorSample` | 2–3 页真实渲染样张 | 主题、字体、颜色语义、视觉完成度是否达到预期 |
+| `productionMode` | 生产方式 A/B/C | 后续生产与反馈频率是否符合项目风险和时间安排 |
+
+审批必须形成 `leander-approval-receipt.v1`，并绑定当前运行、用户消息快照和已审批产物的哈希。审批后如果产物发生变化，原回执失效。
+
+### 3.4 生产方式
+
+三种生产方式只改变页面实现的组织方式，不降低终版质量标准。
+
+| 模式 | 组织方式 | 适用条件 | 主要代价 |
+|---|---|---|---|
+| Mode A：分批确认 | 每批 3–6 页完成实现、渲染和反馈后再进入下一批 | 故事或视觉仍存在不确定性，需要高频人工把关 | 上下文与沟通往返较多 |
+| Mode B：顺序整片 | 样张审批后由主 Agent 顺序完成全稿，再统一渲染与评审 | 主题、蓝图和样张已经稳定；为默认推荐模式 | 中间人工观察点较少 |
+| Mode C：并行分章 | 在章节可独立切分时由多个生产单元并行起草，主 Agent 统一整合 | 长篇 Deck、章节边界明确且存在可用子 Agent | 整合成本和跨章节一致性风险更高 |
+
+Mode C 只能在标杆样张审批后启用。主 Agent 始终负责主题一致性、全稿整合、终版 QA 和用户沟通；并行生产者不能分别形成互不一致的 Deck。
+
+### 3.5 单任务与成本度量
+
+当前版本采用单任务模式：从 Brief 到正式构建在一个连续任务中完成，不因 Token 数量拆分任务，也不以预算触发轮换。`token-ledger.js` 记录当前根任务及相关角色运行的成本，用于度量和复盘，但不设置硬上限。
+
+成本控制主要依赖以下方法：
+
+- 使用 `context-pack.js` 构建阶段相关的最小上下文；
+- 章级共享读取、页级独立存储；
+- 修订时只读取受影响页面和必要的共享依赖；
+- 复用未失效的 QA 证据和角色结论；
+- 仅在事件发生真实变化时重新触发专业角色；
+- 使用紧凑组件索引，而不是在常规生产中反复读取完整组件目录。
 
 ---
 
-## 整体设计思路
+## 四、核心机制与设计依据
 
-把"AI 一次性直出 PPT"改造成"像工程一样**分阶段、有关卡、有证据、可增量修复**的流水线"。用便宜的检查点和逐页隔离,在贵的渲染之前就锁住方向与质量。
+本章从问题定义、设计原则、实现路径、证据形态和适用边界五个维度说明 Leander 的核心机制。五项机制相互依赖：框架机制提供可隔离单元，蓝图机制降低结构性返工，组件机制约束视觉表达，质量进化机制形成闭环，多角色机制提供独立判断。
 
-1. **关卡式 harness,不是一次性生成器。** 出片被拆成 brief → 大纲 → 蓝图 → 锚点 → 生产 → QA 的阶段管道,每阶段先产出便宜、可检查的产物,并在四个检查点停下等确认。结构错了要在"画蓝图"时改,而不是等整片画完。
+### 4.1 框架机制：逐页隔离与单一正式构建路径
 
-2. **稳定的是流程与证据,不是外观。** 框架固化的是工作流和证据链,不是页面长相。每份 deck 的故事线、密度、版式都从当前 brief/主题/素材重新推导,默认绝不照搬上一份 deck 的页面分配。
+#### 问题定义
 
-3. **逐页隔离。** 一页一个文件夹(`page.js` / `page.json` / `qa.md` / `out/`)。页面是最小的设计与修复单位:改一页只重渲一页,不重建整片,反馈成本被压到最低。
+传统自动化 PPT 往往以整份文件为唯一生产单元。页面代码、内容、素材和检查结果相互耦合，局部修改容易引发全稿重建；与此同时，如果渲染、验证和构建分散在多个脚本中，流程参与者可以无意中使用未经验证的旁路产物。
 
-4. **以产物为门 / 证据支撑。** "完成"绑定到看得见的产物(`qa.md`、reviewer 结论块、渲染证据),没有产物 = 没做。每条 PASS 必须写明规则、位置、方法、观察,拒绝空泛证据。散文强制不了执行,就把"跳过 QA"变得可见。
+#### 设计原则
 
-5. **关系优先的视觉选择。** 先问"受众必须看到什么关系"(流程 / 状态 / 对比 / 层级 / 证据 / 场景…),再在四条路线(组件库 / 外部图 / image2 / 页面专属)里选表达,而不是按关键词硬套组件。
+框架采用“页级隔离、共享依赖显式化、正式输出单通路”的设计：
 
-6. **语义化的颜色与留白 + 反 AI 味。** 颜色必须编码含义(同级同色、每页单一强调焦点)、正文要填满或居中、版式要随故事变化;评审专门排查"装饰性配色 / 不对称无用空白 / 千篇一律"这些 AI 生成痕迹。
+- 页面是最小存储、渲染、评审和修复单元。
+- 主题、组件与工具是共享依赖，变更时通过影响分析扩大验证范围。
+- 正式渲染、验证和构建统一经由 `tools/deck.js`。
+- 阶段状态由结构化文件和回执表达，不以自然语言声明替代。
 
-7. **事件触发的多 agent 协作。** planner / layout / designer / curator / reviewer / presenter 由工作流事件触发,评审保持独立;主 agent 负责最终整合与对用户负责,不把责任下放给子代理。
+#### 实现路径
 
-8. **上下文与成本是一等公民。** 用少量 job 组合完整阶段,而不是把每个微步骤拆成根任务;按累计 token 在安全边界写 handoff,新任务用 `resume-job.js` 一键续做。调用次数不是质量门,相同事件摘要的重复评审才会被拒绝。
+每个页面目录至少包含：
 
-9. **自进化闭环。** 每轮反馈积累进 `LESSONS.md`,去标识、可复用的规则被提升为通用规则(并归档进 `LESSONS-ARCHIVE.md`);skill 越用越准。
+```text
+pages/<page-id>/
+├── page.js          页面构建逻辑
+├── page.json        页面合同、视觉路线、素材需求与 QA Profile
+├── qa.md            人类可读的页面结论
+├── qa-result.json   机器可验证的 QA 证据
+└── out/<page>.png   当前页面的隔离渲染结果
+```
 
----
+`page.js` 负责生成可编辑 PowerPoint 对象；`page.json` 负责描述页面为何这样表达；渲染图和 QA 文件负责证明当前实现是否满足约束。代码、合同与证据的分离，使“实现是否存在”“实现是否符合规划”“实现是否经过检查”成为三个可独立验证的问题。
 
-## 顶层
+正式输出路径为：
 
-| 文件 | 作用 |
+```text
+page.js
+  -> deck.js render
+  -> 页面 PNG 与几何审计
+  -> deck.js verify / verify --final
+  -> staging PPTX
+  -> staging 重新渲染
+  -> 与已评审 PNG 做像素一致性比较
+  -> 正式 PPTX + final-artifact-receipt.json
+```
+
+#### 证据与失效条件
+
+框架会验证页面合同、当前渲染哈希、来源证据、工具链指纹、审批回执、角色回执和 QA 新鲜度。以下情况会使既有证据失效：
+
+- 页面代码、元数据或所引用素材发生变化；
+- 主题或共享组件变化并影响当前页面；
+- PowerPoint、字体、依赖或渲染工具链发生变化；
+- QA 文件早于当前渲染；
+- 正式构建后的像素与已评审 PNG 不一致。
+
+#### 机制价值与边界
+
+该机制将局部修订成本从“整份重建”降低为“影响集重建”，并使流程绕过在产物层面可见。但它不是安全沙箱：拥有文件系统权限的程序仍可另行创建 PPTX；此类文件不具备 Leander 正式交付所要求的证据链。
+
+### 4.2 蓝图机制：在低成本阶段消除结构性风险
+
+#### 问题定义
+
+演示文稿的主要返工往往不是单个图形位置错误，而是叙事顺序、页面任务、信息容量或视觉节奏出现系统性偏差。如果在所有页面完成后才识别这类问题，修订将同时影响内容、布局、组件和讲述逻辑。
+
+#### 设计原则
+
+蓝图机制遵循两个层次：
+
+1. **故事级约束**：明确章节在整体论证中的功能，例如定义问题、提供证据、解释机制、提出方案和说明实施效果。
+2. **页面级约束**：明确单页的目的、关系类型、视觉签名、主要形状类别、候选组件和密度理由。
+
+蓝图不是缩小版成稿，也不是组件实现说明书。它只固定影响范围较大的结构决策，为后续视觉路线选择提供搜索边界。
+
+#### 实现路径
+
+大纲审批后，规划者基于 Brief、受众、主题、来源和证据建立：
+
+- 故事节奏矩阵；
+- 逐页意图卡；
+- 布局 Signature 矩阵；
+- 蓝图到组件的候选约束；
+- 颜色语义与页面呼应关系；
+- 高风险页面的可选低保真预览。
+
+布局 Signature 至少回答：
+
+- 页面承担何种叙事任务；
+- 主要信息关系是流程、对比、层级、证据、状态还是空间结构；
+- 视觉重心位于何处；
+- 页面采用何种主要形状类别；
+- 与前后页面形成连续、呼应还是对比；
+- 为什么该页不能沿用相邻页面的同一结构。
+
+对于超过 8 页、机制/架构页较多或视觉方向仍在塑造中的 Deck，布局蓝图为强制阶段。蓝图通过后，标杆样张和全量生产必须保持其关系类型与视觉签名；如需改变，应重新打开蓝图审批。
+
+#### 证据与评价标准
+
+`lint-layout-blueprint.js`、`lint-blueprint-preview.js` 和相关设计 Gate 检查：
+
+- 页面约束是否完整；
+- 相邻页是否过度重复；
+- 单一形状类别是否在全稿中过量使用；
+- 组件候选是否与关系、容量和主题兼容；
+- 高密度页面是否给出合理依据；
+- 蓝图预览是否存在越界、重叠或误导性表达。
+
+#### 机制价值与边界
+
+蓝图机制的价值不在于提前决定每个坐标，而在于把结构性错误前移到易修改阶段。它不能替代真实渲染：字体宽度、图形边界、图片裁切和像素层面的可读性仍须在样张和 QA 阶段验证。
+
+### 4.3 组件机制：关系驱动的视觉路由与组件—主题分离
+
+#### 问题定义
+
+页面设计如果仅依赖关键词匹配，容易出现“提到流程就画箭头”“出现数字就使用指标卡”的机械化表达。另一类常见问题是把内容结构与视觉外观写死在同一组件中，导致更换主题时必须复制或重写整套页面。
+
+#### 设计原则
+
+Leander 将视觉决策拆分为三个层次：
+
+1. **语义关系**：页面需要表达什么关系，例如顺序、因果、层级、比较、证据或状态变化。
+2. **表达路线**：使用共享组件、外部图形、Image2 资产还是页面专属构图。
+3. **视觉外观**：由主题 token 控制字体、颜色、容器、阴影、标题系统和品牌 chrome。
+
+因此，组件负责结构，主题负责视觉语法，页面合同负责说明选择理由。
+
+#### 实现路径
+
+视觉选择器依据下列信息生成并排序候选：
+
+- `purpose` 与 `relationship`；
+- 内容槽位数量和文本容量；
+- `candidateComponents` 与 `patternHints`；
+- 主题兼容性；
+- 素材是否真实存在；
+- 页面风险和候选置信差；
+- 全稿中同类组件与形状的重复程度。
+
+生产前必须比较四条路线：
+
+| 路线 | 适用条件 | 核心要求 |
+|---|---|---|
+| `component-library` | 已有组件能准确表达页面关系 | 保持可编辑性，记录组件 ID 与数据绑定 |
+| `external-graphic` | 地图、GIS、3D、真实截图等外部证据更合适 | 记录来源、授权、版本和页面引用 |
+| `image2` | 需要生成型视觉资产且不会冒充真实证据 | 先形成 Prompt 规格，明确真实性边界 |
+| `page-specific-custom` | 共享组件无法表达该页独特关系 | 说明拒绝其他路线的理由，并限制在单页目录 |
+
+共享组件注册表保存语义、关系、标签、槽位、风险和主题兼容信息；紧凑索引用于日常选择，完整注册表用于组件治理。当前组件库包含主组件、编辑式组件、定制构图和扩展组件，共计 76 个可执行组件。
+
+主题通过 `theme/tokens.js` 注册。`leander-base`、`base2` 和 `leander-global` 共享同一套内容组件，但通过不同的 `signature` 与 token 呈现不同标题系统、容器层级和品牌语义。页面不得为了模仿某个主题而在局部任意硬编码颜色或阴影。
+
+#### 质量约束
+
+视觉路由必须同时满足：
+
+- 关系与表达形式一致；
+- 内容容量不超过组件安全范围；
+- 色彩具有稳定语义，而非纯装饰；
+- 同级对象使用一致编码；
+- 重点色数量受到控制；
+- 全稿不存在大面积机械重复；
+- 真实证据与生成内容在表达上可区分；
+- 封面和封底遵守纯主题组件合同。
+
+#### 机制价值与边界
+
+该机制允许同一内容结构在不同主题下保持语义一致，同时降低复制组件造成的维护分叉。组件复用不是目标本身：当共享组件不能准确表达页面关系时，应采用经过论证的页面专属构图，而不是为了“组件覆盖率”牺牲表达质量。
+
+### 4.4 进化机制：证据化质量治理与反馈闭环
+
+#### 问题定义
+
+演示文稿的质量判断同时包含确定性问题和专业判断问题。文字溢出、图形越界和缺失文件可以由脚本发现；视觉重心、叙事清晰度和信息误导则需要基于真实渲染进行判断。若只保留“已检查”的文字结论，无法证明结论针对的是当前版本。
+
+#### 设计原则
+
+质量治理采用“机器检查全覆盖、人工评审看真实像素、证据与版本哈希绑定”的原则。任何影响页面视觉或语义的变更，都应使相应证据失效并触发复核。
+
+#### 实现路径
+
+质量链包含以下层次：
+
+1. **Preflight**：检查页面合同、视觉路线、素材、主题签名和实现绑定。
+2. **静态与几何审计**：识别语法错误、重叠、越界、线段异常和容量问题。
+3. **真实渲染**：将 PPT 页面导出为 PNG，并生成总览图。
+4. **动态 QA**：根据页面关系和风险生成中文页面专属检查项。
+5. **独立评审**：审阅员检查构图、语义、可读性和视觉一致性，输出 `SHIP` 或 `FIX-FIRST`。
+6. **最小范围修复**：根据 `change-impact.js` 识别影响集，只重建必要页面。
+7. **终版像素锁**：正式构建前重渲 staging PPTX，并与已评审 PNG 做零差异比较。
+
+页面通过 QA 至少需要：
+
+- 当前 `page.js` 和 `page.json`；
+- 当前隔离渲染 PNG；
+- 与当前渲染哈希一致的几何报告；
+- 页面级 `qa-result.json`；
+- 人类可读 `qa.md`；
+- 必要的来源证据和素材引用；
+- 如触发角色事件，存在有效 `agent-run-receipt`。
+
+#### 反馈分级与知识演化
+
+用户反馈按影响性质分为：
+
+| 等级 | 含义 | 处理方式 |
+|---|---|---|
+| P0 硬错误 | 重叠、溢出、事实错误、结构画错 | 立即修复，并进入强制 QA 或工具规则 |
+| P1 表达错误 | 页面关系、视觉路线或组件选择错误 | 修订页面路线，必要时更新组件元数据 |
+| P2 设计质量问题 | 专业度不足、重复、颜色无语义、明显生成痕迹 | 更新设计规则、主题或组件 |
+| P3 项目偏好 | 仅对当前项目或使用者有效 | 写入项目规则，不直接进入公共 Skill |
+
+反馈生命周期为：
+
+```text
+new -> active -> promoted -> stable -> archived
+```
+
+- `new`：进入项目 `state/feedback-log.md`。
+- `active`：重复出现或具有明确通用性，进入当前检查集。
+- `promoted`：被落实到 QA、设计规则、组件或工具代码。
+- `stable`：经过多个项目验证后不再作为高频提醒。
+- `archived`：保留历史依据，但不进入每次任务的默认上下文。
+
+反馈进入公共 Skill 前必须完成抽象：项目事实不得被误写为通用规则；单页特例不得扩散为全局约束；组件缺陷应优先修复组件，而不是在每个页面重复补丁。
+
+#### 机制价值与边界
+
+该机制使“完成”成为可验证状态，而非主观宣告；同时避免反馈日志无限增长。人工评审仍然可能存在判断差异，因此系统允许审阅员把机器 PASS 升级为 `FIX-FIRST`，但不允许自然语言覆盖机器 FAIL。
+
+### 4.5 多角色机制：专业分工、独立评审与单一责任
+
+#### 问题定义
+
+同一执行者同时承担规划、设计、实现和自我验收，容易产生确认偏差；但如果多个角色分别控制不同版本，又会造成责任分散、主题分叉和整合困难。
+
+#### 设计原则
+
+Leander 采用“专业判断分离、角色按事件触发、主 Agent 保持单一责任”的协作结构。角色是 Harness 中的评审或决策节点，不是各自独立制作整份 PPT 的平行团队。
+
+#### 角色模型
+
+| 角色 | 触发事件 | 主要职责 | 不得替代 |
+|---|---|---|---|
+| `planner-zh` | `storyChanged`、`layoutChanged` | Brief、大纲、叙事结构、全稿布局蓝图 | 用户审批、视觉终审 |
+| `visual-designer-zh` | `designChanged`、`themeChanged`、`highVisualRisk` | 主题语义、样张风格、排版和图片策略 | 业务事实判断 |
+| `component-curator-zh` | `componentChanged`、`lowConfidenceSelection` | 组件候选、路线冲突和共享组件治理 | 页面终版验收 |
+| `reviewer-zh` | `renderedPagesReady`、`fullDeckRendered` | 基于真实渲染执行独立 QA，给出 `SHIP/FIX-FIRST` | 自行修改后为自己背书 |
+
+主 Agent 负责：
+
+- 保持需求合同、主题和全稿结构一致；
+- 决定何时打开或关闭角色事件；
+- 整合角色意见并处理冲突；
+- 执行页面生产或组织生产单元；
+- 管理用户检查点；
+- 完成终版验证、讲稿和用户沟通。
+
+#### 证据合同
+
+每次真实角色运行应绑定：
+
+- 宿主返回的任务或运行标识；
+- 工作流事件与阶段；
+- `role-briefs.md` 中的角色要求；
+- 输入摘要和 `eventDigest`；
+- 输出文件及其 SHA-256；
+- 运行状态与结论。
+
+相同阶段中，如果事件摘要没有变化，应复用现有结论；只有设计、主题、页面或评审输入发生真实变化时才重新运行。最终审阅员必须保持独立，并提交与全尺寸 PNG 和几何审计绑定的检查证据。
+
+#### 与生产方式的关系
+
+Mode A/B/C 决定页面如何生产，不决定角色是否有效。标准 Mode B 通常包含一次标杆样张视觉评审和一次全稿独立终审；修复后仅复审变化页面。Mode C 中的章节生产者仍不是最终审阅员，主 Agent 负责跨章节一致性。
+
+#### 机制价值与边界
+
+事件驱动避免了每个阶段无差别调用所有角色，降低了重复上下文成本；独立评审降低自我确认偏差；单一责任确保最终决策可追溯。若宿主环境不支持真实子 Agent，可以由主 Agent按角色简报执行备用评审，但必须明确记录备用原因，不能伪造独立运行回执。
+
+### 4.6 机制之间的依赖关系
+
+| 上游机制 | 为下游提供的条件 |
 |---|---|
-| `SKILL.md` | **路由/入口**。强制流程约束、Phase Map、各阶段读哪个 reference、检查点与 gate。 |
+| 工程化框架 | 提供页级隔离单元、共享依赖和可哈希产物 |
+| 布局蓝图 | 提供页面关系、视觉签名和组件候选边界 |
+| 视觉路由与主题 | 将页面关系转化为可编辑实现 |
+| 质量治理与进化 | 验证当前实现并把缺陷转化为可执行规则 |
+| 多角色协作 | 对规划、设计和质量结论提供专业且相对独立的判断 |
+
+任何一项机制都不能独立保证质量。例如，组件正确不代表叙事正确；蓝图合理不代表真实渲染无溢出；机器审计通过也不代表页面语义清晰。正式交付要求五项机制在同一证据链中共同成立。
+
+---
+
+## 五、质量标准与完成定义
+
+### 5.1 内容质量
+
+- 每页具有明确的叙事任务和可讲结论。
+- 必须需求在需求合同中有页面映射和验收条件。
+- 术语、数字、来源和状态在全稿中一致。
+- 事实、推断、示意和生成内容具有可识别边界。
+- 页面标题表达结论或问题，不以空泛主题词替代。
+
+### 5.2 视觉质量
+
+- 页面关系与视觉形式一致。
+- 相邻页面具有必要的节奏差异，同时保持主题连续性。
+- 颜色、描边、位置、大小和形状共同表达语义。
+- 文字、图片、图形和连接线不存在溢出、碰撞或误导。
+- 全尺寸阅读和总览阅读均能识别层级与重点。
+- 不以大量同质卡片、无意义渐变或装饰图标制造表面复杂度。
+
+### 5.3 工程与证据质量
+
+- 页面源码、合同、渲染和 QA 证据相互匹配。
+- 来源与素材具有内容哈希和明确边界。
+- 用户检查点存在有效审批回执。
+- 必要的角色事件存在真实运行证据。
+- `deck.js verify --final` 通过。
+- staging PPTX 的重新渲染与已评审 PNG 一致。
+- 正式产物具有 `final-artifact-receipt.json`。
+
+### 5.4 “完成”的规范定义
+
+以下条件全部满足时，才可将 Deck 报告为正式完成：
+
+1. 所有活跃需求均有可检查的覆盖证据。
+2. 所有页面均存在当前版本的渲染和 QA 结论。
+3. P0/P1 用户反馈已经关闭。
+4. 必需的用户审批和角色回执有效。
+5. 终版 Gate 与正式构建通过。
+6. 最终 `.pptx` 来自受控 staging 构建，而非旁路文件。
+
+缺少其中任一项时，应明确报告当前状态为草稿、待确认或待修复，不得使用“已完成”替代风险说明。
+
+---
+
+## 六、文件与模块结构
+
+### 6.1 顶层结构
+
+```text
+leander-ppt/
+├── SKILL.md
+├── README.md
+├── CHANGELOG.md
+├── manifest.json
+├── docs/
+├── agents/
+├── references/
+├── scripts/
+└── templates/leander-ppt-scaffold/
+```
+
+| 路径 | 职责 |
+|---|---|
+| `SKILL.md` | Skill 入口、阶段路由、强制约束和最小必读集合。 |
+| `README.md` | 面向使用者和维护者的总体说明。 |
 | `CHANGELOG.md` | 版本变更记录。 |
-| `manifest.json` | skill 清单元数据(名称/版本/入口)。 |
-| `README.md` | 本目录说明。 |
+| `manifest.json` | 名称、版本、入口和分发元数据。 |
+| `docs/` | 安装、Git 协作和主题样例等使用者文档。 |
+| `agents/` | 四个中文角色简报及 `openai.yaml` 配置。 |
+| `references/` | 34 份分阶段方法、规则与质量文档。 |
+| `scripts/` | Scaffold 初始化、同步、回归测试和发布卫生检查。 |
+| `templates/leander-ppt-scaffold/` | 新 Deck 的可执行项目模板。 |
 
-## agents/ — 角色人设(事件触发的 subagent)
+### 6.2 `references/` 文档分组
 
-| 文件 | 作用 |
+#### 流程治理
+
+| 文件 | 主要内容 |
 |---|---|
-| `planner-zh.md` | 规划:故事、大纲、页面意图 |
-| `layout-architect-zh.md` | 布局:整片节奏、布局约束 |
-| `visual-designer-zh.md` | 视觉:锚点风格、颜色语义、排版、图片 |
-| `component-curator-zh.md` | 组件:关系优先的组件复用、选路线、拒绝理由 |
-| `reviewer-zh.md` | 审阅:渲染 QA、动态 QA、SHIP/FIX-FIRST(实跑的审阅员) |
-| `presenter-zh.md` | 讲者:排练流、转场、观众困惑点、补充知识 |
-| `openai.yaml` | agent 的 Codex/OpenAI 配置(角色→模型等) |
+| `HARD-GATE.md` | Fail-closed Gate、不变量、支持边界和对抗回归。 |
+| `SCAFFOLD.md` | 逐页文件夹模型、共享依赖和正式输出路径。 |
+| `FAST-RUN.md` | 已有项目的恢复、状态读取和最小上下文修复。 |
+| `TOKEN-BUDGET.md` | 单任务模式和 Token 成本度量。 |
+| `STATE-MEMORY.md` | 项目级轻量状态和会话恢复。 |
+| `SCOPE-HYGIENE.md` | 防止项目事实进入通用 Skill。 |
+| `REQUIREMENTS-TRACE.md` | 原始需求合同、覆盖证据与跨会话恢复。 |
 
-## references/ — 分阶段规则文档(按用途分组)
+#### 内容规划
 
-**A. 入口与流程治理**
-| 文件 | 作用 |
+| 文件 | 主要内容 |
 |---|---|
-| `HARD-GATE.md` | 硬 gate 强制约束(context 轮换 fail-closed 边界) |
-| `SCAFFOLD.md` | 框架结构说明(逐页文件夹模型) |
-| `FAST-RUN.md` | 快速运行/修复模式 + token 纪律 |
-| `TOKEN-BUDGET.md` | 单任务 260K 预算、3–6 job 组合、report-only→enforce 上线规则 |
-| `SCOPE-HYGIENE.md` | 范围卫生:不把项目事实泄漏进通用规则 |
-| `STATE-MEMORY.md` | 轻量任务记忆(state/) |
-| `SELF-EVOLUTION.md` | 自进化/学习闭环(教训如何积累、提升) |
+| `BRIEF.md` | 受众、目标、来源、边界和交付约束。 |
+| `OUTLINE.md` | 逐页计划、证据和视觉意图。 |
+| `NARRATIVE-FRAMEWORK.md` | 问题、环境、方案、机制和效果的叙事结构。 |
+| `TERMINOLOGY.md` | 术语唯一性和全稿一致性。 |
+| `QUALITY-BASELINE.md` | 内容充分性、真实性、可讲性和视觉底线。 |
 
-**B. 内容与结构规划(Phase 1)**
-| 文件 | 作用 |
+#### 设计与生产
+
+| 文件 | 主要内容 |
 |---|---|
-| `BRIEF.md` | 需求 brief 规格(来源/受众/目标/边界) |
-| `OUTLINE.md` | 大纲规格(逐页计划、被工具解析的输出模板) |
-| `NARRATIVE-FRAMEWORK.md` | 叙事框架(大问题→环境→目标问题→方案→展开→实施效果) |
-| `TERMINOLOGY.md` | 术语约束(一个概念一个名字) |
-| `QUALITY-BASELINE.md` | 内容/视觉质量底线(字段填全≠内容充分) |
+| `DESIGN-SYSTEM.md` | 项目级设计系统。 |
+| `THEMES.md` | 三个公开主题的 token、Signature 和选择规则。 |
+| `VISUAL-COMPOSITION.md` | 构图、视觉重心、层级和留白。 |
+| `LAYOUT-BLUEPRINT.md` | 故事节奏、逐页布局签名和 Gate 1.5。 |
+| `SLIDE-CRAFT.md` | 标题、颜色语义、页面密度和幻灯片工艺。 |
+| `PAGE-DESIGN-METHOD.md` | 从信息关系到视觉实现的页面方法。 |
+| `VISUAL-SELECTION.md` | 四类视觉路线及其选择证据。 |
+| `PRODUCTION.md` | Mode A/B/C、页面生产和最小范围修复。 |
+| `REVISION-MODE.md` | 既有 Deck 的增量修订合同。 |
+| `IMAGE-ASSETS.md` | 图片槽位、真实素材和 Prompt 规格。 |
 
-**C. 设计 / 主题 / 布局(Phase 1.1–1.5)**
-| 文件 | 作用 |
+#### 组件、QA 与协作
+
+| 文件 | 主要内容 |
 |---|---|
-| `DESIGN-SYSTEM.md` | 项目级设计系统 |
-| `THEMES.md` | 主题与模板系统(现 4 个:Base / Base2 / Global / GlobalV2) |
-| `VISUAL-COMPOSITION.md` | 视觉构图(让页面"是设计的"而非拼凑) |
-| `LAYOUT-BLUEPRINT.md` | 布局蓝图 Gate 1.5(节奏矩阵 + 蓝图到组件约束) |
+| `COMPONENTS.md` | 组件类型、来源和维护边界。 |
+| `COMPONENT-CATALOG.md` | 可复用组件目录和函数映射。 |
+| `COMPONENT-LIBRARY-DESIGN.md` | 组件元数据、注册表和治理方法。 |
+| `QA.md` | 渲染 QA、完成定义和审阅证据。 |
+| `DYNAMIC-QA.md` | 关系与风险驱动的页面专属 QA。 |
+| `QUALITY-LOCK.md` | 不得压缩的质量节点。 |
+| `LESSONS.md` | 当前高频缺陷清单。 |
+| `LESSONS-ARCHIVE.md` | 稳定或历史教训。 |
+| `SELF-EVOLUTION.md` | 反馈分级、提升和归档机制。 |
+| `AGENT-COLLABORATION.md` | 事件驱动的多角色协作与证据合同。 |
+| `ROLE-GUIDANCE.md` | 项目 `role-briefs.md` 的写法和使用方式。 |
+| `ARTIFACTS.md` | 用户确认、内部证据、下一步输入和正式输出标签。 |
 
-**D. 页面制作(Phase 3–4)**
-| 文件 | 作用 |
+### 6.3 Scaffold 根目录
+
+| 文件 | 职责 |
 |---|---|
-| `SLIDE-CRAFT.md` | 幻灯片工艺(必读:决策树、颜色语义、填满正文、反 AI 味) |
-| `PAGE-DESIGN-METHOD.md` | 页面设计方法(信息→关系→路线→产物真实性→版面结构→QA) |
-| `VISUAL-SELECTION.md` | 视觉选路线(组件库/外部图/image2/自定义 四路线) |
-| `PRODUCTION.md` | 生产模式 A/B/C + 最小单位修复 |
+| `deck.config.js` | Deck 名称、类型、主题、输出路径、工作流阶段和角色事件。 |
+| `DESIGN.md` | 当前 Deck 的设计系统。 |
+| `visual-direction.md` | 当前项目的视觉方向和素材策略。 |
+| `role-briefs.md` | 四个专业角色的项目级任务要求。 |
+| `terminology.json` | 项目规范术语。 |
+| `quality-target.json` | 内容与视觉质量阈值。 |
+| `checkpoint-status.json` | 用户检查点状态。 |
+| `agent-collaboration.json/.md` | 角色事件与评审证据。 |
+| `source-evidence-index.json` | 来源、边界与内容哈希。 |
+| `qa.md` | Deck 级 QA 汇总。 |
 
-**E. 组件与图片**
-| 文件 | 作用 |
+### 6.4 主题与组件
+
+`theme/` 包含：
+
+- `tokens.js`：三个公开主题的注册入口，默认主题为 `leander-base`；
+- `base2.js`：Base2 的分级圆角、阴影和语义 token；
+- `leander-global.js`：Global 的国际化标题、蓝色语义和封面/页脚规则；
+- `theme.json`：当前 Deck 的主题记录；
+- `assets/`：Logo 与页脚等品牌资产。
+
+`components/` 包含：
+
+- `ppt-components.js`：主组件与主题 chrome；
+- `editorial.js`：编辑式、线框式页面组件；
+- `bespoke.js`：复杂关系和大型视觉隐喻组件；
+- `icons.js`：主题感知的图标 Helper；
+- `extensions/`：可治理的组件扩展；
+- `external-renders/`：地图、图表、3D 或其他外部渲染结果。
+
+### 6.5 `tools/` 功能分组
+
+Scaffold 当前包含约 70 个 JavaScript 工具，主要分为：
+
+| 类别 | 代表工具 | 职责 |
+|---|---|---|
+| 工作流与 Gate | `workflow-gate.js`、`run-phase.js`、`deck.js`、`final-gate.js` | 阶段转换、受保护命令和终版构建 |
+| 上下文与成本 | `context-pack.js`、`token-ledger.js`、`rollout-usage.js` | 最小读取集和 Token 度量 |
+| 需求与来源 | `requirements-trace.js`、`verify-source-evidence.js` | 需求合同、覆盖证据和来源哈希 |
+| 组件与视觉路由 | `select-visual-route.js`、`component-registry.json`、`component-index.min.json` | 候选选择、元数据和组件治理 |
+| 蓝图与渲染 | `render-layout-blueprint.js`、`render-contact-sheet.js`、`render-diversity.js` | 低保真预览、总览和视觉多样性 |
+| QA 与审计 | `verify-page-preflight.js`、`render-quality-gate.js`、`build-qa-profile.js` | 页面前检、几何证据和动态 QA |
+| 影响与修订 | `change-impact.js`、`revision-mode.js`、`page-digests.js` | 影响集计算和增量证据 |
+| 角色与产物 | `plan-agent-events.js`、`verify-agent-collaboration.js`、`artifact-map.js` | 角色事件、运行回执和产物标签 |
+| 回归与维护 | `regression-tests.js`、`lint-scope-hygiene.js`、`lint-component-library.js` | 行为回归、范围卫生和组件维护 |
+
+### 6.6 页面、状态与输出
+
+| 目录 | 职责 |
 |---|---|
-| `COMPONENTS.md` | 组件库总览与政策(三层模型、外部库) |
-| `COMPONENT-CATALOG.md` | 组件目录/选择菜单(~50 个组件 + 函数映射) |
-| `COMPONENT-LIBRARY-DESIGN.md` | 组件库如何演进(元数据标准、注册表/渲染器/选择器约束、治理) |
-| `IMAGE-ASSETS.md` | 图片预留槽位 + prompt 规格工作流 |
-
-**F. QA 与质量**
-| 文件 | 作用 |
-|---|---|
-| `QA.md` | QA 协议(渲染质量锁、完成的定义、审阅员约束) |
-| `DYNAMIC-QA.md` | 页面专属的中文动态 QA |
-| `QUALITY-LOCK.md` | 质量锁(省 token 的前置条件) |
-| `LESSONS.md` | 活跃缺陷清单(一屏、每次都读) |
-| `LESSONS-ARCHIVE.md` | 累积缺陷教训归档(去重全集) |
-
-**G. 协作与产物**
-| 文件 | 作用 |
-|---|---|
-| `AGENT-COLLABORATION.md` | 多 agent 事件触发协作机制 |
-| `ROLE-GUIDANCE.md` | 角色指引(项目 `role-briefs.md` 怎么用) |
-| `ARTIFACTS.md` | 产物标签(user-confirm / next-input / internal-evidence / final-output / archive-reference) |
-
-## scripts/ — skill 级脚本(在 skill 根运行)
-
-| 文件 | 作用 |
-|---|---|
-| `init-scaffold.js` | 建一个发布态干净框架、装锁定依赖、验证运行时、创建 Gate 0 |
-| `sync-scaffold-tools.js` | 恢复已有项目时,只升级 skill 受管的 workflow 工具 |
-| `regression-tests.js` | 共享 skill 的回归测试入口(隔离安装跑) |
-| `release-hygiene.js` | 分发前校验:确保是干净的内部试用包(无泄漏) |
+| `pages/` | 逐页代码、合同、QA 和隔离渲染。 |
+| `state/` | 运行状态、需求合同、决策日志、Token 账本、回执、反馈和页面记忆。 |
+| `output/` | PPTX、PNG、总览图、质量证据和终版回执。 |
+| `agent-reviews/` | 规划、视觉、组件和审阅角色的输出证据。 |
 
 ---
 
-# templates/leander-ppt-scaffold/ — 项目框架模板
+## 七、维护、验证与发布
 
-每个新 deck 从这里复制出一份真实工作目录。以下是模板自带的种子文件。
+### 7.1 规则与代码的修改边界
 
-**根文件**
-| 文件 | 作用 |
+| 修改目标 | 主要位置 |
 |---|---|
-| `deck.config.js` | deck 配置(name/theme/fileName/workflow.stage/executionBudget/agentCollaboration) |
-| `DESIGN.md` | 项目设计系统(模板) |
-| `visual-direction.md` | 项目视觉 brief(模板) |
-| `role-briefs.md` | 多 agent 的项目角色指引(模板) |
-| `terminology.json` | 项目规范术语 |
-| `quality-target.json` | 质量目标分数(各维度阈值) |
-| `checkpoint-status.json` | 检查点审批状态 |
-| `agent-collaboration.json` / `.md` | 机器可读 / 人类可读的角色证据 |
-| `qa.md` | deck 级 QA 汇总(逐页表 + 审阅员结论) |
-| `package.json` / `package-lock.json` | 依赖(pptxgenjs 等) |
-| `.leander-scaffold-version.json` | 框架版本标记 |
-| `.codexignore` / `.gitignore` | 忽略规则 |
+| 阶段方法、文字规则 | `references/*.md` |
+| 强制入口与路由 | `SKILL.md` |
+| 可执行行为 | `templates/leander-ppt-scaffold/tools/*.js` |
+| 主题外观 | `theme/` 与主题感知组件 |
+| 共享组件 | `components/`、注册表和元数据覆盖层 |
+| 单页专属实现 | 对应 `pages/<page-id>/` |
+| 项目事实和反馈 | 当前 Deck 的 `source/`、`state/` 和页面目录 |
 
-## theme/ — 主题
+公共 Skill 不得吸收具体项目名称、客户事实、未授权素材或本机绝对路径。
 
-| 文件 | 作用 |
-|---|---|
-| `tokens.js` | 主题注册表 + `getTheme()`(默认备用 Leander Base) |
-| `leander-global.js` | Leander Global 主题(对外/国际/正式) |
-| `base2.js` | Base2 主题:Base 的柔和纵深变体 |
-| `global-v2.js` | GlobalV2 主题:工业/自动化技术风高键蓝白 |
-| `theme.json` | 当前 deck 选定的主题记录 |
-| `assets/logo-westwell.png` · `footer-westwell.png` | 品牌资产(logo / 页脚字标) |
+### 7.2 修改后的验证顺序
 
-## components/ — 组件库
+在 Skill 根目录执行：
 
-| 文件 | 作用 |
-|---|---|
-| `ppt-components.js` | 主组件库 `makeComponents(pptx, theme)`(~50 内容组件 + chrome) |
-| `editorial.js` | 编辑式 / 线框版式组件(lineCompare、zoneGrid…) |
-| `bespoke.js` | 定制大图形隐喻组件("灵动感":hubRadial、goalPath…) |
-| `icons.js` | 图标 helper(document/person/hub/chart… 图标集) |
-| `tool-system-tree.js` | 工具系统树专用组件(toolSystemTree) |
-| `harness-slides.js` | 讲解 Leander harness 本身的专用页组件 |
-| `extensions/index.js` | 组件扩展注册入口 |
-| `external-renders/` | 外部渲染源(ECharts/3D 等)存放目录 |
+```powershell
+node .\templates\leander-ppt-scaffold\tools\regression-tests.js
+node .\templates\leander-ppt-scaffold\tools\lint-scope-hygiene.js --skill-root .
+node .\scripts\release-hygiene.js
+```
 
-## tools/ — 可执行工具(按功能分组)
+主题注册检查：
 
-**工作流 & 硬 Gate**
-| 文件 | 作用 |
-|---|---|
-| `workflow-gate.js` | 每个 deck 的强制工作流入口与阶段 gate(init/status/approve/migrate) |
-| `run-phase.js` | 把确定性 phase 工作合并成一次模型可见调用 |
-| `deck.js` | 页面 render / verify / build(唯一受 gate 出片通路) |
-| `deck-ctx.js` | 构建 `{ ui, ed, bp, theme, pptx }` 上下文 |
-| `phase-handoff.js` | Gate 边界的哈希绑定 handoff 数据包 |
-| `task-portfolio.js` | 把完整 deck 规划为 3–6 个自适应根任务 job |
-| `resume-job.js` | 新任务一键 attach、校验 handoff、生成严格 context pack、定位当前 job |
-| `hard-gate-contract.js` | 防止误删硬 gate 强制调用点 |
-| `hard-gate-blackbox.js` | 硬 gate 的进程级对抗黑盒冒烟测试 |
-| `tool-freeze.js` | deck 运行期间冻结工作流机器 |
-| `environment-doctor.js` | Gate 0 / 渲染前的本地运行时体检 |
-| `toolchain.js` | 工具链探测 |
+```powershell
+node -e "const {themes}=require('./templates/leander-ppt-scaffold/theme/tokens'); console.log(Object.keys(themes))"
+```
 
-**Context / Token 治理**
-| 文件 | 作用 |
-|---|---|
-| `context-budget-gate.js` | 按根任务+后代子智能体累计 total_tokens 评估执行/交接/硬顶水位 |
-| `context-pack.js` | 默认严格、自动裁掉可选重读项的事件界定 context 数据包 |
-| `token-ledger.js` | Gate 感知的 token 记账(分任务累计、主/子智能体拆分)+ 中文报告 |
-| `rollout-usage.js` | 从本地 Codex rollout JSONL 读真实 token 用量 |
+分享版预期输出：
 
-**视觉选路线 & 组件**
-| 文件 | 作用 |
-|---|---|
-| `select-visual-route.js` | 关系优先的视觉选择器 V2(意图→候选→选路线) |
-| `visual-selection-diversity.js` | 渲染前:防重复组件/重复几何 signature |
-| `component-registry.json` | 组件注册表(语义/关系/标签/槽位/治理状态) |
-| `component-index.min.json` | 紧凑组件索引(日常低 token 选组件) |
-| `build-component-index.js` | 从注册表重建紧凑索引 |
-| `enrich-component-registry.js` | 给注册表补齐可复用库元数据 |
-| `component-contract.js` | Gate 1.5 组件约束:精确组件 ID 与自由构图提示分开 |
-| `component-runtime.js` | 共享组件运行时自省(trace/绑定) |
-| `compact-page-contract.js` | 把页面约束迁移到紧凑 V2 归属模型 |
-| `lint-component-library.js` | 组件库维护 lint(语法/元数据/硬编码色) |
-| `render-component-library-preview.js` | 渲染真实组件图册预览 |
-| `render-component-shortlist-preview.js` | 在当前主题下渲染 Gate 1.5 候选组件短名单 |
-| `verify-component-themes.js` | 合并真实渲染清单→组件双主题兼容元数据 |
+```text
+leander-base
+base2
+leander-global
+```
 
-**渲染 & 预览**
-| 文件 | 作用 |
-|---|---|
-| `render-contact-sheet.js` | 从已渲染页面构建无依赖 SVG contact sheet |
-| `render-diversity.js` | 渲染后的几何/留白多样性审计(低分辨率占用率特征) |
-| `render-layout-blueprint.js` | 确定性低保真蓝图渲染器 |
-| `render-risk.js` | 确定性风险分级(哪些页需要全尺寸评审) |
-| `render-quality-gate.js` | 哈希绑定的渲染质量证据锁(capture/record/verify) |
-| `blueprint-geometry.js` | 蓝图几何计算(拒绝非轴对齐线段等) |
-| `zoom-crop.js` | 从渲染 PNG 裁剪+放大,做像素级缺陷复核 |
+组件注册表发生变化时，还应执行：
 
-**校验 & Lint(设计关卡)**
-| 文件 | 作用 |
-|---|---|
-| `verify-design-gates.js` | 设计硬关卡(outline/blueprint/pages 阶段) |
-| `verify-checkpoints.js` | 阶段检查点 gate(phase4 等) |
-| `verify-page-preflight.js` | 页面生产/渲染前的最终视觉约束 gate |
-| `verify-agent-collaboration.js` | 校验真实角色运行是否匹配事件计划与独立性 |
-| `verify-qa-result.js` | 校验有证据支撑的页面 QA(仅 Markdown PASS 不够) |
-| `verify-quality-baseline.js` | 渲染/build 前校验可复用内容/视觉质量底线 |
-| `verify-terminology.js` | 校验 deck 术语一致性 |
-| `verify-state-memory.js` | 校验轻量 state/记忆产物 |
-| `lint-layout-blueprint.js` | 蓝图节奏/形状类复用 lint |
-| `lint-blueprint-preview.js` | Gate 1.5 预览安全 lint |
-| `lint-scope-hygiene.js` | 范围卫生 lint(防项目事实泄漏) |
+```powershell
+node .\templates\leander-ppt-scaffold\tools\build-component-index.js
+node .\templates\leander-ppt-scaffold\tools\lint-component-library.js --strict
+```
 
-**QA / 产物 / 迁移 / 其他**
-| 文件 | 作用 |
-|---|---|
-| `build-qa-profile.js` | 从规则集 ID + 页面风险生成紧凑中文 QA 约束 |
-| `qa-batch.js` | 批量初始化/应用页面 QA,不丢弃仍有效的 PASS 证据 |
-| `qa-evidence-index.js` | 压缩逐规则证据 digest,给增量 reviewer 提供轻量读取面 |
-| `qa-rules.zh.json` | 中文 QA 规则集 |
-| `artifact-map.js` | 产物清单映射(生成 artifact-manifest) |
-| `page-digests.js` | 拆分的 render/selection/QA/source 摘要(非渲染元数据不使 PNG 失效) |
-| `change-impact.js` | 变更影响分析(对比当前摘要与上次渲染集) |
-| `issue-registry.js` | 结构化问题生命周期登记 |
-| `plan-agent-events.js` | 产出事件摘要计划(有界的 Mode B 评审) |
-| `migrate-agent-collaboration-v3.js` | 把历史协作证据迁移到 V3(不伪造评审) |
-| `migrate-evidence-v2.js` | 对已 PASS 的旧证据做一次性迁移 |
-| `regression-tests.js` | 框架内的回归套件(语法 + 确定性行为) |
+### 7.3 发布检查
 
-## pages/ — 示例/种子页(逐页文件夹模型)
+发布前至少确认：
 
-| 文件夹 | 内容 |
-|---|---|
-| `p01-cover/` | 封面示例页:`page.js`(构建)· `page.json`(约束)· `qa.md`(逐页结论) |
-| `p02-values/` | 内容示例页:同上三件套 |
+- `manifest.json`、Scaffold 版本和 `deck.js` 版本一致；
+- 三个公开主题可正常注册；
+- 主题样例与 `MANIFEST.sha256` 一致；
+- 未包含 `node_modules/`、运行时 `output/`、临时 `state/` 或未批准业务材料；
+- 回归测试、范围卫生和发布卫生检查通过；
+- Git 差异中没有密钥、本机路径或意外二进制文件；
+- README、Git 指南和主题文档反映同一分享范围。
 
-> 每张幻灯片一个文件夹,是最小的隔离、渲染与修复单位;渲染输出落在该页的 `out/<id>.png`。
-
-## state/ — 轻量任务记忆
-
-| 文件 | 作用 |
-|---|---|
-| `run-state.json` | 运行状态 |
-| `decision-log.md` | 决策日志 |
-| `conversation-summary.md` | 会话摘要 |
-| `task-portfolio.json` | 3–6 个自适应根任务 job、当前 job 与 split 历史 |
-| `context-budget.json` | 当前任务累计 token 水位与 would-rotate/enforce 决策 |
-| `phase-handoff.json` | 新任务续做的哈希绑定最小数据包 |
-| `feedback-log.md` | 项目本地原始反馈日志 |
-| `issues.json` | 问题登记 |
-| `page-memory/` | 逐页记忆(运行时填) |
-
-## output/ · agent-reviews/
-
-生成物(`.pptx`、`preview/`、contact sheet)与角色评审证据的输出目录,随运行填充。
+完整 Git 协作流程见 [`docs/Git-操作说明.md`](docs/Git-操作说明.md)。
 
 ---
 
-## 速记
+## 八、快速索引
 
-- **改规则** → 编辑 `references/*.md`(散文,模型读)。
-- **改行为/机器逻辑** → 编辑 `templates/leander-ppt-scaffold/tools/*.js`(代码,被执行)。
-- **改外观/主题** → `templates/leander-ppt-scaffold/theme/` 与 `components/`。
-- **出片唯一通路** → `node tools/deck.js render|verify|build`,必须过 workflow gate。
+| 目标 | 入口 |
+|---|---|
+| 第一次安装 | [`docs/GitHub-使用指南.md`](docs/GitHub-使用指南.md) |
+| 选择主题 | [`references/THEMES.md`](references/THEMES.md) |
+| 理解检查点 | [`SKILL.md`](SKILL.md) 与 [`references/HARD-GATE.md`](references/HARD-GATE.md) |
+| 规划全稿结构 | [`references/OUTLINE.md`](references/OUTLINE.md) 与 [`references/LAYOUT-BLUEPRINT.md`](references/LAYOUT-BLUEPRINT.md) |
+| 选择页面表达路线 | [`references/VISUAL-SELECTION.md`](references/VISUAL-SELECTION.md) |
+| 查询组件 | [`references/COMPONENT-CATALOG.md`](references/COMPONENT-CATALOG.md) |
+| 全量生产或修订 | [`references/PRODUCTION.md`](references/PRODUCTION.md) 与 [`references/REVISION-MODE.md`](references/REVISION-MODE.md) |
+| 执行 QA | [`references/QA.md`](references/QA.md) |
+| 查看三个主题样例 | [`docs/theme-samples/`](docs/theme-samples/) |
+| 发布与 Git 操作 | [`docs/Git-操作说明.md`](docs/Git-操作说明.md) |
+
+正式出片唯一通路：
+
+```powershell
+node tools/deck.js render
+node tools/deck.js verify --final
+node tools/deck.js build
+```
+
+上述命令必须在有效 Workflow、审批、来源、角色与 QA 证据条件下执行。任何不具备相应证据链的 PPTX 均不应被描述为 Leander 正式交付物。

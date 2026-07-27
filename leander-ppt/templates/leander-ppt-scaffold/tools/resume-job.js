@@ -6,6 +6,7 @@ function commands(skipAttach = false) {
   return [
     ...(skipAttach ? [] : [["token-ledger.js", "attach-thread"]]),
     ["phase-handoff.js", "verify"],
+    ["requirements-trace.js", "verify", "--stage", "resume"],
     ["context-pack.js", "--mode", "status", "--write"],
     ["task-portfolio.js", "status", "--json"]
   ];
@@ -16,11 +17,11 @@ function run() {
     if (result.stdout) process.stdout.write(result.stdout);
     if (result.status !== 0) throw new Error((result.stderr || `${script} failed`).trim());
   }
-  console.log("RESUME READY: read only state/phase-handoff.json plus the strict context pack, then execute the active portfolio job.");
+  console.log("RESUME READY: read the approved requirements contract, current coverage, phase handoff and strict context pack before executing the active portfolio job.");
 }
 function selfTest() {
   const list = commands(false).map(item => item[0]);
-  if (list.join(",") !== "token-ledger.js,phase-handoff.js,context-pack.js,task-portfolio.js") throw new Error("resume command order changed");
+  if (list.join(",") !== "token-ledger.js,phase-handoff.js,requirements-trace.js,context-pack.js,task-portfolio.js") throw new Error("resume command order changed");
   console.log("PASS resume job self-test");
 }
 try { if (require.main === module) process.argv.includes("--self-test") ? selfTest() : run(); } catch (error) { console.error(error.message); process.exit(1); }

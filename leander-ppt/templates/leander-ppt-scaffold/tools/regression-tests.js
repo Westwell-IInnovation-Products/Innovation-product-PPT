@@ -29,64 +29,7 @@ function run(label, args) {
   const last = `${result.stdout || ""}${result.stderr || ""}`.trim().split(/\r?\n/).slice(-1)[0] || "PASS";
   console.log(`PASS ${label}: ${last}`);
 }
-function assertThemeContract() {
-  const { getTheme, themes } = require(path.join(ROOT, "theme", "tokens"));
-  if (!themes?.["global-v2"]) {
-    console.log("SKIP GlobalV2 theme contract: optional theme is not installed in this project");
-    return;
-  }
-  const theme = getTheme("GlobalV2");
-  const expected = {
-    id: "global-v2",
-    accent: "276FBF",
-    primary: "192033",
-    blue: "2F6BFF",
-    teal: "0AA5A5",
-    purple: "7C65C9",
-    green: "41A66B",
-    warn: "F2A541",
-    danger: "DF6B6B",
-    headerStyle: "reference-kicker",
-    footerStyle: "reference-baseline",
-    divider: "reference-index",
-    cover: "reference-split",
-    closing: "white-minimal"
-  };
-  const actual = {
-    id: theme.id,
-    accent: theme.colors.accent,
-    primary: theme.colors.primary,
-    blue: theme.colors.blue,
-    teal: theme.colors.teal,
-    purple: theme.colors.purple,
-    green: theme.colors.green,
-    warn: theme.colors.warn,
-    danger: theme.colors.danger,
-    headerStyle: theme.signature.headerStyle,
-    footerStyle: theme.signature.footer.style,
-    divider: theme.signature.divider,
-    cover: theme.signature.cover,
-    closing: theme.signature.closing
-  };
-  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
-    throw new Error(`GlobalV2 theme contract mismatch: ${JSON.stringify(actual)}`);
-  }
-  const chrome = theme.signature.header;
-  const footer = theme.signature.footer;
-  if (JSON.stringify(chrome.marker) !== JSON.stringify({ x: 90, y: 78, w: 33, h: 3, color: "teal" })
-      || chrome.title.x !== 87 || chrome.title.y !== 117
-      || chrome.subtitle.x !== 90 || chrome.subtitle.y !== 192
-      || footer.x !== 87 || footer.y !== 1014 || footer.w !== 1590
-      || footer.page.x !== 1752 || footer.page.y !== 1026) {
-    throw new Error(`GlobalV2 reference chrome geometry mismatch: ${JSON.stringify({ chrome, footer })}`);
-  }
-  if (getTheme("global-v2").id !== "global-v2" || getTheme("globalv2").id !== "global-v2") {
-    throw new Error("GlobalV2 aliases must resolve to global-v2");
-  }
-  console.log("PASS GlobalV2 theme contract");
-}
 assertReleaseVersion();
-assertThemeContract();
 function assertBase2Contract() {
   const { getTheme } = require(path.join(ROOT, "theme", "tokens"));
   const theme = getTheme("Base2");
@@ -138,36 +81,6 @@ function assertBase2Contract() {
   console.log("PASS Base2 theme contract");
 }
 assertBase2Contract();
-function assertBase3Contract() {
-  const { getTheme } = require(path.join(ROOT, "theme", "tokens"));
-  const t = getTheme("Base3");
-  const expected = {
-    id: "base3", bg: "FFFFFF", surface2: "F4F6F8", primary: "07195A", accent: "C51516",
-    blue: "1C7293", line: "D9D5CB", radiusCard: 0, radiusPanel: 0, radiusBand: 0,
-    cardElevation: "none", titleColor: "primary", cover: "left-index", footerRunning: true,
-    cardTop: "blue,accent,primary", iconStyle: "line"
-  };
-  const actual = {
-    id: t.id, bg: t.colors.bg, surface2: t.colors.surface2, primary: t.colors.primary,
-    accent: t.colors.accent, blue: t.colors.blue, line: t.colors.line,
-    radiusCard: t.shape.radius.card, radiusPanel: t.shape.radius.panel, radiusBand: t.shape.radius.band,
-    cardElevation: t.elevation.card.type, titleColor: t.signature.titleColor, cover: t.signature.cover,
-    footerRunning: t.signature.footer.running, cardTop: (t.signature.cardTop.colors || []).join(","),
-    iconStyle: t.signature.icon.style
-  };
-  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
-    throw new Error(`Base3 theme contract mismatch: ${JSON.stringify(actual)}`);
-  }
-  if (getTheme("base3").id !== "base3" || getTheme("base-3").id !== "base3") {
-    throw new Error("Base3 aliases must resolve to base3");
-  }
-  const r = getTheme("base3").shape.radius;
-  for (const k of ["micro", "control", "inset", "card", "panel", "band"]) {
-    if (r[k] !== 0) throw new Error(`Base3 must stay flat: radius.${k} should be 0, got ${r[k]}`);
-  }
-  console.log("PASS Base3 theme contract");
-}
-assertBase3Contract();
 function assertStateFlowContract() {
   const componentFile = path.join(ROOT, "components", "ppt-components.js");
   const registryFile = path.join(ROOT, "tools", "component-registry.json");
@@ -221,8 +134,8 @@ const behaviors = [
   ["approval receipt", "approval-receipt.js"], ["source evidence", "verify-source-evidence.js"], ["agent run receipt", "agent-run-receipt.js"],
   ["final artifact pixels", "final-artifact-gate.js"], ["gate adversarial suite", "gate-adversarial-suite.js"],
   ["agent collaboration migration", "migrate-agent-collaboration-v3.js"], ["hard Gate contract", "hard-gate-contract.js"],
-  ["hard Gate adversarial black-box", "hard-gate-blackbox.js"], ["revision mode", "revision-mode.js"],
-  ["workflow gate carry-forward", "workflow-gate.js"], ["candidate harvest", "candidate-harvest.js"]
+  ["hard Gate adversarial black-box", "hard-gate-blackbox.js"], ["revision mode", "revision-mode.js"], ["requirements trace", "requirements-trace.js"],
+  ["workflow gate carry-forward", "workflow-gate.js"]
 ];
 behaviors.forEach(([label, file]) => run(label, [path.join(TOOLS, file), "--self-test"]));
 console.log(`PASS Leander regression suite: ${scripts.length} syntax checks, ${behaviors.length} behavior tests.`);

@@ -2,6 +2,7 @@
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const requirementsTrace = require("./requirements-trace");
 const ROOT = path.join(__dirname, "..");
 const FILE = path.join(ROOT, "state", "phase-handoff.json");
 function readJson(file, fallback = null) { try { return JSON.parse(fs.readFileSync(file, "utf8").replace(/^\uFEFF/, "")); } catch { return fallback; } }
@@ -16,12 +17,16 @@ function build() {
   const rotationLock = readJson(path.join(ROOT, "state", "context-rotation-lock.json"), {});
   const portfolio = readJson(path.join(ROOT, "state", "task-portfolio.json"), {});
   const cfg = fs.existsSync(path.join(ROOT, "deck.config.js")) ? require(path.join(ROOT, "deck.config.js")) : {};
-  const candidates = ["brief.md", "outline.md", "DESIGN.md", "visual-direction.md", "theme-contract.md", "layout-blueprint.json", "checkpoint-status.json", "agent-collaboration.json", "output/render-quality-evidence.json"];
+  const candidates = ["brief.md", "outline.md", "DESIGN.md", "visual-direction.md", "theme-contract.md", "layout-blueprint.json", "checkpoint-status.json", "agent-collaboration.json", "state/requirements-contract.json", "state/requirements-coverage.json", "output/render-quality-evidence.json"];
   const artifactDigests = Object.fromEntries(candidates.map(item => [item, sha(path.join(ROOT, item))]).filter(([, digest]) => digest));
   const approvedDecisions = Object.entries(checkpoints.checkpoints || {}).filter(([, item]) => item.status === "approved").map(([name, item]) => ({ name, mode: item.mode || "", approvedAt: item.approvedAt || "" }));
   const activeJob = (portfolio.jobs || []).find(item => item.status === "active") || null;
+  const requirementState = requirementsTrace.inspect(ROOT, "handoff");
+  const traceReads = ["state/requirements-contract.json", "state/requirements-coverage.json"];
+  const recommendedReads = [...traceReads, ...(context.recommendedReads || ["checkpoint-status.json", "state/run-state.json", "artifact-manifest.md"])]
+    .filter((item, index, list) => list.indexOf(item) === index);
   const handoff = {
-    version: "leander-phase-handoff.v1",
+    version: "leander-phase-handoff.v2",
     generatedAt: new Date().toISOString(),
     runId: receipt.runId || "",
     currentGate: runState.currentGate || cfg.workflow?.stage || "",
@@ -33,14 +38,31 @@ function build() {
     nextAction: runState.nextAction || "Run context-pack status and continue from the current approved gate.",
     activeJob: activeJob ? { id: activeJob.id, label: activeJob.label, scope: activeJob.scope, goal: activeJob.goal, commands: activeJob.commands } : null,
     resumeCommand: "node tools/resume-job.js",
-    recommendedReads: context.recommendedReads || ["checkpoint-status.json", "state/run-state.json", "artifact-manifest.md"],
+    recommendedReads,
+    requirementsTrace: {
+      resumeEligible: requirementState.ok,
+      contractSha256: sha(path.join(ROOT, "state", "requirements-contract.json")),
+      coverageSha256: sha(path.join(ROOT, "state", "requirements-coverage.json")),
+      sourceTaskIds: requirementState.contract?.sourceContext?.sourceTasks || [],
+      summary: requirementState.summary,
+      blockingErrors: requirementState.errors
+    },
     contextRotation: {
       budgetStatus: contextBudget.status || "unknown",
       lockStatus: rotationLock.status || "clear",
       reason: rotationLock.reason || contextBudget.reason || "",
       blockedRootThreadIds: rotationLock.status === "pending" ? (rotationLock.blockedRootThreadIds || []) : []
     },
-    continuationPolicy: { replayConversationHistory: false, attachFreshTaskToTokenLedger: true, preserveWorkflowReceipt: true, expandReadsOnlyForNamedGap: true, adaptiveCalls: true, fixedSubagentCap: null, maxEstimatedTokens: 3000 }
+    continuationPolicy: {
+      replayConversationHistory: !requirementState.ok,
+      attachFreshTaskToTokenLedger: true,
+      preserveWorkflowReceipt: true,
+      preserveRequirementsContract: true,
+      expandReadsOnlyForNamedGap: true,
+      adaptiveCalls: true,
+      fixedSubagentCap: null,
+      maxEstimatedTokens: 3000
+    }
   };
   const serialized = JSON.stringify(handoff);
   handoff.packet = { sha256: crypto.createHash("sha256").update(serialized).digest("hex"), bytes: Buffer.byteLength(serialized), estimatedTokens: Math.ceil(Buffer.byteLength(serialized) / 4) };
@@ -55,14 +77,24 @@ function write() {
 }
 function verify() {
   const current = readJson(FILE), expected = build(), errors = [];
-  if (!current || current.version !== "leander-phase-handoff.v1") errors.push("missing leander-phase-handoff.v1");
+  if (!current || current.version !== "leander-phase-handoff.v2") errors.push("missing leander-phase-handoff.v2");
   if (current && current.runId !== expected.runId) errors.push("handoff runId does not match workflow receipt");
   for (const [file, digest] of Object.entries(current?.artifactDigests || {})) if (sha(path.join(ROOT, file)) !== digest) errors.push(`handoff artifact changed: ${file}`);
+  if (current?.requirementsTrace?.resumeEligible !== true) errors.push("handoff is not resume-eligible because the original requirements trace is incomplete");
+  if (current?.requirementsTrace?.contractSha256 !== expected.requirementsTrace.contractSha256) errors.push("requirements contract changed after handoff");
+  if (current?.requirementsTrace?.coverageSha256 !== expected.requirementsTrace.coverageSha256) errors.push("requirements coverage changed after handoff");
+  if (current?.packet) {
+    const copy = JSON.parse(JSON.stringify(current));
+    delete copy.packet;
+    const serialized = JSON.stringify(copy);
+    const digest = crypto.createHash("sha256").update(serialized).digest("hex");
+    if (digest !== current.packet.sha256 || Buffer.byteLength(serialized) !== current.packet.bytes) errors.push("handoff packet integrity check failed");
+  } else errors.push("handoff packet is missing");
   if (errors.length) throw new Error(errors.join("; "));
   return current;
 }
 function summary(value) {
-  return [`Handoff ${value.runId || "unbound"}`, `stage=${value.currentStage || "unknown"}`, `approved=${value.approvedDecisions.length}`, `next=${value.nextAction}`, `packet=${value.packet?.estimatedTokens || "?"} tokens`].join(" | ");
+  return [`Handoff ${value.runId || "unbound"}`, `stage=${value.currentStage || "unknown"}`, `approved=${value.approvedDecisions.length}`, `requirements=${value.requirementsTrace?.resumeEligible ? "ready" : "blocked"}`, `next=${value.nextAction}`, `packet=${value.packet?.estimatedTokens || "?"} tokens`].join(" | ");
 }
 const command = process.argv[2] || "summary";
 try {

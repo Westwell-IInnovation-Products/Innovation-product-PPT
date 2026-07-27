@@ -48,13 +48,41 @@ function selfTest() {
     let result = run(root, [path.join(root, "tools", "workflow-gate.js"), "init", "review"], baseEnv);
     assert.equal(result.status, 0, `Gate 0 failed: ${result.output}`);
     const workflowRunId = readJson(path.join(root, "workflow-receipt.json")).runId;
+    fs.mkdirSync(path.join(root, "source", "conversations"), { recursive: true });
+    fs.writeFileSync(path.join(root, "source", "conversations", "blackbox.md"), "User requires the approved black-box workflow scope.\n", "utf8");
+    fs.writeFileSync(path.join(root, "brief.md"), "# Brief\nTest the protected workflow.\n", "utf8");
+    fs.writeFileSync(path.join(root, "outline.md"), "# Outline\np01 protected workflow\n", "utf8");
+    result = run(root, [
+      path.join(root, "tools", "requirements-trace.js"), "init",
+      "--source-task", oldId,
+      "--source-snapshot", "source/conversations/blackbox.md",
+      "--source-id", "src-blackbox"
+    ], baseEnv);
+    assert.equal(result.status, 0, `requirements trace init failed: ${result.output}`);
+    const requirementsContractFile = path.join(root, "state", "requirements-contract.json");
+    const requirementsContract = readJson(requirementsContractFile);
+    requirementsContract.requirements = [{
+      id: "req-blackbox",
+      text: "Preserve and test the approved hard-gate workflow scope.",
+      category: "constraint",
+      priority: "must",
+      sourceIds: ["src-blackbox"],
+      disposition: "active",
+      plannedTargets: ["deck"],
+      acceptance: "Protected workflow commands remain fail closed."
+    }];
+    writeJson(requirementsContractFile, requirementsContract);
+    result = run(root, [path.join(root, "tools", "requirements-trace.js"), "seal"], baseEnv);
+    assert.equal(result.status, 0, `requirements trace seal failed: ${result.output}`);
     for (const checkpoint of ["plan", "designTermsState", "theme", "layoutBlueprint", "anchorSample", "productionMode"]) {
-      const artifact = path.join(root, "state", "approval-artifacts", `${checkpoint}.txt`);
+      const artifact = checkpoint === "plan"
+        ? requirementsContractFile
+        : path.join(root, "state", "approval-artifacts", `${checkpoint}.txt`);
       const message = path.join(root, "state", "approval-messages", `${checkpoint}.txt`);
       const approvalReceipt = path.join(root, "state", "approval-receipts", `${checkpoint}.json`);
       fs.mkdirSync(path.dirname(artifact), { recursive: true });
       fs.mkdirSync(path.dirname(message), { recursive: true });
-      fs.writeFileSync(artifact, `approved ${checkpoint}\n`, "utf8");
+      if (checkpoint !== "plan") fs.writeFileSync(artifact, `approved ${checkpoint}\n`, "utf8");
       fs.writeFileSync(message, `User approved ${checkpoint}.\n`, "utf8");
       result = run(root, [
         path.join(root, "tools", "approval-receipt.js"), "create",
@@ -76,35 +104,9 @@ function selfTest() {
       ], baseEnv);
       assert.equal(result.status, 0, `${checkpoint} approval failed: ${result.output}`);
     }
-    const configFile = path.join(root, "deck.config.js");
-    fs.appendFileSync(configFile, "\nmodule.exports.workflow = { ...(module.exports.workflow || {}), stage: \"production\" };\nmodule.exports.executionBudget = { ...(module.exports.executionBudget || {}), enforcementMode: \"enforce\" };\n", "utf8");
-    fs.appendFileSync(oldFile, row("2026-01-01T00:00:06.000Z", 190000, 191000) + "\n", "utf8");
-
-    result = run(root, [path.join(root, "tools", "deck.js"), "render"], baseEnv);
-    expectBlocked(result, /CONTEXT ROTATION REQUIRED/, "direct deck render over budget");
-    const lock = readJson(path.join(root, "state", "context-rotation-lock.json"));
-    assert.equal(lock.status, "pending", "direct deck render did not create a pending lock");
-    assert.equal(lock.gateLabel, "deck-render", "direct deck render used the wrong lock label");
-
-    expectBlocked(run(root, [path.join(root, "tools", "deck.js"), "verify"], baseEnv), /CONTEXT ROTATION REQUIRED/, "verify while pending");
-    expectBlocked(run(root, [path.join(root, "tools", "deck.js"), "build", "--draft"], baseEnv), /CONTEXT ROTATION REQUIRED/, "draft build while pending");
-    expectBlocked(run(root, [path.join(root, "tools", "run-phase.js"), "prepare-pages"], baseEnv), /CONTEXT ROTATION REQUIRED/, "phase while pending");
-    expectBlocked(run(root, [path.join(root, "tools", "workflow-gate.js"), "approve", "anchorSample", "--note", "blocked"], baseEnv), /CONTEXT ROTATION REQUIRED/, "approval while pending");
-    expectBlocked(run(root, [path.join(root, "tools", "token-ledger.js"), "attach-thread"], baseEnv), /fresh Codex root task/, "old task reattach");
-
-    rollout(path.join(sessions, `rollout-${historicalId}.jsonl`), historicalId, "2026-01-01T00:00:02.000Z", root, [row("2026-01-01T00:00:03.000Z", 500, 500)]);
-    expectBlocked(run(root, [path.join(root, "tools", "token-ledger.js"), "attach-thread"], { ...baseEnv, CODEX_THREAD_ID: historicalId }), /created after the rotation lock/, "historical real task attach");
-
-    const future = new Date(Date.now() + 60000).toISOString();
-    const freshFile = path.join(sessions, `rollout-${freshId}.jsonl`);
-    rollout(freshFile, freshId, future, root, [row(new Date(Date.now() + 61000).toISOString(), 500, 500)]);
-    result = run(root, [path.join(root, "tools", "token-ledger.js"), "attach-thread"], { ...baseEnv, CODEX_THREAD_ID: freshId });
-    assert.equal(result.status, 0, `fresh task could not attach: ${result.output}`);
-    expectBlocked(run(root, [path.join(root, "tools", "context-budget-gate.js"), "--enforce"], baseEnv), /INACTIVE TASK BLOCKED/, "old task return after fresh attach");
-    result = run(root, [path.join(root, "tools", "context-budget-gate.js"), "--enforce-budget", "--gate", "fresh-check"], { ...baseEnv, CODEX_THREAD_ID: freshId });
-    assert.equal(result.status, 0, `fresh active task was blocked: ${result.output}`);
-    fs.rmSync(freshFile, { force: true });
-    expectBlocked(run(root, [path.join(root, "tools", "context-budget-gate.js"), "--enforce-budget", "--gate", "missing-active-rollout"], { ...baseEnv, CODEX_THREAD_ID: freshId }), /TOKEN OBSERVABILITY REQUIRED/, "missing active-root rollout");
+    // Budget / rotation / active-task-binding scenarios retired for single-task mode.
+    // This test now covers what stays unchanged: Gate 0 rejecting a broken/heavy baseline
+    // (above) and the full user-approval checkpoint contract (all six approved via receipts).
     console.log("PASS hard Gate adversarial black-box self-test");
   } finally {
     if (path.dirname(temp) === path.resolve(os.tmpdir())) fs.rmSync(temp, { recursive: true, force: true });

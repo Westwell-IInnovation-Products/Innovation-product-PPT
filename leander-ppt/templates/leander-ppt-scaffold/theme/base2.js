@@ -68,6 +68,7 @@ const base2Theme = {
   },
   signature: {
     id: "base2",
+    structStyle: "soft",
     titleColor: "accent",
     headerRule: { style: "solid", color: "accent", w: 760, h: 3 },
     footer: { style: "bar", color: "accent" },

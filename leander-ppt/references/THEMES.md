@@ -107,23 +107,23 @@ const THEME = {
 
 ## 内置公司主题——先问用哪个
 
-本 skill 随附五个公司主题。它们都来自已审批设计的脱敏抽象。**Phase 2 必须先按受众、信息密度和证据类型在五者间选择**,再考虑替代方案:
+本 skill 随附三个公司主题。它们都来自已审批设计的抽象。**Phase 2 必须先按受众、信息密度和证据类型在三者间选择**,再考虑替代方案:
 
-| | Leander Base | Base2 | Base3 | Leander Global | GlobalV2 |
-|---|---|---|---|---|---|
-| 用于 | 内部 / 公司 deck | 内部机制、证据、状态、治理与决策 deck | **高密度工作成果汇报**、商业计划、密集 label→detail 评审 | 对外 / 国际 / 正式 deck | 工业、自动化、软硬一体技术产品与机制说明 |
-| 底色 | 暖米白 `#F5F5F0` | 暖米白 `#F5F5F0` + 白色层级板 | 干净白 `#FFFFFF` + 冷灰层级板 `#F4F6F8` | 干净白 `#FFFFFF` | 高键白 `#FFFFFF` + 浅蓝技术地面 `#EAF3FC` |
-| 信号色 | **Westwell 红** `#C51516` | **Westwell 红** `#C51516`,只标当前态 / Gate / 阻塞 / 结论 | **Westwell 红** `#C51516`(kicker / 重点 / 风险)+ 海洋青 `#1C7293` 表流向 | **天蓝** `#00B0F0`(红 = 仅状态) | **工程蓝** `#276FBF`；技术青 `#0AA5A5` 只标数据 / 感知 / 连接信号 |
-| 结构色 | 藏青 `#07195A` | 藏青 `#07195A` + 灰蓝支撑层 | 藏青 `#07195A` | 藏青 `#002060` + 中蓝 `#0070C0` | 深墨 `#192033` + 工程蓝 `#276FBF` + 明蓝 `#2F6BFF` |
-| 标题系统 | 实心红条,标题为红 | 与 Base 相同的品牌 chrome | 红色全大写 kicker + **藏青陈述式标题**(标题不是红的)+ 灰白 hairline | 点线天蓝,标题为藏青 | 短青线 eyebrow + 深墨标题 + 灰蓝 thesis |
-| 页脚 | 红条 | 红条 | 灰白 hairline running footer + 页码 | 图片字标页脚 | 冷灰 hairline + 可选来源 / 页码 |
-| 封面 | 暖底,右对齐红标题 | 暖底,右对齐红标题 | 左标题块 + 右编号索引(`left-index`) | 项目审批的满幅图片,或干净的白色极简 | 左文右证据图；无图时明确显示 evidence slot |
-| 形状 / 层级 | 克制扁平,**主题强制**:`container = { round:true, radius:8, shadow:false }` | 主卡 18–22px、内嵌 12–14px、单层轻阴影(默认 `container.shadow:true`) | **全直角、零阴影**,主题强制:`container = { round:false, shadow:false }` + `shape.radius` 全 0 + `elevation` 均 `none` | 取默认 container,未强制扁平 | 精密线框、低装饰(取默认 container) |
-| 结论带 | `conclusion:"plain"`,居中红字、无容器 | `conclusion:"band"`,描边圆角带 + 眉标 | 当前取默认 `plain`(见 Base3 段说明) | 默认 `plain` | 默认 `plain` |
-| 字体 | 雅黑 + Century Gothic | 雅黑 + Century Gothic | 雅黑 + Century Gothic | Century Gothic 英文优先 + 雅黑 | 雅黑 + Century Gothic；缺失时 Arial 并复核字宽 |
-| 选择信号 | 企业内部、管理与方法分享 | 证据板、状态轨、机制链、决策路径需要柔和纵深 | 信息密度高、需要 label→detail 网格与三色图形层 | 国际、客户、正式说明 | 需要真实产品证据、技术机制和精密小字号层级 |
+| | Leander Base | Base2 | Leander Global |
+|---|---|---|---|
+| 用于 | 内部 / 公司 deck | 内部机制、证据、状态、治理与决策 deck | 对外 / 国际 / 正式 deck |
+| 底色 | 暖米白 `#F5F5F0` | 暖米白 `#F5F5F0` + 白色层级板 | 干净白 `#FFFFFF` |
+| 信号色 | **Westwell 红** `#C51516` | **Westwell 红** `#C51516`,只标当前态 / Gate / 阻塞 / 结论 | **天蓝** `#00B0F0`(红 = 仅状态) |
+| 结构色 | 藏青 `#07195A` | 藏青 `#07195A` + 灰蓝支撑层 | 藏青 `#002060` + 中蓝 `#0070C0` |
+| 标题系统 | 实心红条,标题为红 | 与 Base 相同的品牌 chrome | 点线天蓝,标题为藏青 |
+| 页脚 | 红条 | 红条 | 图片字标页脚 |
+| 封面 | 暖底,右对齐红标题 | 暖底,右对齐红标题 | 项目审批的满幅图片,或干净的白色极简 |
+| 形状 / 层级 | 克制扁平,**主题强制**:`container = { round:true, radius:8, shadow:false }` | 主卡 18–22px、内嵌 12–14px、单层轻阴影(默认 `container.shadow:true`) | 取默认 container,未强制扁平 |
+| 结论带 | `conclusion:"plain"`,居中红字、无容器 | `conclusion:"band"`,描边圆角带 + 眉标 | 默认 `plain` |
+| 字体 | 雅黑 + Century Gothic | 雅黑 + Century Gothic | Century Gothic 英文优先 + 雅黑 |
+| 选择信号 | 企业内部、管理与方法分享 | 证据板、状态轨、机制链、决策路径需要柔和纵深 | 国际、客户、正式说明 |
 
-问:**"常规内部汇报 → Leander Base；内部机制 / 证据 / 状态型内容 → Base2；高密度工作成果汇报 / 商业计划 → Base3；对外 / 国际 → Leander Global；工业技术产品、机制与真实证据主导 → GlobalV2。用哪一个？"** 按受众和页面关系推荐。只有当五者都不适合时,才呈现下面的替代方案。
+问:**"常规内部汇报 → Leander Base；内部机制 / 证据 / 状态型内容 → Base2；对外 / 国际 → Leander Global。用哪一个？"** 按受众和页面关系推荐。只有当三者都不适合时,才呈现下面的替代方案。
 
 ### Leander Base(`leander-base`)
 
@@ -147,17 +147,6 @@ const THEME = {
 - **优先复用 signature 元件**：`ui.barCard()` 表达风险档位 / 路由结果 / 状态行，`ui.regionEyebrow()` 给每个区块加分区眉标。这两者是 Base2 的招牌词汇，能省掉大量手画方块。
 - 适合证据板、状态轨、机制链、协作流程、治理边界和决策路径。若页面只是常规企业汇报且不需要层级纵深，优先 Leander Base。
 
-### Base3(`base3`,别名 `Base3` / `base-3`)
-
-- Base3 是 Leander Base 的**扁平锐利、图形驱动**变体,抽象自内部 WellOcean 商业计划 deck。定位:**高密度工作成果汇报** —— 一屏要放下大量 label→detail 行,而不是几张大卡。
-- 干净白底 `#FFFFFF` + 冷灰层级板 `#F4F6F8`;藏青 `#07195A` 作结构,红 `#C51516` 与海洋青 `#1C7293` 组成三色强调层。
-- **标题不是红的**:`titleColor: "primary"`(藏青陈述式整句标题)+ 红色全大写 letter-spaced kicker 压在标题上方 + 全宽灰白 hairline(不是彩色实心条)。这是它和 Base / Base2 最容易认错的地方。
-- **全直角、零阴影(设计意图)**:`shape.radius` 七档全为 `0`,`elevation.card` 与 `elevation.focus` 均为 `{ type: "none" }`。对比来自填充、hairline 和图形层,不来自纵深。
-- 这个意图由 `container: { round: false, shadow: false }` **在 `rect()` / `shp()` 收口点强制**。⚠️ 注意一个已实测的坑:**`shape.radius` 全 0 并不足以得到直角** —— `roundRect` 配 `rectRadius: 0` 会被 pptxgenjs 忽略、回退成 PowerPoint 的默认圆角,必须靠 `round:false` 切到直角矩形。以后再加"锐利"风格的主题时,记得连 `container` 一起声明,不要只把 `shape.radius` 归零。
-- 图形语汇:3px 卡顶色条按 青 → 红(lead)→ 藏青 轮转;细线单色图标(青或红,永不填充、永不多色);青色流向箭头;空心编号时间轴,只有"当前"节点填红;每个 label→detail 行前一个青色小 dash 标记。
-- 封面 `left-index`(左标题块 + 右编号索引),封底 `center-minimal`,分节页沿用 `big-number`,页脚是灰白 hairline running footer + 页码。
-- **已知缺口**:base3 在 `componentStyle.conclusionBand` 里声明了自己的结论带(`surface2` 填充 + 左侧红 tick、无描边),但 `componentStyle` 目前不被任何组件读取,且 base3 未声明 `signature.conclusion`,所以 `ui.conclusionBand()` 对它按默认 `plain` 渲染。要出它自己的结论带,需要给 base3 加一个 `signature.conclusion` 变体。
-
 ### Leander Global(`leander-global`)
 
 - 干净白底 `#FFFFFF`、藏青 `#002060`(结构/标题)、天蓝 `#00B0F0`(唯一的信号色)、中蓝 `#0070C0`(真正的第二类别)。**红色被降级为仅状态**(`colors.danger`,✗/error)——绝不是结构性高亮。
@@ -169,32 +158,20 @@ const THEME = {
 - 封面:`cover` 默认 **白色极简**(干净白、大藏青标题、点线藏青横线、浅蓝副标题、`Make a Well Change.` 天蓝标语、字标页脚)。`coverStyle: "photo-dark"` 只有在有项目审批的 `data.image` 时可用;共享 Skill 不发布任何领域场景。封底(`closing`)默认 **白色极简**;`closingStyle: "photo-dark"` 遵循同样的项目图片要求。
 - 深色封面图片是一张内置占位——用 `data.image` 或覆盖 `theme.signature.coverPhoto` 换成一张真实的港口/物流照片。
 
-### GlobalV2(`global-v2`,别名 `GlobalV2` / `globalv2`)
-
-- 整体第一印象必须是蓝白高键技术稿：高键白底、浅蓝技术地面、深墨结构、工程蓝主强调。不能因为技术青频繁出现在连线或状态节点上，让整套缩略图呈现绿色主题。
-- 工程蓝 `#276FBF` 是页眉短线、主焦点、关键结构和主要技术路径的主题信号；明蓝 `#2F6BFF` 只用于真实第二类别或更强的信息层级。
-- 技术青 `#0AA5A5` 降级为稀缺的局部语义色，只表示数据、感知、连接或现场事实上行。它不能同时重复用于页眉、页脚、页码、普通编号和每页焦点；同一页通常只允许一个青色信号区域。
-- 协同紫、成功绿、警示橙、风险红只在真实类别或状态存在时使用；绿色绝不承担品牌或主题识别。
-- 宽字号层级来自已审批技术演示的实测抽象：标题约 20pt、正文约 10.5pt、图内标签约 7–9pt。标题与细节必须保持明显级差，不能把小字整体放大成卡片墙。
-- Chrome 标识为 `reference-kicker`、`reference-baseline`、`reference-index`、`reference-split` 和 `white-minimal`。内容页采用参考稿实测的左上青色短标记 + 深墨栏目名、下移标题/副标题组和短版心页脚基线；内容页默认不重复右上角 Logo。它们只改变 cover/header/footer/divider/closing；内容组件继续使用唯一共享组件库。
-- `reference-split` 封面复用参考稿的双短线、左侧标题组、右侧低位证据图和封面基线位置，并优先接受项目注入的 `data.image`。图片应是真实产品、场景、截图、高键技术渲染或其他可解释证据；共享主题不携带行业场景，也不生成虚假工业画面。无图时渲染明确的 evidence slot，提醒项目补充素材。
-- 适合工业智能、自动化、机器人、物流技术和软硬一体方案；不适合只需要传统企业红色品牌表达，或以国际正式英文规范为主的场合。
-- 选择规则：当页面价值依赖“真实证据图 + 可编辑机制图 + 精密信息层级”时优先 GlobalV2；否则仍按内部 → Base、国际正式 → Global 的默认路由。
-
 ## 一个共享组件库 + 逐主题 Signature
 
 只有**一个**组件库(`components/ppt-components.js`,即 `makeComponents(pptx, theme)` 闭包),被所有主题共享——不是每个主题一个库。
 
 - **内容组件自动换主题。** 每个内容组件都读 `theme.colors` / `theme.fonts`;需要几何和纵深时还读取 `theme.shape` / `theme.elevation` / `theme.stroke`。所以选一个主题就会给整份 deck 重新上色和调整层级,无需改动组件。组件加一次,在每个主题里都能用。
-- **容器语言由 `theme.container` 单点强制。** `rect()` 与 `shp()` 是唯一收口点,读 `container = { round, radius, shadow }`:`shadow:false` 时整份 deck 一律不出阴影;`round:false` 时不走圆角矩形;`radius` 是主题没有 `shape.radius` 时的兜底半径。这让"扁平 vs 纵深"变成**选了主题就生效**的结果,而不是画页面时靠自觉。未声明 `container` 的主题取默认 `{ round:true, shadow:true }`,行为与历史一致——所以给 `base3` / `leander-global` / `global-v2` 补一个 `container` 就能让它们各自变扁平或保持纵深。
+- **容器语言由 `theme.container` 单点强制。** `rect()` 与 `shp()` 是唯一收口点,读 `container = { round, radius, shadow }`:`shadow:false` 时整份 deck 一律不出阴影;`round:false` 时不走圆角矩形;`radius` 是主题没有 `shape.radius` 时的兜底半径。这让"扁平 vs 纵深"变成**选了主题就生效**的结果,而不是画页面时靠自觉。未声明 `container` 的主题取默认 `{ round:true, shadow:true }`,行为与历史一致；`leander-global` 可按其设计语言覆盖容器策略。
 - **三个可直接复用的 signature 元件。** `ui.regionEyebrow()`(letter-spaced 全大写分区眉标)、`ui.barCard()`(左色条状态卡,`tier=low/mid/high/done/warn`,位置+色条+填充+标签四通道表达状态)、`ui.conclusionBand()`(结论带,按 `signature.conclusion` 在 plain / band 之间切换)。三者都走 `rect()`,所以在 Base 下自动扁平、在 Base2 下自动圆角带阴影,页面层不需要写主题分支。
 - **Chrome 跟随主题 `signature`。** 只有 chrome(`cover` / `header` / `footer` / `closing`)随主题变化,由主题 token 里的一个 `signature` 块驱动(`titleColor`、`headerRule`、`footer`、`divider`、`cover`、`closing`、`coverPhoto`)。这就是 Base 和 Global 在不 fork 库的情况下看起来确实不同的原因。`footer` 支持 `bar` / `thin` / `wordmark` / `none`;`divider` 支持 `big-number` / `white-underline`;`conclusion` 支持 `plain`(居中红字、无容器)/ `band`(描边圆角带 + 眉标)。要加一个新主题:加 token + 一个 `signature`;不要复制组件。
 - **封面和尾页是纯 chrome 页面。** `cover` 角色必须且只能以 `ui.cover()` 生成，`closing` 角色必须且只能以 `ui.closing()` 生成；页面不得用 custom 构图替代、不得覆盖主题 tagline、不得通过局部扩展槽继续堆行动或证据。需要额外解释时，放到相邻内容页，不要稀释主题首页/尾页。
-- **选择一个主题:** `const { getTheme } = require("./theme/tokens"); const theme = getTheme("Base2");` 然后 `makeComponents(pptx, theme)`。注册表住在 `theme/tokens.js`(`themes`、`getTheme`);变体主题 token 分别在 `theme/base2.js`、`theme/leander-global.js` 与 `theme/global-v2.js`。默认(`theme`)仍为 Leander Base,以向后兼容。
+- **选择一个主题:** `const { getTheme } = require("./theme/tokens"); const theme = getTheme("Base2");` 然后 `makeComponents(pptx, theme)`。注册表住在 `theme/tokens.js`(`themes`、`getTheme`);变体主题 token 分别在 `theme/base2.js` 与 `theme/leander-global.js`。默认(`theme`)仍为 Leander Base,以向后兼容。
 
 ## 内置模板指引
 
-在五个内置主题都被拒绝之后,基于 deck 类型和受众推荐 2-3 个替代方案。
+在三个内置主题都被拒绝之后,基于 deck 类型和受众推荐 2-3 个替代方案。
 
 | Deck 类型 | 视觉气质 |
 |---|---|
@@ -207,7 +184,7 @@ const THEME = {
 
 ## 模板选择检查点
 
-第 0 步——先于一切,按场合在五个内置主题间选择:常规内部 → Leander Base；内部机制 / 证据 / 状态 → Base2；高密度工作成果汇报 / 商业计划 → Base3；对外 / 国际 / 正式 → Leander Global；工业技术产品、机制与证据主导 → GlobalV2。如果选了一个内置主题,下面的检查点大部分是预填好的；仍需确认 logo、封面和封底处理。GlobalV2 还必须确认项目是否提供真实 `data.image`；未提供时只显示 evidence slot,不得把占位当成最终行业素材。只有当五者都不适合时,才为替代方案跑完整检查点。
+第 0 步——先于一切,按场合在三个内置主题间选择:常规内部 → Leander Base；内部机制 / 证据 / 状态 → Base2；对外 / 国际 / 正式 → Leander Global。如果选了一个内置主题,下面的检查点大部分是预填好的；仍需确认 logo、封面和封底处理。只有当三者都不适合时,才为替代方案跑完整检查点。
 
 样张生产之前,确认:
 

@@ -22,7 +22,7 @@ const ROOT = path.join(__dirname, "..");
 const PAGES = path.join(ROOT, "pages");
 
 // Keep in sync with .leander-scaffold-version.json; regression blackbox fails on drift.
-const SCAFFOLD_VERSION = "0.6.0-beta.17";
+const SCAFFOLD_VERSION = "0.6.0-beta.20";
 function verifyScaffoldVersion() {
   const file = path.join(ROOT, ".leander-scaffold-version.json");
   let version = "";

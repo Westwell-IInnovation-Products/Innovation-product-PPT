@@ -1,5 +1,5 @@
 {
-  "version": "0.6.0-beta.17",
+  "version": "0.6.0-beta.20",
   "qualityLock": "render-quality-evidence.v4+visual-geometry-policy.v1+final-artifact-lock.v2",
   "contextPack": "leander-context-pack.v3-strict",
   "tokenLedger": "leander-token-report.zh.v2-conversations",
@@ -10,6 +10,8 @@
   "taskPortfolio": "leander-task-portfolio.v1",
   "qaEvidenceIndex": "leander-qa-evidence-index.v1",
   "revisionContract": "leander-revision-contract.v2",
+  "requirementsTrace": "leander-requirements-contract.v1+leander-requirements-coverage.v1",
+  "phaseHandoff": "leander-phase-handoff.v2",
   "sourceEvidence": "source-evidence-index.v2",
   "approvalReceipt": "leander-approval-receipt.v1",
   "agentRunReceipt": "leander-agent-run-receipt.v1",

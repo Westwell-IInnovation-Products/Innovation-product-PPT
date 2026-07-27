@@ -21,23 +21,10 @@ function job(id, label, scope, goal, commands) {
   return { id, label, status: "pending", scope, goal, commands, tokenTarget: 180000, splitAtTokens: 160000 };
 }
 function planJobs(pages = [], options = {}) {
-  const max = Math.max(3, Number(options.maxPlannedRootTasks || 6));
-  const jobs = [job("job-1", "决策合同", { pages: [] }, "完成 brief、逐页大纲、设计/术语状态、布局蓝图与用户检查点。", ["node tools/run-phase.js status"])];
-  if (pages.length <= 15) {
-    jobs.push(job("job-2", "锚点与生产", { pages }, "完成锚点、页面生产、增量渲染和动态 QA 初始化。", [`node tools/run-phase.js page-cycle${pages.length ? ` --pages ${pages.join(",")}` : ""}`]));
-  } else {
-    const desiredProductionJobs = pages.length <= 30 ? 2 : Math.ceil(pages.length / 12);
-    const productionJobs = Math.min(Math.max(1, desiredProductionJobs), Math.max(1, max - 2));
-    const size = Math.ceil(pages.length / productionJobs);
-    for (let i = 0; i < productionJobs; i += 1) {
-      const scope = pages.slice(i * size, (i + 1) * size);
-      if (!scope.length) continue;
-      jobs.push(job(`job-${jobs.length + 1}`, i === 0 ? "锚点与前段生产" : `生产与 QA 批次 ${i + 1}`, { pages: scope }, i === 0 ? "锁定锚点后完成首批页面、渲染与 QA。" : "完成本批页面、增量渲染、QA 回填和增量 reviewer。", [`node tools/run-phase.js page-cycle --pages ${scope.join(",")}`]));
-    }
-  }
-  jobs.push(job(`job-${jobs.length + 1}`, "集成终验", { pages }, "只在全片渲染新鲜后执行一次终版 reviewer、普通/最终验证与 build。", ["node tools/run-phase.js render-review", "node tools/run-phase.js final-verify", "node tools/deck.js build"]));
+  // Single-task mode: the whole deck is one job, from brief to final build.
+  const jobs = [job("job-1", "整片交付", { pages }, "在一个任务里完成 brief、逐页大纲、设计/术语/state、主题、布局蓝图、锚点、全量生产、渲染 QA、终验与 build。", ["node tools/run-phase.js status"])];
   jobs[0].status = "active";
-  return jobs.slice(0, max);
+  return jobs;
 }
 function create(force = false) {
   const existing = readJson(FILE, null);
@@ -97,8 +84,8 @@ function forecast(value = readJson(FILE, null) || create()) {
   return {
     activeJob: current?.id || "complete",
     cumulativeTotalTokens: cumulative,
-    recommendSplit: !!current && (cumulative >= Number(current.splitAtTokens || 160000) || pageCount > 12),
-    reason: cumulative >= Number(current?.splitAtTokens || 160000) ? "token forecast reached split line" : pageCount > 12 ? "page scope exceeds preferred batch" : "within forecast"
+    recommendSplit: false, // single-task mode: never split
+    reason: "single-task mode"
   };
 }
 function summary(value) {
@@ -106,9 +93,10 @@ function summary(value) {
   return `Portfolio ${done}/${value.jobs.length} complete | active=${current?.id || "none"}${current?.scope?.pages?.length ? ` pages=${current.scope.pages.join(",")}` : ""} | split=${f.recommendSplit ? "recommended" : "no"}`;
 }
 function selfTest() {
-  assert.equal(planJobs(Array.from({ length: 24 }, (_, i) => `p${String(i + 1).padStart(2, "0")}`), { maxPlannedRootTasks: 6 }).length, 4);
-  assert(planJobs(Array.from({ length: 48 }, (_, i) => `p${i + 1}`), { maxPlannedRootTasks: 6 }).length <= 6);
-  assert.equal(planJobs(["p01", "p02"], { maxPlannedRootTasks: 6 }).length, 3);
+  // Single-task mode: any deck is exactly one job.
+  assert.equal(planJobs(Array.from({ length: 24 }, (_, i) => `p${String(i + 1).padStart(2, "0")}`)).length, 1);
+  assert.equal(planJobs(Array.from({ length: 48 }, (_, i) => `p${i + 1}`)).length, 1);
+  assert.equal(planJobs(["p01", "p02"]).length, 1);
   console.log("PASS task portfolio self-test");
 }
 function main() {

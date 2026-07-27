@@ -218,17 +218,6 @@ page pattern + layout block + visual parts
 
 如果它是一次性但有用的,把它留在 deck 项目的页面实现或项目本地的 `components/` 里。
 
-### Agent 辅助的候选接收
-
-项目完成后的候选提取由现有 `component-curator-zh` 承担。确定性工具负责发现信号、物化四文件候选包并计算重复风险；Agent 负责语义脱敏、关系抽象、通用槽位和近似组件解释。候选入库可以自动,正式晋升必须保留一次人工批准。
-
-自动物化要求:
-
-- 渲染器已经从页面实现抽到 `components/promotion-candidates/`,并导出 `{ name, create }`。
-- 提案包含完整 V3 元数据、复用证据和独立复核摘要。
-- 固定状态仍为 `review-required / pending`,自动流程不能声称双主题视觉已经人工通过。
-- 完全同 ID、同候选名或与不同来源正式组件同名时必须阻断；关系/槽位高度相似时转入 Curator 复核。
-
 ## 稳定性与易用性
 
 - 优先少量带好槽位的稳定组件,而不是很多近乎重复的。
@@ -351,8 +340,7 @@ node tools/render-component-library-preview.js
 node tools/render-component-library-preview.js --theme leander-base --out-dir <base-output>
 node tools/render-component-library-preview.js --theme base2 --out-dir <base2-output>
 node tools/render-component-library-preview.js --theme leander-global --out-dir <global-output>
-node tools/render-component-library-preview.js --theme global-v2 --out-dir <global-v2-output>
-node tools/verify-component-themes.js <base-manifest> <base2-manifest> <global-manifest> <global-v2-manifest> --write
+node tools/verify-component-themes.js <base-manifest> <base2-manifest> <global-manifest> --write
 ```
 
 这个验证只能证明组件能够在主题下技术渲染。视觉设计师仍需检查对比度、前景色、颜色语义和结构质量。

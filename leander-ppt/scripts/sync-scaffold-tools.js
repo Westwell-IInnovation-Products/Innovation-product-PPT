@@ -17,7 +17,7 @@ const managed = [
   "tests/visual-gate/clean-layout.json", "tests/visual-gate/intentional-overlap.json",
   "tools/regression-tests.js", "tools/hard-gate-contract.js", "tools/hard-gate-blackbox.js", "tools/render-diversity.js", "tools/render-risk.js", "tools/tool-freeze.js",
   "tools/change-impact.js", "tools/migrate-evidence-v2.js", "tools/migrate-agent-collaboration-v3.js", "tools/page-digests.js", "tools/phase-handoff.js",
-  "tools/plan-agent-events.js", "tools/qa-batch.js", "tools/qa-evidence-index.js", "tools/resume-job.js", "tools/rollout-usage.js", "tools/task-portfolio.js", "tools/token-ledger.js",
+  "tools/plan-agent-events.js", "tools/qa-batch.js", "tools/qa-evidence-index.js", "tools/requirements-trace.js", "tools/resume-job.js", "tools/rollout-usage.js", "tools/task-portfolio.js", "tools/token-ledger.js",
   "tools/qa-rules.zh.json",
   "tools/revision-mode.js",
   "tools/lint-scope-hygiene.js", "tools/lint-layout-blueprint.js", "tools/lint-blueprint-preview.js", "tools/render-contact-sheet.js", "tools/render-quality-gate.js",

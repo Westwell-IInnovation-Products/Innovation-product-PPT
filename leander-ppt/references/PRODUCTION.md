@@ -184,7 +184,7 @@ node tools/verify-checkpoints.js phase4
 
 在 Checkpoint Plan 处、或 Phase 4 之前选一种模式。
 
-Mode A/B/C 只决定页面如何产出。它们不决定哪些专家角色活跃。角色由 `workflow.events` 触发;锚点和整片渲染需要 visual-designer 和 reviewer 证据,而 component/presenter 角色取决于组件置信度、共享变更、deck 类型和排练需要。
+Mode A/B/C 只决定页面如何产出。它们不决定哪些专家角色活跃。角色由 `workflow.events` 触发;锚点和整片渲染需要 visual-designer 和 reviewer 证据,而 component 角色取决于组件置信度、共享变更和 deck 类型;讲稿由主 Agent 按需产出,不是角色。
 
 ### Mode A - 章/批确认
 
@@ -245,7 +245,7 @@ Main agent merges, normalizes, renders, fixes, runs event-triggered role review,
 
 预期风险:章节风格可能不同。主 agent 必须在终版交付之前统一排版、间距、组件使用、页眉/页脚节奏和说法标注。
 
-Mode C 硬规则:章/批生产 worker 不是角色评审 agent。一个起草页面或执行批次自检的 subagent 不满足 `component-curator-zh`、`visual-designer-zh`、`reviewer-zh` 或 `presenter-zh` 的终版证据。Mode C 整合之后,对完整渲染的 deck 再跑一遍那些角色 agent,并记录 `phase: "post-production"` 证据。
+Mode C 硬规则:章/批生产 worker 不是角色评审 agent。一个起草页面或执行批次自检的 subagent 不满足 `component-curator-zh`、`visual-designer-zh` 或 `reviewer-zh` 的终版证据。Mode C 整合之后,对完整渲染的 deck 再跑一遍那些角色 agent,并记录 `phase: "post-production"` 证据。
 
 ## 能力使用协议
 
@@ -259,7 +259,7 @@ Mode C 硬规则:章/批生产 worker 不是角色评审 agent。一个起草页
 | Visual designer agent | 标杆样张风格、颜色语义、视觉打磨、高风险页风格评审 | 纯内容编辑 |
 | Component curator agent | 视觉路线/组件库决策、可复用组件提升 | 页面路线已审批且未变时 |
 | Reviewer agent / Agent Teams | 对大纲、样张页、完整 deck 或修复页的独立 QA | 琐碎的纯文字元数据改动不需要 |
-| Presenter agent | 终版排练、讲者流、内部分享就绪度 | deck 还没通过渲染 QA 之前 |
+| 讲稿(主 Agent 交付步骤,非角色) | 终版讲者流、内部分享就绪度 | deck 还没通过渲染 QA 之前 |
 | Subagent 生产 | 锚点审批之后的 Mode C 并行章/批生产 | 锚点审批之前,或 deck 风格未定时 |
 | Subagent 评审 | 审阅员团队不可用、但独立 QA 有价值时 | 还没有渲染 artifact 时 |
 | 当前 agent 自检 | 没有审阅员/subagent 时的备用 | 绝不用瞄一眼替代基于渲染的 QA |
@@ -290,12 +290,10 @@ Subagent 必须不拥有:
 
 当启用基于角色的协作时,在每个角色贡献之后更新 `agent-collaboration.json`:
 
-- `planner-zh`:大纲/故事评审之后。
-- `layout-architect-zh`:布局蓝图评审之后。
+- `planner-zh`:大纲/故事评审 **与布局蓝图评审**之后(同一角色,一次出完)。
 - `visual-designer-zh`:锚点/风格评审之后。
 - `component-curator-zh`:路线/组件决策评审之后。
 - `reviewer-zh`:每次渲染 QA 之后。
-- `presenter-zh`:终版排练评审之后(如果用了)。
 
 跑:
 
@@ -307,7 +305,7 @@ node tools/deck.js verify --final
 
 如果一个必需角色没有被真实 subagent 跑,把 `status` 设为 `fallback`,写一个清晰的 `reason`,并仍然提供 `verdict`、`summary` 和 `evidence`。不要把一个必需角色标为 `bypassed`,除非 deck 配置明确允许对小/简单 deck 的必需 bypass。
 
-生产阶段例外:当 `deck.config.js.workflow.stage = "production"` 且 `agentCollaboration.requirePostProductionRoleReview` 不为 `false` 时,终版的 `component-curator-zh`、`visual-designer-zh`、`reviewer-zh` 或 `presenter-zh` 检查不允许备用。这些角色必须是 `status: "completed"`、`phase: "post-production"`,且它们的证据必须提到 `full-deck`。标杆样张评审、页面生产 worker 和主 agent 备用都不能满足这道终版 gate。
+生产阶段例外:当 `deck.config.js.workflow.stage = "production"` 且 `agentCollaboration.requirePostProductionRoleReview` 不为 `false` 时,终版的 `component-curator-zh`、`visual-designer-zh` 或 `reviewer-zh` 检查不允许备用。这些角色必须是 `status: "completed"`、`phase: "post-production"`,且它们的证据必须提到 `full-deck`。标杆样张评审、页面生产 worker 和主 agent 备用都不能满足这道终版 gate。
 
 ## 最小单位修复协议
 
@@ -378,7 +376,7 @@ node tools/deck.js verify --final
 - [ ] 页面约束通过 `node tools/verify-design-gates.js pages`;设计规则不只是写在 `DESIGN.md` 里。
 - [ ] 截图槽位、表达模式、实现状态和证据边界都反映在页面设计里。
 - [ ] 如果启用 agent 协作,`agent-collaboration.json` 没有待决的必需角色、没有未审批的必需 bypass,且 `node tools/deck.js verify --final` 通过。
-- [ ] 如果 `workflow.stage` 是 `production`,当前事件触发的所有角色都有 V2 run ID、输入/输出哈希、真实 artifact 和有效结论;reviewer 始终必需,presenter 对内部分享必需。
+- [ ] 如果 `workflow.stage` 是 `production`,当前事件触发的所有角色都有 V2 run ID、输入/输出哈希、真实 artifact 和有效结论;reviewer 始终必需(讲稿由主 Agent 产出,不计入角色证据)。
 - [ ] 最新输出之后跑了 `node tools/artifact-map.js --write`,且用户报告把确认文件和下一步输入分开。
 - [ ] 在任何页面专属自定义路线之前,考虑过 component-library、external-graphic 和 image2/imageSlot 路线。
 - [ ] 视觉形态匹配页面关系,不只是标题。

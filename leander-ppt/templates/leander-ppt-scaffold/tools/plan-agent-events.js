@@ -5,7 +5,6 @@ const crypto = require("crypto");
 const ROOT = path.join(__dirname, "..");
 const cfg = require(path.join(ROOT, "deck.config.js"));
 const { digestPage } = require("./page-digests");
-const { discoverSignals: discoverCandidateSignals } = require("./candidate-harvest");
 function shaFile(file) { return fs.existsSync(file) && fs.statSync(file).isFile() ? crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex") : ""; }
 function stable(value) { if (Array.isArray(value)) return value.map(stable); if (value && typeof value === "object") return Object.fromEntries(Object.keys(value).sort().map(k => [k, stable(value[k])])); return value; }
 function digest(value) { return crypto.createHash("sha256").update(JSON.stringify(stable(value))).digest("hex"); }
@@ -45,26 +44,24 @@ function requiredRoles() {
   // Other roles run only when their workflow events are explicitly opened.
   if (stage === "anchor-sample") roles.push("visual-designer-zh");
   if (stage === "production") roles.push("reviewer-zh", ...(cfg.deckType === "internal-sharing" ? (ac.internalSharingRequiredRoles || []) : []));
-  if (stage === "production" && discoverCandidateSignals(ROOT).length > 0) roles.push("component-curator-zh");
   return [...new Set(roles)];
 }
 function phaseForRole(role) {
   if (cfg.workflow?.stage === "anchor-sample" && ["visual-designer-zh", "reviewer-zh"].includes(role)) return "anchor-sample";
-  if (cfg.workflow?.stage === "production" && ["visual-designer-zh", "reviewer-zh", "presenter-zh"].includes(role)) return "production-final";
+  if (cfg.workflow?.stage === "production" && ["visual-designer-zh", "reviewer-zh"].includes(role)) return "production-final";
   return cfg.workflow?.stage || "";
 }
 function inputs(role) {
   const common = { stage: cfg.workflow?.stage || "", phase: phaseForRole(role), mode: "B", role };
   const map = {
-    "planner-zh": [relHash("brief.md"), relHash("outline.md")],
-    "layout-architect-zh": [relHash("outline.md"), relHash("layout-blueprint.json"), relHash("DESIGN.md")],
+    // planner-zh covers story/outline and the layout blueprint in one pass.
+    "planner-zh": [relHash("brief.md"), relHash("outline.md"), relHash("layout-blueprint.json"), relHash("DESIGN.md")],
     "visual-designer-zh": [relHash("DESIGN.md"), relHash("visual-direction.md"), relHash("output/full-deck-contact-sheet.png"), relHash("output/render-diversity-audit.json"), pageHashes().map(({ id, renderSha256, renderDigest, selectionOutcomeDigest }) => ({ id, renderSha256, renderDigest, selectionOutcomeDigest }))],
-    "component-curator-zh": [relHash("tools/component-registry.json"), relHash("output/candidate-harvest.json"), relHash("state/component-candidate-proposals.json"), pageHashes().map(({ id, selectionDigest }) => ({ id, selectionDigest }))],
+    "component-curator-zh": [relHash("tools/component-registry.json"), pageHashes().map(({ id, selectionDigest }) => ({ id, selectionDigest }))],
     // qa-evidence-index.json is a compact reviewer read surface, but it is not
     // part of the event digest: reviewer output changes its own verdict/checks
     // and must not recursively trigger another identical review.
-    "reviewer-zh": [relHash("output/full-deck-contact-sheet.png"), relHash("output/quality-baseline-audit.json"), relHash("output/render-diversity-audit.json"), scopedPageHashes().map(({ id, renderSha256, renderDigest, selectionOutcomeDigest, qaProfileDigest, sourceDigest }) => ({ id, renderSha256, renderDigest, selectionOutcomeDigest, qaProfileDigest, sourceDigest }))],
-    "presenter-zh": [relHash("outline.md"), relHash("speaker-notes.md"), relHash("output/full-deck-contact-sheet.png")]
+    "reviewer-zh": [relHash("output/full-deck-contact-sheet.png"), relHash("output/quality-baseline-audit.json"), relHash("output/render-diversity-audit.json"), scopedPageHashes().map(({ id, renderSha256, renderDigest, selectionOutcomeDigest, qaProfileDigest, sourceDigest }) => ({ id, renderSha256, renderDigest, selectionOutcomeDigest, qaProfileDigest, sourceDigest }))]
   };
   return { ...common, artifacts: map[role] || [] };
 }
@@ -74,7 +71,7 @@ function build() {
   for (const role of Object.keys(cfg.agentCollaboration?.roleTriggers || {})) {
     const eventDigest = digest(inputs(role)), prior = data.roles?.[role] || {}, requiredPhase = phaseForRole(role);
     const reusable = prior.status === "completed" && prior.phase === requiredPhase && prior.eventDigest === eventDigest && prior.outputDigest === shaFile(path.join(ROOT, prior.artifact || ""));
-    const freshReview = ["anchor-sample", "production-final"].includes(requiredPhase) && ["visual-designer-zh", "reviewer-zh", "presenter-zh"].includes(role);
+    const freshReview = ["anchor-sample", "production-final"].includes(requiredPhase) && ["visual-designer-zh", "reviewer-zh"].includes(role);
     roles[role] = {
       required: required.has(role),
       action: !required.has(role) ? "not-triggered" : reusable ? "reuse-existing-run" : freshReview ? "run-fresh-once" : "run-once",

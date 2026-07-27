@@ -34,7 +34,7 @@
 
 - 它回答“这套 PPT 应该看起来像什么”。
 - 它可以包含当前 PPT 的页码、截图槽位、章节节奏和用户偏好。
-- 它由主流程、布局架构师、视觉设计师和 reviewer 读取。
+- 它由主流程、策划师（含布局蓝图）、视觉设计师和 reviewer 读取。
 - 它不新增角色，不替代 `visual-designer-zh`。
 - 当其中的规则具有通用价值时，需要先脱敏、抽象，再提升到 `VISUAL-COMPOSITION.md`、`SLIDE-CRAFT.md`、`PAGE-DESIGN-METHOD.md` 或 `LESSONS.md`。
 

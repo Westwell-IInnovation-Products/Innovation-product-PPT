@@ -3,10 +3,8 @@
   "policy": "event-driven.v3",
   "roles": {
     "planner-zh": {"status":"pending","action":"","event":"","phase":"","threadId":"","forkTurns":"","contextPolicy":"","runId":"","eventDigest":"","inputDigest":"","outputDigest":"","artifact":"outline.md","verdict":"","summary":"","reason":"","runs":[]},
-    "layout-architect-zh": {"status":"pending","action":"","event":"","phase":"","threadId":"","forkTurns":"","contextPolicy":"","runId":"","eventDigest":"","inputDigest":"","outputDigest":"","artifact":"layout-blueprint.md","verdict":"","summary":"","reason":"","runs":[]},
     "visual-designer-zh": {"status":"pending","action":"","event":"","phase":"","threadId":"","forkTurns":"none","contextPolicy":"compact-pack","runId":"","eventDigest":"","inputDigest":"","outputDigest":"","artifact":"agent-reviews/visual-designer-zh.md","verdict":"","summary":"","reason":"","runs":[]},
     "component-curator-zh": {"status":"pending","action":"","event":"","phase":"","threadId":"","forkTurns":"","contextPolicy":"compact-pack","runId":"","eventDigest":"","inputDigest":"","outputDigest":"","artifact":"agent-reviews/component-curator-zh.md","verdict":"","summary":"","reason":"","runs":[]},
-    "reviewer-zh": {"status":"pending","action":"","event":"","phase":"","threadId":"","forkTurns":"none","contextPolicy":"compact-pack","runId":"","eventDigest":"","inputDigest":"","outputDigest":"","artifact":"agent-reviews/reviewer-zh.md","verdict":"","summary":"","reason":"","runs":[]},
-    "presenter-zh": {"status":"pending","action":"","event":"","phase":"","threadId":"","forkTurns":"none","contextPolicy":"compact-pack","runId":"","eventDigest":"","inputDigest":"","outputDigest":"","artifact":"speaker-notes.md","verdict":"","summary":"","reason":"","runs":[]}
+    "reviewer-zh": {"status":"pending","action":"","event":"","phase":"","threadId":"","forkTurns":"none","contextPolicy":"compact-pack","runId":"","eventDigest":"","inputDigest":"","outputDigest":"","artifact":"agent-reviews/reviewer-zh.md","verdict":"","summary":"","reason":"","runs":[]}
   }
 }

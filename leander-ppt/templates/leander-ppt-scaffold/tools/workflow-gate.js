@@ -90,6 +90,7 @@ function initialize(intent) {
   requiredStep("token-ledger.js", ["start", "--run-id", receipt.runId]);
   writeJson(RECEIPT, receipt);
   writeJson(CHECKPOINTS, checkpoints);
+  bestEffort("requirements-trace.js", ["init"]);
   // Delta reuses the existing portfolio; a full reset re-plans it. (R3 will add a 1-job revision plan.)
   if (!deltaCarry) bestEffort("task-portfolio.js", ["create", "--force"]);
   bestEffort("tool-freeze.js", ["capture", "gate0"]);
@@ -247,6 +248,13 @@ function approveCheckpoint(key, value, note, approvalFileArg) {
     console.error(`Approval receipt failed: ${checked.errors.join("; ")}`);
     process.exit(1);
   }
+  if (key === "plan") {
+    requiredStep("requirements-trace.js", ["verify", "--stage", "plan"]);
+    if (String(checked.receipt?.artifact?.path || "").replace(/\\/g, "/") !== "state/requirements-contract.json") {
+      console.error("Plan approval must bind state/requirements-contract.json so original goals, scope decisions, outline mapping and source snapshots are approved together.");
+      process.exit(1);
+    }
+  }
   const item = data.checkpoints[key] || {};
   item.status = "approved";
   item.approvedAt = new Date().toISOString();
@@ -269,6 +277,20 @@ const requirements = {
   final: ["plan", "designTermsState", "theme", "layoutBlueprint", "anchorSample", "productionMode"]
 };
 
+function enforceRequirementsTrace(target, data, receipt) {
+  const stage = target === "anchor" ? "anchor" : target === "production" ? "production" : "final";
+  requiredStep("requirements-trace.js", ["verify", "--stage", stage]);
+  const plan = data.checkpoints?.plan;
+  const approvalFile = path.resolve(ROOT, plan?.approvalReceipt || "");
+  const approvalRunId = plan?.approvalReceiptRunId || receipt.runId;
+  const checked = verifyApprovalFile(approvalFile, { root: ROOT, checkpoint: "plan", runId: approvalRunId });
+  if (!checked.ok || String(checked.receipt?.artifact?.path || "").replace(/\\/g, "/") !== "state/requirements-contract.json") {
+    console.error("LEANDER REQUIREMENTS GATE FAILED: plan approval is not bound to the current requirements contract.");
+    console.error("Reopen plan, present the requirements-to-page trace to the user, and approve state/requirements-contract.json with a new receipt.");
+    process.exit(1);
+  }
+}
+
 function verify(target) {
   enforceContextRotation();
   const receipt = loadReceipt();
@@ -284,6 +306,7 @@ function verify(target) {
     console.error("Stop at the current checkpoint, present the user-facing artifact, and obtain explicit approval.");
     process.exit(1);
   }
+  enforceRequirementsTrace(target, data, receipt);
   receipt.lastVerifiedAt = new Date().toISOString();
   receipt.lastVerifiedTarget = target;
   writeJson(RECEIPT, receipt);

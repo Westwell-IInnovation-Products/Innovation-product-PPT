@@ -35,7 +35,7 @@ QA 负责判断页面是否有问题：重叠、溢出、歪线、字号太小�
 
 - 主流程用它约束蓝图、样页和页面生产。
 - `visual-designer-zh` 用它做视觉复核和美感判断。
-- `layout-architect-zh` 可以用它检查整套 PPT 的节奏和版式差异。
+- `planner-zh` 可以用它检查整套 PPT 的节奏和版式差异。
 - `reviewer-zh` 可以用它补充“没错但不好看”的判断依据。
 
 不要新增 `visual-direction`、`visual-guide`、`art-director` 之类的独立 agent，除非用户明确要求重构 agent 体系。默认做法是把视觉导向并入现有视觉设计师角色和主流程关卡。

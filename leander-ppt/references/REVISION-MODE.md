@@ -7,6 +7,8 @@
 
 `workflow-gate.js init redesign` 只处理第一个决定，绝不自动回答第二个决定。
 
+`revision-contract.json` 只约束页面文件差异，不能证明原始业务目标仍被覆盖。每轮 redesign 还必须更新并重新 seal `requirements-contract.json`，让新的 Gate 1 审批同时确认“页面怎么改”和“哪些原始问题仍然必须回答”。
+
 ## 两种内容基线模式
 
 ### `delta-revision`
@@ -42,6 +44,7 @@
 4. 每条 `modify` 应区分“反馈要求改变的部分”和“必须保留的部分”。
 5. 在编辑前运行 `node tools/revision-mode.js verify --intent redesign`,验证合同结构与授权；它不会要求尚未发生的 diff。
 6. 初始化新的 redesign receipt,让用户通过 approval receipt 审批本轮 `pageMap`,然后只修改映射允许的页面。
+   - 同时把 pageMap 对应到 requirements contract 的需求 ID；删除页面不等于删除需求，需求必须迁移到其他 planned target，或以用户明确证据标记 deferred/removed。
 7. 编辑后运行 `node tools/revision-mode.js verify`,强制核对真实文件 diff；通过后才能进入终版门禁。
 
 ## 审批结转与增量短流水线

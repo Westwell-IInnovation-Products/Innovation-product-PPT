@@ -3,12 +3,15 @@
 //   node tools/verify-state-memory.js
 const fs = require("fs");
 const path = require("path");
+const requirementsTrace = require("./requirements-trace");
 
 const ROOT = path.join(__dirname, "..");
 const REQUIRED = [
   "state/run-state.json",
   "state/decision-log.md",
   "state/conversation-summary.md",
+  "state/requirements-contract.json",
+  "state/requirements-coverage.json",
   "state/issues.json",
   "checkpoint-status.json",
   "deck.config.js"
@@ -42,6 +45,10 @@ function main() {
         production: ["plan", "designTermsState", "theme", "layoutBlueprint", "anchorSample", "productionMode"]
       }[stage] || [];
       dependencies.forEach(key => { if (!approved(key)) findings.push(`workflow.stage=${stage}，但 checkpoint ${key} 尚未批准或有理由地绕过`); });
+      if (approved("plan")) {
+        const trace = requirementsTrace.inspect(ROOT, "plan");
+        trace.errors.forEach(item => findings.push(`requirements trace：${item}`));
+      }
       const phaseWords = {
         "outline-reset": /(brief|outline|大纲|简报)/i,
         "layout-blueprint": /(layout|blueprint|蓝图)/i,

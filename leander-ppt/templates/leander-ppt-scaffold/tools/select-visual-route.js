@@ -280,13 +280,13 @@ function main() {
     const baseContext = {
       relationship: "sequence", relationshipAliases: [], secondaryRelationships: [], candidateComponents: [], patternHints: [],
       blueprint: {}, requiredSlots: [], shape: { maxItems: 4 }, needsEvidence: false, hasQuantitativeEvidence: false,
-      theme: "global-v2", text: "operational recovery convergence"
+      theme: "leander-global", text: "operational recovery convergence"
     };
-    const chart = scoreComponent({ name: "pieBreakdown", relationships: ["evidence"], relationPrimitive: "evidence", tags: ["chart", "ratio"], slots: [], themeCompatibility: ["global-v2"] }, baseContext);
+    const chart = scoreComponent({ name: "pieBreakdown", relationships: ["evidence"], relationPrimitive: "evidence", tags: ["chart", "ratio"], slots: [], themeCompatibility: ["leander-global"] }, baseContext);
     assert(chart.hardRejected && chart.rejections.includes("semantics.quantitative-evidence-missing"), "non-quantitative mechanism pages must not fall back to a chart");
-    const exact = scoreComponent({ name: "processTimeline", relationships: ["sequence"], relationPrimitive: "sequence", tags: ["process"], slots: [], themeCompatibility: ["global-v2"] }, { ...baseContext, candidateComponents: ["processTimeline"] });
+    const exact = scoreComponent({ name: "processTimeline", relationships: ["sequence"], relationPrimitive: "sequence", tags: ["process"], slots: [], themeCompatibility: ["leander-global"] }, { ...baseContext, candidateComponents: ["processTimeline"] });
     assert(exact.reasons.includes("contract.component-rank.1") && exact.breakdown.blueprint >= 40, "exact candidateComponents must be a strong component constraint");
-    const hinted = scoreComponent({ name: "processTimeline", relationships: ["sequence"], relationPrimitive: "sequence", tags: ["process"], slots: [], themeCompatibility: ["global-v2"] }, { ...baseContext, patternHints: ["process"] });
+    const hinted = scoreComponent({ name: "processTimeline", relationships: ["sequence"], relationPrimitive: "sequence", tags: ["process"], slots: [], themeCompatibility: ["leander-global"] }, { ...baseContext, patternHints: ["process"] });
     assert(hinted.reasons.includes("contract.pattern-hint") && hinted.breakdown.blueprint < exact.breakdown.blueprint, "patternHints must stay weaker than exact component IDs");
     console.log("PASS visual route competition self-test");
     return;

@@ -4,7 +4,7 @@ Leander-PPT 把 Agent 作为 Harness 关卡中的专业角色，而不是让多�
 
 ## 核心原则
 
-- 六个逻辑角色保留：策划师、布局架构师、视觉设计师、组件管理员、质检员、汇报人。
+- 保留四个逻辑角色：策划师（含布局蓝图）、视觉设计师、组件管理员、质检员。讲稿由主 Agent 直接产出，不是角色。
 - 生产模式 A/B/C 只决定页面如何生产，不决定哪些角色有效。
 - 角色由事件触发，不是每一轮全员重跑。
 - 可由脚本确定的错误先跑脚本；Agent 处理需要判断的故事、表达、设计和汇报问题。
@@ -14,12 +14,12 @@ Leander-PPT 把 Agent 作为 Harness 关卡中的专业角色，而不是让多�
 
 | 角色 | 主要事件 | 主要产物 | 不能代替 |
 |---|---|---|---|
-| `planner-zh` | 大纲新建、故事线变化 | `outline.md` | 用户确认、视觉设计 |
-| `layout-architect-zh` | 页序或布局变化、重新进入蓝图 | `layout-blueprint.md/json` | 正式页面绘制 |
+| `planner-zh` | 大纲新建、故事线变化、页序或布局变化 | `outline.md` + `layout-blueprint.md/json` | 用户确认、视觉设计、正式页面绘制 |
 | `visual-designer-zh` | 锚点、主题变化、高视觉风险 | 视觉评审报告或锚点样页意见 | 改写业务事实 |
 | `component-curator-zh` | 组件变更、选择置信度低、候选分差过小 | 组件选择/治理报告 | 页面最终验收 |
 | `reviewer-zh` | 页面或整套 PPT 已渲染 | `qa-result.json`、质检报告 | 自己修自己批 |
-| `presenter-zh` | 用户明确要求演练 | `speaker-notes.md` | 绕过 QA 改页 |
+
+讲稿 `speaker-notes.md` 由**主 agent** 在需要时直接产出,不是角色评审,也不占 fresh-fork 预算。
 
 ## 事件配置
 
@@ -35,8 +35,7 @@ events: {
   componentChanged: false,
   lowConfidenceSelection: false,
   renderedPagesReady: false,
-  fullDeckRendered: false,
-  rehearsalRequested: false
+  fullDeckRendered: false
 }
 ```
 
@@ -46,17 +45,16 @@ events: {
 
 ```text
 Brief / source
-  -> 策划师：故事和大纲
+  -> 策划师：故事、大纲，以及整套蓝图和页面视觉签名（同一角色一次出完）
   -> 主题 / DESIGN.md：先确定视觉语义边界
-  -> 布局架构师：整套蓝图和页面视觉签名
   -> 视觉设计师：高风险蓝图与锚点风格
   -> 组件管理员：低置信页面的路线和组件合同
   -> 主 Agent：按页面合同实现
   -> 质检员：真实渲染证据与动态 QA
-  -> 汇报人：最终演练和补充知识
+  -> 主 Agent：终版讲稿（交付步骤，不是角色）
 ```
 
-标杆样张强制触发视觉设计师；最终交付强制触发质检员；汇报人只在用户明确要求演练时触发。组件管理员只在共享组件变化或明确存疑的选择时触发，不因 Mode A/B/C 改变。
+标杆样张强制触发视觉设计师；最终交付强制触发质检员。组件管理员只在共享组件变化或明确存疑的选择时触发，不因 Mode A/B/C 改变。
 
 标准 Mode B 的评审基线是锚点阶段视觉设计师一次、真正完成后的集成渲染由质检员一次（contact sheet + 风险页全尺寸）。这不是全局子智能体硬上限:共享设计变化或新的真实 event digest 可以追加角色运行;相同 event digest 的重复运行会被关卡拒绝。蓝图由主 Agent 按 `LAYOUT-BLUEPRINT.md` 清单自查，默认不派子代理评审。增量修复只为当前受影响页面追加评审事件；未变化页面沿用与当前渲染哈希匹配的证据。
 
@@ -129,7 +127,7 @@ FIX-FIRST 复审只传增量：首轮 FIX-FIRST 之后，制作方只改动被�
 
 - 事件未触发时可以保持 `pending`，不算机制失效。
 - 事件已触发的必需角色不能保持 `pending`。
-- 最终阶段强制的质检员必须真实独立运行，不能用主 Agent fallback 冒充。视觉设计师只在锚点、主题/设计变化或高视觉风险时触发；汇报人只在明确演练请求时触发；组件管理员未触发时保持 pending 是正常状态。
+- 最终阶段强制的质检员必须真实独立运行，不能用主 Agent fallback 冒充。视觉设计师只在锚点、主题/设计变化或高视觉风险时触发；组件管理员未触发时保持 pending 是正常状态。
 - 小任务允许 fallback 时，要写明原因、产物和结论。
 - `bypassed` 只在配置明确允许且有理由时使用。
 
@@ -158,7 +156,6 @@ node tools/verify-agent-collaboration.js
 - 用页面生产 Agent 的自检代替独立质检。
 - 组件选择置信度低却没有触发组件管理员。
 - 整套渲染已变化却沿用旧视觉或 reviewer 报告。
-- `rehearsalRequested` 已打开却没有汇报人演练。
 
 ## 主 Agent 职责
 

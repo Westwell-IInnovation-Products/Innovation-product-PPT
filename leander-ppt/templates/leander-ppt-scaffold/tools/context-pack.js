@@ -60,14 +60,13 @@ function roleReads(roleName, pages) {
   const failedPages = pages.filter(page => !["PASS", "SHIP", "READY"].includes(String(page.qa || "").toUpperCase()));
   const pageContracts = reviewPages.map(page => page.files.contract);
   const renders = (riskPages.length ? riskPages : pages).map(page => page.files.render);
-  const common = ["role-briefs.md", `agents/${roleName || "<role>"}.md`, "state/context-pack.json or this stdout packet"];
+  const common = ["state/requirements-contract.json", "state/requirements-coverage.json", "role-briefs.md", `agents/${roleName || "<role>"}.md`, "state/context-pack.json or this stdout packet"];
   const map = {
-    "planner-zh": ["brief.md", "outline.md", "terminology.json"],
-    "layout-architect-zh": ["outline.md", "layout-blueprint.json", "output/layout-blueprint-preview.svg", "output/layout-blueprint-risk-preview.svg", "output/layout-blueprint-component-shortlist.svg", "output/layout-blueprint-component-shortlist.md", "output/layout-blueprint-preview-qa.md"],
+    // planner-zh owns story/outline AND the whole-deck layout blueprint in one pass.
+    "planner-zh": ["brief.md", "outline.md", "terminology.json", "layout-blueprint.json", "output/layout-blueprint-preview.svg", "output/layout-blueprint-risk-preview.svg", "output/layout-blueprint-component-shortlist.svg", "output/layout-blueprint-component-shortlist.md", "output/layout-blueprint-preview-qa.md"],
     "visual-designer-zh": ["DESIGN.md", "visual-direction.md", "quality-target.json", "state/agent-event-plan.json", "output/render-quality-evidence.json", "output/render-diversity-audit.json", "output/anchor-samples-contact-sheet.png", "output/full-deck-contact-sheet.png", ...renders],
     "component-curator-zh": ["tools/component-index.min.json", "layout-blueprint.json", ...pages.filter(page => page.curatorReview).map(page => page.files.contract)],
-    "reviewer-zh": ["output/qa-evidence-index.json", "quality-target.json", "state/agent-event-plan.json", "output/render-quality-evidence.json", "output/render-diversity-audit.json", "output/anchor-samples-contact-sheet.png", "output/full-deck-contact-sheet.png", "output/quality-baseline-audit.md", ...pageContracts, ...renders, ...failedPages.map(page => page.files.qaResult)],
-    "presenter-zh": ["outline.md", "speaker-notes.md", "output/full-deck-contact-sheet.png"]
+    "reviewer-zh": ["output/qa-evidence-index.json", "quality-target.json", "state/agent-event-plan.json", "output/render-quality-evidence.json", "output/render-diversity-audit.json", "output/anchor-samples-contact-sheet.png", "output/full-deck-contact-sheet.png", "output/quality-baseline-audit.md", ...pageContracts, ...renders, ...failedPages.map(page => page.files.qaResult)]
   };
   return [...common, ...(map[roleName] || pageContracts)].filter((item, index, list) => item && list.indexOf(item) === index);
 }
@@ -89,7 +88,7 @@ function budgetFor() {
   return 20000;
 }
 function isRequiredRead(item) {
-  return /(?:phase-handoff|context-pack|role-briefs\.md|agents\/[^/]+\.md)$/i.test(item.path || "");
+  return /(?:phase-handoff|requirements-(?:contract|coverage)\.json|context-pack|role-briefs\.md|agents\/[^/]+\.md)$/i.test(item.path || "");
 }
 function boundReadPlan(plan, maxTokens) {
   const required = plan.filter(isRequiredRead), optional = plan.filter(item => !isRequiredRead(item));
@@ -105,7 +104,7 @@ function boundReadPlan(plan, maxTokens) {
 }
 function recommendedReads(stage, pages) {
   if (mode === "agent") return roleReads(role, pages);
-  if (mode === "status") return ["checkpoint-status.json", "state/run-state.json", "artifact-manifest.md"];
+  if (mode === "status") return ["state/requirements-contract.json", "state/requirements-coverage.json", "checkpoint-status.json", "state/run-state.json", "artifact-manifest.md"];
   if (stage === "layout-blueprint") return [
     "checkpoint-status.json", "layout-blueprint.md", "layout-blueprint.json",
     "output/layout-blueprint-preview.svg", "output/layout-blueprint-risk-preview.svg", "output/layout-blueprint-component-shortlist.svg", "output/layout-blueprint-component-shortlist.md",
@@ -143,7 +142,7 @@ function build() {
     requiredEstimatedTextTokens: bounded.requiredTokens,
     status: bounded.status,
     omittedReads: bounded.omitted.map(item => item.path),
-    rule: "The pack is strict by default and auto-prunes optional reads. Start from state/phase-handoff.json in a fresh task. Do not replay task history or open visual assets as text. Expand only after naming the missing decision or changed shared dependency."
+    rule: "The pack is strict by default and auto-prunes optional reads. Start from the approved requirements contract, current coverage and state/phase-handoff.json in a fresh task. Do not replay task history when the requirements trace is valid or open visual assets as text. Expand only after naming the missing decision or changed shared dependency."
   };
   const compact = JSON.stringify(pack);
   pack.packet = { sha256: crypto.createHash("sha256").update(compact).digest("hex"), bytes: Buffer.byteLength(compact), estimatedTokens: Math.ceil(Buffer.byteLength(compact) / 4) };
@@ -166,6 +165,7 @@ function markdown(pack) {
 function selfTest() {
   const plan = [
     { path: "state/phase-handoff.json", estimatedTextTokens: 1000 },
+    { path: "state/requirements-contract.json", estimatedTextTokens: 500 },
     { path: "optional-heavy.md", estimatedTextTokens: 4000 },
     { path: "render.png", estimatedTextTokens: 0 }
   ];

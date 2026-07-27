@@ -62,6 +62,7 @@ const globalTheme = {
     headerRule: { style: "dash", color: "blue", weight: 0.25, dash: "lgDash", track: true },
     footer: { style: "image", img: "theme/assets/footer-westwell.png", x: 23, y: 987, w: 1806, h: 63 },
     divider: "white-underline",
+    icon: { style: "line", weight: 1.6 },
     cover: "white-minimal",
     closing: "white-minimal",
     coverPhoto: "",

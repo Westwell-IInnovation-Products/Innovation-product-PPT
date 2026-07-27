@@ -18,21 +18,21 @@ module.exports = {
       componentChanged: false,
       lowConfidenceSelection: false,
       renderedPagesReady: false,
-      fullDeckRendered: false,
-      rehearsalRequested: false
+      fullDeckRendered: false
     }
   },
   executionBudget: {
-    // Wave A observes first. Switch to "enforce" only after several real decks
-    // show that the thresholds leave enough room for a clean handoff.
-    enforcementMode: "report-only", // report-only | enforce
-    conversationHardTotalTokens: 260000,
-    executionStopTokens: 180000,
-    handoffOnlyTokens: 220000,
+    // Single-task mode: the whole deck is produced in one task. There is no token
+    // ceiling and no rotation — the token ledger only measures cost, it never blocks.
+    // The threshold fields below are retained for the ledger's report labels only.
+    enforcementMode: "report-only", // retained field; the gate never enforces
+    conversationHardTotalTokens: 0,  // 0 = no hard limit
+    executionStopTokens: 0,
+    handoffOnlyTokens: 0,
     reservedCompletionTokens: 40000,
-    callBudgetMode: "adaptive",
-    preferredRootTasks: 4,
-    maxPlannedRootTasks: 6,
+    callBudgetMode: "single-task",
+    preferredRootTasks: 1,
+    maxPlannedRootTasks: 1,
     subagentTargetTotalTokens: 120000,
     contextPacks: {
       status: 3000,
@@ -53,16 +53,14 @@ module.exports = {
     // but NOT visual-designer-zh (style is already locked at anchor, and the final
     // reviewer already covers composition/visual/color/shape-class defects).
     // visual-designer re-engages only when design/theme actually changed or a page
-    // is flagged highVisualRisk. presenter-zh is a deliverable step (speaker notes)
-    // run on rehearsalRequested, not an extra quality gate — opening it does not
-    // "double-check" the deck, it only adds a pass.
+    // is flagged highVisualRisk. planner-zh owns story + outline AND the whole-deck
+    // layout blueprint in one pass (they are one planning decision, not two reviews).
+    // Speaker notes are a main-agent deliverable step, not an agent role.
     roleTriggers: {
-      "planner-zh": ["storyChanged"],
-      "layout-architect-zh": ["layoutChanged"],
+      "planner-zh": ["storyChanged", "layoutChanged"],
       "visual-designer-zh": ["designChanged", "themeChanged", "highVisualRisk"],
       "component-curator-zh": ["componentChanged", "lowConfidenceSelection"],
-      "reviewer-zh": ["renderedPagesReady", "fullDeckRendered"],
-      "presenter-zh": ["rehearsalRequested"]
+      "reviewer-zh": ["renderedPagesReady", "fullDeckRendered"]
     },
     // Final quality is judged from the integrated render, not only page contracts.
     // Standard budget: one visual review at anchor, one reviewer run at final.

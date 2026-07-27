@@ -51,6 +51,7 @@ const theme = {
   },
   signature: {
     id: "leander-base",
+    structStyle: "outline",
     titleColor: "accent",
     headerRule: { style: "solid", color: "accent", w: 760, h: 3 },
     footer: { style: "bar", color: "accent" },
@@ -88,27 +89,17 @@ const theme = {
 };
 
 const { globalTheme } = require("./leander-global");
-const { globalV2Theme } = require("./global-v2");
 const { base2Theme } = require("./base2");
-const { base3Theme } = require("./base3");
 
 const themes = {
   "leander-base": theme,
   "base2": base2Theme,
-  "base3": base3Theme,
-  "leander-global": globalTheme,
-  "global-v2": globalV2Theme
+  "leander-global": globalTheme
 };
 
 function getTheme(name) {
   const raw = String(name || "").trim();
-  const normalized = /^global-?v2$/i.test(raw)
-    ? "global-v2"
-    : /^base-?2$/i.test(raw)
-      ? "base2"
-      : /^base-?3$/i.test(raw)
-        ? "base3"
-        : raw;
+  const normalized = /^base-?2$/i.test(raw) ? "base2" : raw;
   const t = themes[normalized];
   if (!t || t === theme) return theme;
   return {

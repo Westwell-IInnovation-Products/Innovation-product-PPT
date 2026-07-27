@@ -39,7 +39,7 @@
 |   +-- context-pack.js     compact project/page/agent state for low-token continuation
 |   +-- phase-handoff.js    hash-bound Gate continuation packet for a fresh task
 |   +-- token-ledger.js     rollout-backed Gate/role Token accounting and Chinese report
-|   +-- task-portfolio.js   adaptive 3-6 root-task job portfolio
+|   +-- task-portfolio.js   single-job portfolio (single-task mode)
 |   +-- resume-job.js       one-command attach + handoff + strict pack + active job
 |   +-- page-digests.js     split render/selection/QA/source dependency digests
 |   +-- verify-page-preflight.js  final route/capacity/slot/prompt/signature gate
@@ -57,7 +57,7 @@
 +-- qa.md                   deck-level QA summary (per-page table + reviewer verdict)
 ```
 
-Pipeline:对已有工作,新根任务直接跑 `node tools/resume-job.js`,只打开严格 context pack 推荐的文件。对一个页面切片,用 `node tools/run-phase.js page-cycle --pages <ids>`:路线选择 -> 动态 QA -> preflight -> 确定性 lint -> 增量 render -> contact sheet -> 受影响页 QA 初始化 -> 紧凑 QA 索引 -> 拆分摘要抓取。审阅员证据在一次 `qa-review-batch.v1` 里应用,后续只读 `qa-evidence-index.json` 的 delta 和被点名页面。然后跑页面 verify、终版 collaboration/render-quality verify、受 gate 约束的 build,以及产物映射。渲染新鲜度用目的专属的摘要,而不是整文件 mtime:QA/来源元数据永不使 PNG 失效,选定渲染的变化使该页失效,共享 theme/组件的变化使整份 deck 失效。
+Pipeline:对已有工作,用 `node tools/context-pack.js --mode status` 拿严格数据包,只打开它推荐的文件(跨会话重开旧项目时可先 `node tools/resume-job.js`)。对一个页面切片,用 `node tools/run-phase.js page-cycle --pages <ids>`:路线选择 -> 动态 QA -> preflight -> 确定性 lint -> 增量 render -> contact sheet -> 受影响页 QA 初始化 -> 紧凑 QA 索引 -> 拆分摘要抓取。审阅员证据在一次 `qa-review-batch.v1` 里应用,后续只读 `qa-evidence-index.json` 的 delta 和被点名页面。然后跑页面 verify、终版 collaboration/render-quality verify、受 gate 约束的 build,以及产物映射。渲染新鲜度用目的专属的摘要,而不是整文件 mtime:QA/来源元数据永不使 PNG 失效,选定渲染的变化使该页失效,共享 theme/组件的变化使整份 deck 失效。
 
 Phase 4 之前,跑 `node tools/verify-checkpoints.js phase4`。文件 `checkpoint-status.json` 必须为 plan、布局蓝图、theme、标杆样张和生产模式记录明确的审批或明确的 bypass。如果 `deck.config.js.workflow.stage = "production"`,终版 verify/build 会自动跑这道检查点 gate。
 

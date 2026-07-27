@@ -106,6 +106,7 @@ Pick 2-3 representative pages for sample production:
 - 解释实现的页面必须标注 `implementationStatus`:implemented、partial、proposed 或 public-reference。
 - 选组件之前声明 `expressionMode`:mechanism-diagram、screenshot-evidence、big-typography、case-evidence、human-ai-swimlane、artifact-map、simple-image2-illustration,或 component-composite。
 - 如果 deck 反复出现框架术语,创建 `terminology.json`,并让页面标题与规范名称对齐。
+- **页面标题用书面、学术的陈述**(名词短语或完整书面判断句),不用口语 / 口播腔;把这一页的一句话论点(takeaway)写进**副标题**,而不是标题、也不是留到页面底部再复述。详见 `SLIDE-CRAFT.md` 的"标题、副标题与结论句"。
 
 ## 手工 Deck 标准化模式
 
@@ -129,6 +130,7 @@ Pick 2-3 representative pages for sample production:
 - [ ] 每个章节都有 Chapter ID、页面范围、生产角色,以及可见/不可见状态。
 - [ ] 内部分享 deck 有一个宽泛的叙事映射,通常覆盖大问题、环境、目标问题、方案、方案展开,以及实施/效果。
 - [ ] 每一页都有 Page ID、Chapter ID、标题、结论、证据池、视觉意图、组件来源、数据边界和素材需求。
+- [ ] 页面标题是书面/学术陈述而非口语;每页的一句话论点(takeaway)归入副标题,而不是标题或底部总结带。
 - [ ] 每张内容页都有足够的证据或机制细节,支撑 30-90 秒有用的讲解,而不依赖填充文字。
 - [ ] 视觉意图是可执行、不含糊的,例如"带图标的四列机制",而不是"漂亮布局"。
 - [ ] 证据薄弱或素材缺失的页面被标出。

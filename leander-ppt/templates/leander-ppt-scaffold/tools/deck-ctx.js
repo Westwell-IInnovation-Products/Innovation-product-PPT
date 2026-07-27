@@ -5,6 +5,7 @@ const { makeComponents } = require("../components/ppt-components");
 const { makeEditorial } = require("../components/editorial");
 const { makeBespoke } = require("../components/bespoke");
 const { makeToolSystemTree } = require("../components/tool-system-tree");
+const { setIconStyle } = require("../components/icons");
 
 function newPptx(theme) {
   const p = new pptxgen();
@@ -57,6 +58,7 @@ function tracedNamespace(namespace, source, trace) {
 }
 
 function makeCtx(pptx, theme) {
+  setIconStyle(theme); // per-theme icon style (line vs soft) before components bind
   const trace = makeTrace();
   const ui = tracedNamespace("ui", makeComponents(pptx, theme), trace);
   const ed = tracedNamespace("ed", makeEditorial({ ui, theme, pptx }), trace);

@@ -74,7 +74,7 @@ function build() {
   [
     ["checkpoint-status.json", "阶段状态"], ["layout-blueprint.json", "蓝图合同"], ["deck.config.js", "运行配置"],
     ["theme-contract.md", "主题合同"], ["terminology.json", "术语合同"], ["state/run-state.json", "运行状态"],
-    ["state/phase-handoff.json", "跨任务阶段交接"], ["quality-target.json", "质量目标"], ["agent-collaboration.json", "角色状态"]
+    ["state/phase-handoff.json", "跨任务阶段交接"], ["state/requirements-contract.json", "原始需求与范围合同"], ["state/requirements-coverage.json", "需求覆盖证据"], ["quality-target.json", "质量目标"], ["agent-collaboration.json", "角色状态"]
   ].forEach(([file, purpose]) => add(items, "next-input", purpose, file, "下一阶段按需读取。", false));
   [
     ["output/layout-blueprint-preview-qa.json", "蓝图机器 QA"], ["output/layout-blueprint-geometry.json", "蓝图几何证据"],
@@ -90,8 +90,10 @@ function build() {
     .map(role => role.artifact)
     .filter(exists))];
   currentRoleArtifacts.forEach(file => add(items, "internal-evidence", "当前角色证据", file, "由当前 agent-collaboration.json 引用。", false));
-  if (stage === "production" && collaboration.roles?.["presenter-zh"]?.status === "completed" && openEvents.rehearsalRequested === true) {
-    add(items, "final-output", "中文汇报讲稿", "speaker-notes.md", "汇报人基于最终页面彩排生成的逐页讲述、转场和节奏建议。", false);
+  // Speaker notes are a main-agent deliverable step, not an agent role: label them
+  // whenever the file exists at production stage.
+  if (stage === "production" && exists("speaker-notes.md")) {
+    add(items, "final-output", "中文汇报讲稿", "speaker-notes.md", "基于最终页面生成的逐页讲述、转场和节奏建议(主 agent 交付步骤)。", false);
   }
 
   const stale = ["outline-reset", "layout-blueprint"].includes(stage);
