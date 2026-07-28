@@ -65,7 +65,13 @@ for (const { dir, data: page } of pages) {
   if (!present(page.title, content ? 4 : 2)) add(errors, id, "title", "缺少可讲述的页面标题。");
   if (titles.has(text(page.title))) add(warnings, id, "title", "页面标题与其他活动页完全重复，请确认是否为有意呼应。");
   titles.add(text(page.title));
-  if (/TODO|TBD|PLACEHOLDER|待补|占位/i.test(JSON.stringify(page))) add(errors, id, "placeholder", "页面合同仍含未处理的占位内容。");
+  const themeFeatures = Array.isArray(page.themeFidelity?.features) ? page.themeFidelity.features.map(item => typeof item === "string" ? item : item?.id) : [];
+  const explicitPending = themeFeatures.includes("pending-simulation-state")
+    && /partial|proposed/i.test(text(page.implementationStatus))
+    && /pending|missing|待仿真|待测|缺素材/i.test(text(page.assetNeed))
+    && present(page.dataBoundary, 8)
+    && Number(page.themeFidelity?.composition?.inventedPendingValues || 0) === 0;
+  if (/TODO|TBD|PLACEHOLDER|待补|占位/i.test(JSON.stringify(page)) && !explicitPending) add(errors, id, "placeholder", "页面合同仍含未处理的占位内容。待仿真/待测必须用显式 pending state、事实边界和零虚构值合同。");
   if (!content) continue;
   contentPages.push(page);
 
@@ -98,6 +104,7 @@ for (const { dir, data: page } of pages) {
   const qa = page.qaProfile || {};
   if (!Array.isArray(qa.pageRules) || qa.pageRules.length < 1) add(errors, id, "qaProfile", "缺少针对本页主张的动态 QA。");
   if (!Array.isArray(qa.requiredEvidence) || !qa.requiredEvidence.includes("render-sha256")) add(errors, id, "qaProfile", "动态 QA 未要求真实渲染证据。");
+  if (!Array.isArray(qa.requiredEvidence) || !qa.requiredEvidence.includes("theme-fidelity-audit")) add(errors, id, "qaProfile", "动态 QA 未要求主题保真审计证据。");
 
   const publicOrEvidence = page.implementationStatus === "public-reference" || relationship === "evidence";
   if (publicOrEvidence && (!Array.isArray(qa.requiredEvidence) || !qa.requiredEvidence.includes("source-reference"))) {
@@ -143,10 +150,19 @@ if (cfg.workflow?.stage === "anchor-sample") {
   const modalMode = Object.entries(modeCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "";
   const active = pages.map(item => item.data);
   const coverage = {
-    "tone-or-cover": active.some(page => !isContent(page)),
+    "tone-or-cover": active.some(page => !isContent(page) || /brand/.test(`${page.storyRole || ""} ${page.themeFidelity?.archetype || ""}`.toLowerCase())),
     "modal-content": !!modalMode && active.some(page => text(page.expressionMode).toLowerCase() === modalMode),
     "complex-structure": active.some(page => /system|architecture|mechanism|network|tree|flow|hierarchy|dense/i.test(`${page.relationship || ""} ${page.expressionMode || ""}`)),
-    "evidence-or-image": active.some(page => /evidence|screenshot|image|external|artifact/i.test(`${page.relationship || ""} ${page.expressionMode || ""} ${page.visualSelection?.selectedRoute?.route || ""}`))
+    "screenshot-evidence": active.some(page => /screenshot-evidence/i.test(text(page.expressionMode)) || (page.screenshotSlots || []).length > 0),
+    "data-dense": active.some(page => text(page.contentDensity).toLowerCase() === "high"
+      || /variable|delta|compact-kpi|data-dense/.test(`${page.themeFidelity?.archetype || ""} ${(page.themeFidelity?.features || []).join(" ")}`.toLowerCase())),
+    "asset-gap-high-capacity": active.some(page => {
+      const featureText = (page.themeFidelity?.features || []).map(item => typeof item === "string" ? item : item?.id).join(" ");
+      const capacity = Number(page.contentShape?.maxItems || page.visualSelection?.contentShape?.maxItems || 0);
+      return /pending|missing|待仿真|待测|缺素材/i.test(text(page.assetNeed))
+        && (capacity >= 6 || text(page.contentDensity).toLowerCase() === "high")
+        && /pending-simulation-state/.test(featureText);
+    })
   };
   (qualityTarget.anchorCoverage || []).filter(name => !coverage[name]).forEach(name => add(errors, "deck", "anchorCoverage", `锚点样页缺少代表性类别：${name}。`));
   reportDeckStats.anchorCoverage = coverage;

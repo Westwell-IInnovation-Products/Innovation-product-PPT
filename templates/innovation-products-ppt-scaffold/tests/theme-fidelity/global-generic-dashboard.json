@@ -1,0 +1,32 @@
+{
+  "id": "global-generic-dashboard",
+  "title": "Scenario indicators",
+  "relationship": "evidence",
+  "expressionMode": "dashboard",
+  "contentDensity": "high",
+  "contentShape": { "maxItems": 9 },
+  "visualSelection": {
+    "selectedRoute": { "route": "page-specific-custom", "name": "custom-composition" }
+  },
+  "themeFidelity": {
+    "version": "theme-fidelity.v1",
+    "theme": "leander-global",
+    "archetype": "global.generic-dashboard",
+    "features": ["ruled-information-hierarchy"],
+    "composition": {
+      "uniformCardGrid": { "rows": 2, "columns": 3, "emptyCards": 6, "uniform": true },
+      "secondaryInfoCards": 3,
+      "evidenceDominant": false,
+      "evidenceSlots": 0,
+      "tableRows": 0,
+      "deltaPairs": 0,
+      "kpiRail": { "count": 0, "compact": false }
+    }
+  },
+  "_testModuleFidelity": {
+    "version": "theme-fidelity.v1",
+    "theme": "leander-global",
+    "archetype": "global.generic-dashboard",
+    "features": ["ruled-information-hierarchy"]
+  }
+}

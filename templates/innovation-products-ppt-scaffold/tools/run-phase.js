@@ -76,6 +76,7 @@ function preparePages() {
   });
   run("page design contracts", "verify-design-gates.js", ["pages"]);
   run("quality baseline", "verify-quality-baseline.js");
+  run("theme fidelity", "verify-theme-fidelity.js", ["--pages", dirs.join(",")]);
   run("final visual-contract preflight", "verify-page-preflight.js", ["--pages", dirs.join(",")]);
 }
 

@@ -9,6 +9,7 @@
 // 渲染后的重叠、线条歪斜、微小字号仍需要 rendered QA / 视觉设计师复核。
 const fs = require("fs");
 const path = require("path");
+const { getContentFidelity, normalizeThemeId } = require("../theme/content-fidelity");
 const { inspectBlueprintComponentContracts } = require("./component-contract");
 
 const ROOT = path.join(__dirname, "..");
@@ -190,6 +191,8 @@ function inspectOutline(findings) {
 
 function inspectBlueprint(findings, warnings) {
   const cfg = exists(path.join(ROOT, "deck.config.js")) ? require(path.join(ROOT, "deck.config.js")) : {};
+  const themeId = normalizeThemeId(cfg.theme || "leander-base");
+  const fidelityProfile = getContentFidelity(themeId);
   const file = path.join(ROOT, "layout-blueprint.json");
   if (cfg.workflow && cfg.workflow.stage === "outline-reset") {
     add(warnings, "warning", "blueprint", file, "当前处于 outline-reset，旧 layout-blueprint.json 应视为 stale。", "确认大纲后重新生成蓝图，再运行 blueprint 关卡。");
@@ -217,6 +220,20 @@ function inspectBlueprint(findings, warnings) {
     }
     if (isContent(c) && !hasAny(c, ["colorPlan", "colorIntent", "accentTarget"])) {
       add(findings, "error", "blueprint", file, `${page} 缺少颜色意图。`, "红色/蓝色/灰色必须服务逻辑，蓝图阶段要写明强调对象。");
+    }
+    if (isContent(c)) {
+      const archetype = c.themeArchetype || c.themeFidelity?.archetype;
+      const features = (c.themeFeatures || c.themeFidelity?.features || []).map(item => typeof item === "string" ? item : item?.id).filter(Boolean);
+      const invalid = features.filter(id => !fidelityProfile.features[id]);
+      if (!norm(archetype) || features.length < 2) {
+        add(findings, "error", "blueprint", file, `${page} 缺少内容层主题 archetype 或至少两个 themeFeatures。`, "蓝图必须先声明主体构图如何体现所选主题；颜色/chrome 不计。");
+      }
+      if (invalid.length) {
+        add(findings, "error", "blueprint", file, `${page} 使用了无效或 skin-only 的主题特征：${invalid.join(", ")}。`, `只使用 ${themeId} 内容签名中定义的构图/层级/证据特征。`);
+      }
+      if (themeId === "leander-global" && lower(c.contentDensity) === "high" && !fidelityProfile.highCapacityArchetypes.includes(archetype)) {
+        add(findings, "error", "blueprint", file, `${page} 是 Global 高容量页但未选择工程型高容量 archetype。`, "使用证据主画面、紧凑 KPI rail、工程变量表、Δ 对比或待仿真板。");
+      }
     }
     if (isContent(c) && lower(c.contentDensity) === "low") {
       if (!hasAny(c, ["whitespaceIntent"]) || !hasAny(c, ["densityRationale", "whitespaceRationale"])) {
@@ -323,10 +340,17 @@ function inspectPages(findings, warnings) {
       if (!Array.isArray(qa.requiredEvidence) || !qa.requiredEvidence.includes("render-sha256")) {
         add(findings, "error", "pages", pageJson, `${page} qaProfile 缺少 render-sha256 证据要求。`, "QA 必须绑定当前渲染哈希。" );
       }
+      if (isContent(meta) && (!Array.isArray(qa.requiredEvidence) || !qa.requiredEvidence.includes("theme-fidelity-audit"))) {
+        add(findings, "error", "pages", pageJson, `${page} qaProfile 缺少 theme-fidelity-audit 证据要求。`, "重新运行 build-qa-profile，让 QA 检查主体构图而不只检查主题皮肤。");
+      }
     } else {
       add(findings, "error", "pages", pageJson, `${page} 尚无 qa-profile.zh.v2。`, "页面生产前运行 build-qa-profile；旧 V1 不能继续通过关卡。" );
     }
     const code = readText(pageJs);
+    const selectedRoute = meta.visualSelection?.selectedRoute?.route;
+    if (isContent(meta) && selectedRoute === "page-specific-custom" && !meta.themeFidelity) {
+      add(findings, "error", "pages", pageJson, `${page} 的 page-specific-custom 缺少 themeFidelity 合同。`, "声明 theme/archetype/features/composition，并在 page.js 导出同名实施证据。");
+    }
     if (/fontFace\s*:\s*["']Microsoft YaHei["'][\s\S]{0,80}[A-Za-z0-9]/.test(code)) {
       add(warnings, "warning", "pages", pageJs, `${page} 可能存在英文/数字使用微软雅黑。`, "英文标签和数字优先使用 Century Gothic；最终以渲染 QA 为准。");
     }

@@ -8,6 +8,7 @@ const path = require("path");
 const os = require("os");
 const { digestPage, legacyContractDigest, legacyRenderContextDigest, shaFile, shaText } = require("./page-digests");
 const { POLICY_VERSION } = require("./geometry-policy");
+const { inputDigest: themeFidelityInputDigest } = require("./verify-theme-fidelity");
 
 const RULES = JSON.parse(fs.readFileSync(path.join(__dirname, "qa-rules.zh.json"), "utf8").replace(/^\uFEFF/, ""));
 const QA_RESULT_VERSION = "qa-result.zh.v3";
@@ -29,6 +30,13 @@ function evidenceError(value, expectedType = "", ruleId = "") {
     if (String(value.policyVersion || "") !== POLICY_VERSION) return "machine geometry evidence policyVersion is stale";
     if (!/^[a-f0-9]{64}$/i.test(String(value.artifactSha256 || ""))) return "machine geometry evidence requires artifactSha256";
     return String(value.artifact || "").trim().length >= 3 ? "" : "machine geometry evidence requires artifact";
+  }
+  if (expectedType === "theme-fidelity-audit") {
+    if (!/theme-fidelity/i.test(method)) return "theme fidelity evidence method must include theme-fidelity";
+    if (!/^[a-f0-9]{64}$/i.test(String(value.artifactSha256 || ""))) return "theme fidelity evidence requires artifactSha256";
+    if (String(value.auditPageId || "").trim().length < 1) return "theme fidelity evidence requires auditPageId";
+    if (!/theme-fidelity-audit\.json$/i.test(String(value.artifact || "").replace(/\\/g, "/"))) return "theme fidelity evidence must reference theme-fidelity-audit.json";
+    return "";
   }
   if (expectedType === "source-reference") return String(value.source || "").trim().length >= 3 ? "" : "source-reference evidence requires source";
   if (expectedType === "component-trace") return String(value.artifact || "").trim().length >= 3 ? "" : "component-trace evidence requires artifact";
@@ -75,6 +83,26 @@ function machineEvidenceError(pageDir, check) {
   if (check.status !== current.status) return `machine status must be ${current.status}`;
   if (evidence.artifactSha256 !== current.evidence.artifactSha256) return "machine geometry artifact hash is stale";
   if (JSON.stringify(evidence.findingIds || []) !== JSON.stringify(current.evidence.findingIds || [])) return "machine geometry findingIds do not match the current audit";
+  return "";
+}
+function themeFidelityEvidenceError(pageDir, check) {
+  const page = readJson(path.join(pageDir, "page.json")) || {};
+  const root = path.resolve(pageDir, "..", "..");
+  const artifact = path.join(root, "output", "theme-fidelity-audit.json");
+  const report = readJson(artifact);
+  const artifactSha256 = shaFile(artifact);
+  const pageId = String(page.id || page.page || path.basename(pageDir));
+  const row = (report?.pages || []).find(item => String(item.pageId) === pageId);
+  const evidence = check.evidence || {};
+  if (!report || report.version !== "theme-fidelity-audit.v1") return "theme fidelity audit missing or invalid";
+  if (!row) return `theme fidelity audit has no row for ${pageId}`;
+  if (row.verdict !== "PASS") return `theme fidelity audit verdict is ${row.verdict || "missing"}`;
+  if (evidence.auditPageId !== pageId) return "theme fidelity auditPageId does not match the current page";
+  if (evidence.artifactSha256 !== artifactSha256) return "theme fidelity audit artifact hash is stale";
+  if (row.inputDigest !== themeFidelityInputDigest(pageDir, row.theme)) return "theme fidelity audit input digest is stale";
+  if (row.humanReviewRequired && !/contact-sheet|full-size-render/i.test(String(evidence.method || ""))) {
+    return "theme fidelity evidence requires contact-sheet or full-size-render human review";
+  }
   return "";
 }
 function evidenceFingerprint(check) {
@@ -165,6 +193,10 @@ function verify(pageDir) {
       if (isMachineRule(ruleId)) {
         const machineProblem = machineEvidenceError(pageDir, check);
         if (machineProblem) errors.push(`QA machine evidence mismatch: ${ruleId} (${machineProblem})`);
+      }
+      if (RULES.rules?.[ruleId]?.evidence === "theme-fidelity-audit") {
+        const themeProblem = themeFidelityEvidenceError(pageDir, check);
+        if (themeProblem) errors.push(`QA theme fidelity evidence mismatch: ${ruleId} (${themeProblem})`);
       }
     }
   });
@@ -269,7 +301,7 @@ function writeMarkdown(pageDir, verified) {
 function selfTest() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "leander-qa-v2-"));
   const dir = path.join(root, "pages", "fixture");
-  [path.join(dir, "out"), path.join(root, "theme"), path.join(root, "components"), path.join(root, "tools")].forEach(p => fs.mkdirSync(p, { recursive: true }));
+  [path.join(dir, "out"), path.join(root, "theme"), path.join(root, "components"), path.join(root, "tools"), path.join(root, "output")].forEach(p => fs.mkdirSync(p, { recursive: true }));
   fs.writeFileSync(path.join(root, "deck.config.js"), "module.exports={theme:'base'};\n", "utf8");
   fs.writeFileSync(path.join(root, "theme", "tokens.js"), "module.exports={};\n", "utf8");
   fs.writeFileSync(path.join(root, "tools", "qa-rules.zh.json"), JSON.stringify(RULES), "utf8");
@@ -278,7 +310,7 @@ function selfTest() {
     visualSelection: { selectedRoute: { route: "page-specific-custom", name: "fixture" } },
     qaProfile: {
       version: "qa-profile.zh.v2",
-      ruleSets: ["universal"],
+      ruleSets: ["universal", "theme.leander-global"],
       pageRules: [],
       requiredEvidence: ["render-sha256"],
       selectedRoute: { route: "page-specific-custom", name: "fixture" }
@@ -286,6 +318,18 @@ function selfTest() {
   };
   fs.writeFileSync(path.join(dir, "page.json"), JSON.stringify(page), "utf8");
   fs.writeFileSync(path.join(dir, "page.js"), "module.exports = {};\n", "utf8");
+  const themeAuditFile = path.join(root, "output", "theme-fidelity-audit.json");
+  fs.writeFileSync(themeAuditFile, JSON.stringify({
+    version: "theme-fidelity-audit.v1",
+    verdict: "PASS",
+    pages: [{
+      pageId: "fixture",
+      theme: "leander-global",
+      verdict: "PASS",
+      humanReviewRequired: true,
+      inputDigest: themeFidelityInputDigest(dir, "leander-global")
+    }]
+  }), "utf8");
   fs.writeFileSync(path.join(dir, "out", "fixture.png"), "render-v1", "utf8");
   fs.writeFileSync(path.join(dir, "out", "geometry-audit.json"), JSON.stringify({
     version: "render-geometry-audit.v1",
@@ -309,12 +353,22 @@ function selfTest() {
     check.evidence.method = type === "source-reference" ? "source-audit" : type === "contract-compare" ? "contract-compare" : "visual-full-size";
     check.evidence.observation = `self-test observation for ${check.ruleId}`;
     check.evidence.source = "self-test fixture";
+    if (type === "theme-fidelity-audit") {
+      check.evidence.artifact = "../../output/theme-fidelity-audit.json";
+      check.evidence.artifactSha256 = shaFile(themeAuditFile);
+      check.evidence.auditPageId = "fixture";
+      check.evidence.method = "machine-theme-fidelity+contact-sheet";
+    }
   });
   fs.writeFileSync(resultFile, JSON.stringify(result), "utf8");
   result.digests.qaDigest = digestPage(dir, root).qaDigest;
   fs.writeFileSync(resultFile, JSON.stringify(result), "utf8");
   const pass = verify(dir);
   if (!pass.ok) throw new Error(`valid QA fixture failed: ${pass.errors.join("; ")}`);
+  fs.writeFileSync(path.join(dir, "page.js"), "module.exports = { changed: true };\n", "utf8");
+  const staleTheme = verify(dir);
+  if (staleTheme.ok || !staleTheme.errors.some(item => /theme fidelity audit input digest is stale/.test(item))) throw new Error("stale theme fidelity audit fixture did not fail");
+  fs.writeFileSync(path.join(dir, "page.js"), "module.exports = {};\n", "utf8");
   fs.writeFileSync(path.join(dir, "out", "fixture.png"), "render-v2", "utf8");
   const stale = verify(dir);
   if (stale.ok || !stale.errors.some(item => /renderSha256/.test(item))) throw new Error("stale render fixture did not fail");
@@ -336,4 +390,4 @@ function main() {
 }
 
 if (require.main === module) main();
-module.exports = { verify, init, upgrade, writeMarkdown, expectedRuleIds, evidenceError, evidenceSetErrors, isMachineRule, machineCheck, contractDigest, renderContextDigest, shaFile, shaText, QA_RESULT_VERSION };
+module.exports = { verify, init, upgrade, writeMarkdown, expectedRuleIds, evidenceError, evidenceSetErrors, isMachineRule, machineCheck, themeFidelityEvidenceError, contractDigest, renderContextDigest, shaFile, shaText, QA_RESULT_VERSION };

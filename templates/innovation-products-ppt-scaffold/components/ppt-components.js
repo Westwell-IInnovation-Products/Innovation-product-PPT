@@ -2043,9 +2043,156 @@ function makeComponents(pptx, theme) {
     addText(slide, x, y + 20, w, 40, data.text || "", { size: theme.type.lead || 28, color: C.accent, bold: true, align: "center" });
   }
 
+  // Global-capable high-capacity engineering patterns. They remain shared
+  // renderers: theme.contentFidelity changes density/geometry without forking
+  // the component library.
+
+  // Dominant screenshot/diagram plus a narrow, precisely numbered evidence rail.
+  function evidenceBoard(slide, data = {}) {
+    const cTop = header(slide, data.title, data.subtitle) || 220;
+    const global = theme.contentFidelity?.id === "leander-global" || theme.signature?.id === "leander-global";
+    const top = cTop + 14, bottom = 934, gap = global ? 26 : 34;
+    const railW = global ? 430 : 470, mainX = 96, mainW = 1728 - railW - gap, h = bottom - top;
+    rect(slide, mainX, top, mainW, h, { fill: C.surface2, line: C.line, round: !global, shadow: false });
+    if (data.image && fs.existsSync(data.image)) {
+      slide.addImage({ path: data.image, x: U(mainX + 8), y: U(top + 8), w: U(mainW - 16), h: U(h - 16) });
+    } else {
+      addText(slide, mainX + 42, top + h / 2 - 34, mainW - 84, 30, data.placeholder || "EVIDENCE SLOT — SOURCE REQUIRED", {
+        size: global ? 17 : 19, color: C.primary, bold: true, align: "center", fontFace: F.en, charSpacing: global ? 1.5 : 0
+      });
+      addText(slide, mainX + 70, top + h / 2 + 12, mainW - 140, 28, data.placeholderDetail || "Insert a real screenshot, engineering diagram, or approved render.", {
+        size: 13, color: C.mute, align: "center", fit: "shrink"
+      });
+    }
+    const railX = mainX + mainW + gap;
+    regionEyebrow(slide, railX, top, railW, data.railTitle || "EVIDENCE ANCHORS", { size: global ? 11 : 13, charSpacing: global ? 2.8 : 2 });
+    const items = (data.callouts || []).slice(0, 7), rowTop = top + 38;
+    const rowH = Math.min(global ? 76 : 88, (h - 48) / Math.max(1, items.length));
+    items.forEach((item, i) => {
+      const y = rowTop + i * rowH, hot = item.focus === true || data.focus === i;
+      line(slide, railX, y + rowH - 2, railX + railW, y + rowH - 2, { color: C.line, width: global ? 0.7 : 1 });
+      shp(slide, shape.ellipse, railX, y + 10, 30, 30, { fill: hot ? C.accent : C.primary, line: hot ? C.accent : C.primary });
+      addText(slide, railX, y + 17, 30, 14, String(i + 1).padStart(2, "0"), { size: 9, color: hot ? C.onAccent : C.onPrimary, bold: true, align: "center", fontFace: F.en });
+      addText(slide, railX + 46, y + 6, railW - 46, 24, item.title || item.label || `Anchor ${i + 1}`, { size: global ? 14 : 16, color: hot ? C.accent : C.primary, bold: true, fit: "shrink" });
+      addText(slide, railX + 46, y + 33, railW - 46, Math.max(20, rowH - 40), item.body || item.desc || "", { size: global ? 11.5 : 13, color: C.mute, fit: "shrink", lineSpacingMultiple: 1.15 });
+    });
+    if (data.source) addText(slide, mainX + 18, bottom - 26, mainW - 36, 18, `SOURCE  ${data.source}`, { size: 9.5, color: C.mute, fontFace: F.en, fit: "shrink" });
+    footer(slide);
+  }
+
+  // Dense horizontal metric rail. Metrics share rules and baselines rather than
+  // expanding into equal-size dashboard cards.
+  function compactKpiRail(slide, data = {}) {
+    const cTop = header(slide, data.title, data.subtitle) || 220;
+    const global = theme.contentFidelity?.id === "leander-global" || theme.signature?.id === "leander-global";
+    const items = (data.items || []).slice(0, 10), n = Math.max(1, items.length);
+    const x = 96, w = 1728, y = cTop + (global ? 28 : 48), h = global ? 166 : 190;
+    line(slide, x, y, x + w, y, { color: C.primary, width: global ? 1.2 : 1.5 });
+    line(slide, x, y + h, x + w, y + h, { color: C.line, width: 1 });
+    const cellW = w / n;
+    items.forEach((item, i) => {
+      const cx = x + i * cellW, hot = item.focus === true || data.focus === i;
+      if (i) line(slide, cx, y + 18, cx, y + h - 18, { color: C.line, width: global ? 0.65 : 1 });
+      addText(slide, cx + 16, y + 20, cellW - 32, 18, item.label || "", { size: global ? 10.5 : 12.5, color: C.mute, bold: true, fontFace: F.en, charSpacing: global ? 1.2 : 0, fit: "shrink" });
+      addText(slide, cx + 16, y + 50, cellW - 32, 42, item.value == null ? "—" : String(item.value), { size: global ? 25 : 29, color: hot ? C.accent : C.primary, bold: true, fontFace: F.en, fit: "shrink" });
+      addText(slide, cx + 16, y + 99, cellW - 32, 20, item.unit || item.state || "", { size: global ? 9.5 : 11, color: C.mute, fontFace: F.en, fit: "shrink" });
+      if (item.delta != null) addText(slide, cx + 16, y + 127, cellW - 32, 18, `Δ ${item.delta}`, { size: global ? 10.5 : 12, color: item.negative ? C.danger : C.blue, bold: true, fontFace: F.en, fit: "shrink" });
+    });
+    const rows = (data.notes || []).slice(0, 5), rowY = y + h + 54;
+    regionEyebrow(slide, x, rowY - 30, w, data.notesTitle || "ENGINEERING READING", { size: global ? 10.5 : 12.5 });
+    rows.forEach((row, i) => {
+      const yy = rowY + i * (global ? 64 : 70);
+      line(slide, x, yy + 52, x + w, yy + 52, { color: C.line, width: 0.7 });
+      addText(slide, x, yy, 250, 22, row.label || row.title || `Note ${i + 1}`, { size: global ? 12 : 14, color: C.primary, bold: true, fit: "shrink" });
+      addText(slide, x + 280, yy, w - 280, 34, row.body || row.desc || "", { size: global ? 12 : 13.5, color: C.text, fit: "shrink" });
+    });
+    footer(slide);
+  }
+
+  // High-capacity variable register with explicit unit, baseline, scenario,
+  // delta, and source/state columns. Pending values stay blank by design.
+  function engineeringVariableTable(slide, data = {}) {
+    const cTop = header(slide, data.title, data.subtitle) || 220;
+    const global = theme.contentFidelity?.id === "leander-global" || theme.signature?.id === "leander-global";
+    const rows = (data.rows || []).slice(0, 12);
+    const x = 96, w = 1728, y = cTop + 22, bottom = 934;
+    const headers = data.headers || ["VARIABLE", "UNIT", "BASELINE", "SCENARIO", "Δ", "STATE / SOURCE"];
+    const widths = global ? [430, 130, 230, 230, 180, 528] : [390, 140, 240, 240, 190, 528];
+    const headH = global ? 46 : 54, rowH = Math.min(global ? 52 : 60, (bottom - y - headH) / Math.max(1, rows.length));
+    let xx = x;
+    headers.forEach((label, i) => {
+      rect(slide, xx, y, widths[i], headH, { fill: global ? C.primary : C.surface2, line: C.line, round: false });
+      addText(slide, xx + 12, y + 15, widths[i] - 24, 18, label, { size: global ? 10 : 11.5, color: global ? C.onPrimary : C.primary, bold: true, fontFace: F.en, charSpacing: global ? 1.1 : 0, fit: "shrink" });
+      xx += widths[i];
+    });
+    rows.forEach((row, ri) => {
+      const yy = y + headH + ri * rowH, pending = /pending|待仿真|待测|待确认/i.test(`${row.state || ""} ${row.status || ""}`);
+      const values = [
+        row.variable || row.name || "",
+        row.unit || "",
+        pending ? "—" : (row.baseline ?? "—"),
+        pending ? "—" : (row.scenario ?? row.value ?? "—"),
+        pending ? "—" : (row.delta ?? "—"),
+        pending ? (row.state || "PENDING SIMULATION") : (row.source || row.state || "")
+      ];
+      xx = x;
+      values.forEach((value, ci) => {
+        const fill = pending ? C.surface2 : (ri % 2 ? C.surface : C.bg);
+        rect(slide, xx, yy, widths[ci], rowH, { fill, line: C.line, lineWidth: global ? 0.55 : 0.8, round: false });
+        addText(slide, xx + 12, yy + Math.max(9, (rowH - 22) / 2), widths[ci] - 24, 22, String(value), {
+          size: global ? (ci === 0 ? 12.5 : 11.5) : (ci === 0 ? 14 : 12.5),
+          color: pending && ci === 5 ? C.blue : (ci === 0 ? C.primary : C.text),
+          bold: ci === 0 || (pending && ci === 5),
+          fontFace: ci > 0 && ci < 5 ? F.en : undefined,
+          fit: "shrink"
+        });
+        xx += widths[ci];
+      });
+    });
+    footer(slide);
+  }
+
+  // Engineering baseline/candidate/delta comparison with aligned rows and a
+  // compact visual delta bar; no independent comparison cards.
+  function deltaCompare(slide, data = {}) {
+    const cTop = header(slide, data.title, data.subtitle) || 220;
+    const global = theme.contentFidelity?.id === "leander-global" || theme.signature?.id === "leander-global";
+    const rows = (data.rows || []).slice(0, 9), x = 96, w = 1728, y = cTop + 30;
+    const labelW = 430, valueW = 210, deltaW = 210, plotW = w - labelW - valueW * 2 - deltaW;
+    const rowH = Math.min(global ? 62 : 70, (928 - y - 50) / Math.max(1, rows.length));
+    const cols = [
+      { x, w: labelW, label: data.labelHeader || "VARIABLE" },
+      { x: x + labelW, w: valueW, label: data.baseHeader || "BASELINE" },
+      { x: x + labelW + valueW, w: valueW, label: data.caseHeader || "SCENARIO" },
+      { x: x + labelW + valueW * 2, w: deltaW, label: "Δ" },
+      { x: x + labelW + valueW * 2 + deltaW, w: plotW, label: "RELATIVE CHANGE" }
+    ];
+    cols.forEach(col => {
+      addText(slide, col.x + 10, y, col.w - 20, 18, col.label, { size: global ? 10 : 11.5, color: C.mute, bold: true, fontFace: F.en, charSpacing: global ? 1.1 : 0, fit: "shrink" });
+      line(slide, col.x, y + 32, col.x + col.w, y + 32, { color: C.primary, width: 1 });
+    });
+    const scale = Math.max(1, ...rows.map(row => Math.abs(Number(row.delta || 0))));
+    rows.forEach((row, i) => {
+      const yy = y + 40 + i * rowH, delta = Number(row.delta || 0), pending = /pending|待仿真|待测/i.test(row.state || "");
+      line(slide, x, yy + rowH - 2, x + w, yy + rowH - 2, { color: C.line, width: global ? 0.55 : 0.8 });
+      addText(slide, x + 10, yy + 14, labelW - 20, 24, row.label || row.variable || "", { size: global ? 12.5 : 14, color: C.primary, bold: true, fit: "shrink" });
+      addText(slide, x + labelW + 10, yy + 14, valueW - 20, 24, pending ? "—" : String(row.baseline ?? "—"), { size: global ? 12 : 13.5, color: C.text, fontFace: F.en, fit: "shrink" });
+      addText(slide, x + labelW + valueW + 10, yy + 14, valueW - 20, 24, pending ? "—" : String(row.scenario ?? "—"), { size: global ? 12 : 13.5, color: C.text, fontFace: F.en, fit: "shrink" });
+      addText(slide, x + labelW + valueW * 2 + 10, yy + 14, deltaW - 20, 24, pending ? "PENDING" : String(row.deltaLabel ?? row.delta ?? "—"), { size: global ? 11.5 : 13, color: pending ? C.blue : (delta < 0 ? C.danger : C.primary), bold: true, fontFace: F.en, fit: "shrink" });
+      const plotX = x + labelW + valueW * 2 + deltaW + 12, center = plotX + plotW / 2 - 12;
+      line(slide, center, yy + 10, center, yy + rowH - 12, { color: C.line, width: 0.7 });
+      if (!pending && delta !== 0) {
+        const bw = Math.min(plotW / 2 - 24, Math.abs(delta) / scale * (plotW / 2 - 24));
+        rect(slide, delta < 0 ? center - bw : center, yy + 20, bw, Math.max(12, rowH - 34), { fill: delta < 0 ? C.danger : C.blue, round: false });
+      }
+    });
+    footer(slide);
+  }
+
   return {
     U, PT, addText, rect, line, logo, header, footer, cover, closing,
     regionEyebrow, barCard, conclusionBand,
+    evidenceBoard, compactKpiRail, engineeringVariableTable, deltaCompare,
     metricCards, bigWordCardMatrix, fourColumnMechanism,
     sectionDivider, sectionDividerBigNumber, sectionDividerUnderline, systemArchitectureCenter, hubSpokeCapability, roadmapSwimlane,
     caveatBand, stepNav, painCards, cycleLoop, processTimeline,

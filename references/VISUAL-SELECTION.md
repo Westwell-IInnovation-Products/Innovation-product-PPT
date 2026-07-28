@@ -24,6 +24,8 @@ node tools/build-qa-profile.js pages/<id>/page.json --write
 3. `image2`：用于一个简单意象或场景；预留 `imageSlot` 并保存提示词，不画小字和复杂流程。
 4. `page-specific-custom`：内容页的一等构图路线：按蓝图视觉签名手工构图，组件可作为局部积木；大字海报、品牌页天然适用。
 
+选中 `page-specific-custom` 时，额外遵守 `THEME-FIDELITY.md`：在 `page.json.themeFidelity` 与 `page.js.themeFidelity` 中声明同一 theme/archetype/features，至少落实三个非 chrome 特征并跨至少两个类别。自定义自由度不能用来绕过主题内容签名。
+
 ## 组件评分顺序
 
 内部评分只用于短名单，不对外展示为页面内容，也不代表最终美感。
@@ -70,6 +72,13 @@ node tools/build-qa-profile.js pages/<id>/page.json --write
     "score": 82,
     "confidence": 0.82,
     "margin": 13
+  },
+  "themeFidelity": {
+    "version": "theme-fidelity.v1",
+    "theme": "leander-global",
+    "archetype": "global.engineering-evidence",
+    "features": ["evidence-dominant-main", "compact-kpi-rail", "ruled-information-hierarchy"],
+    "composition": {"evidenceDominant": true, "evidenceSlots": 1, "kpiRail": {"count": 6, "compact": true}}
   },
   "requiresCuratorReview": false,
   "rejectedRoutes": []

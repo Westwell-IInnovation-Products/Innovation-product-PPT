@@ -170,7 +170,7 @@
   },
   "qaProfile": {
     "version": "qa-profile.zh.v2",
-    "rulesVersion": "qa-rules.zh.v2",
+    "rulesVersion": "qa-rules.zh.v5",
     "scope": "content-page",
     "relationship": "system-map",
     "selectedRoute": {
@@ -181,6 +181,7 @@
     "componentRef": "tools/component-index.min.json#hubRadial",
     "ruleSets": [
       "universal",
+      "theme.leander-base",
       "relationship.system-map",
       "route.component-library",
       "evidence.implementation"
@@ -189,12 +190,13 @@
       {
         "id": "page.p02.message",
         "severity": "P1",
-        "text": "核心信息必须由视觉结构支撑：核心价值"
+        "text": "核心信息必须由视觉结构支撑：核心价值必须通过可解释的结构、证据和关系被听众直接理解。"
       }
     ],
     "requiredEvidence": [
       "render-sha256",
       "visual-location",
+      "theme-fidelity-audit",
       "component-trace",
       "source-reference"
     ]

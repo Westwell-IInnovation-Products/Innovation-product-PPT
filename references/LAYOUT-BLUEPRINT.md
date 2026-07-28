@@ -87,6 +87,8 @@
 矩阵必须包含:
 
 - `visualSignature`
+- `themeArchetype`:从所选主题的 `contentFidelity.preferredArchetypes` 中选择主体构图；高容量 Global 页必须从 `highCapacityArchetypes` 选择
+- `themeFeatures`:至少两个非 chrome 内容特征；颜色、字体、页眉和页脚不计
 - `relationshipSubtype`
 - `layoutArchetype`
 - `skeletonFamily`:用于节奏审计的粗预览族,例如 contrast / process / map / state / tool-decision / evidence-role / lifecycle
@@ -114,6 +116,8 @@
 {
   "page": "p13",
   "visualSignature": "tool-tree-with-call-engine",
+  "themeArchetype": "base.linear-explanation",
+  "themeFeatures": ["linear-divider-structure", "single-semantic-focus"],
   "relationshipSubtype": "toolbox.tool-tree",
   "layoutArchetype": "left-root-middle-branches-right-engine",
   "skeletonFamily": "tool-decision",
@@ -335,6 +339,7 @@ node tools/lint-blueprint-preview.js
 - 密集的页面被拆分或简化
 - image2/外部图形的需求被早早识别
 - 高风险页被选为标杆样张
+- 锚点覆盖封面/品牌页、截图证据页、数据密集页,以及至少一张缺素材但需高指标容量的变量/待仿真页
 - 组件选择在详细绘制前感觉合理
 - 低保真预览居中且结构可读;粗糙可接受,但混乱的连接线或明显偏心的版面结构让蓝图 fail
 - 颜色角色在整个故事里有意义:红标识张力/当前/gate/变化,藏青标识稳定结构,装饰性颜色不被当填充用

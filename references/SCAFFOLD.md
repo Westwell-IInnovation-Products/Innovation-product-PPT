@@ -156,7 +156,7 @@ pages/<id>-<name>/
 
 `page.json` 是那一页的本地事实来源;`page.js` 实现它。QA 和修复报告应引用 `pageId`。
 
-每个 `page.json` 都必须包含 `component`(来源)、`assetNeed`、`dataBoundary`、一个由 `tools/select-visual-route.js` 生成的当前 `visualSelection`,以及一个由 `tools/build-qa-profile.js` 生成的中文 `qaProfile`。每个内容页的 `page.js` 都必须导出 `visualBinding: { route, name }`,并与 `visualSelection.selectedRoute` 一致。如果一页用了自定义视觉形态,把它的 `component` 标为 `page-specific custom`,并在 `visualSelection` + `qaProfile` + `qa.md` 里解释为什么现有组件、外部图形或图片槽位都不够用。
+每个 `page.json` 都必须包含 `component`(来源)、`assetNeed`、`dataBoundary`、一个由 `tools/select-visual-route.js` 生成的当前 `visualSelection`,以及一个由 `tools/build-qa-profile.js` 生成的中文 `qaProfile`。每个内容页的 `page.js` 都必须导出 `visualBinding: { route, name }`,并与 `visualSelection.selectedRoute` 一致。如果一页用了自定义视觉形态,把它的 `component` 标为 `page-specific custom`,并在 `visualSelection` + `qaProfile` + `qa.md` 里解释为什么现有组件、外部图形或图片槽位都不够用；同时在 `page.json` 和 `page.js` 写入一致的 `themeFidelity` 合同,证明主体构图落实所选主题的内容签名。
 
 > 旧版:chapter/batch 表示一组逻辑上归类的页面文件夹。不要重新引入一个平行的 chapter 文件夹树或单体生成器。
 

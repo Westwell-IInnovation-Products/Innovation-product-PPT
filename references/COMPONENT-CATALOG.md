@@ -153,11 +153,11 @@
 
 这个目录是**一个**共享库(`components/ppt-components.js`),不是每个主题一个库。
 
-- **内容组件与主题无关**——它们读 `theme.colors` / `theme.fonts`,所以上面每一个组件在你切换主题时(`leander-base` ↔ `leander-global`)自动换主题。组件加一次;它在所有主题里都能用。颜色语义规则是相对主题的:"强调 = 单一焦点"在 Base 里意味着 Westwell 红,在 Global 里是天蓝(那里红只表状态)。
+- **内容组件共享代码,但不再假装构图与主题无关。** 它们继续只实现一次并读取 `theme.colors` / `theme.fonts`；需要主题化主体几何时,读取 `theme.contentFidelity` 或组件注册表的 `themeFidelityFeatures`。切换主题必须同时改变内容层 archetype/密度/层级证据,不能只自动换色。
 - **Chrome 跟随主题 `signature`。** `cover` / `header` / `footer` / `closing` 按 `theme.signature`(`titleColor`、`headerRule`、`footer`、`cover`、`closing`、`coverPhoto`)分支,让每个主题复现它自己的参考看:
   - Base:暖色右对齐红封面,实心红横线 + 页脚,居中藏青+红结尾。
   - Global:photo-dark(或 white-minimal)封面,藏青标题 + 点线天蓝横线 + 细页脚,photo-dark 结尾;`cover()` 接受 `coverStyle` / `data.image` 覆盖。
-- **加一个主题** = 新 token + 一个 `signature` 块(+ 可选封面素材)。绝不 fork 组件库。选择:从 `theme/tokens.js` 用 `getTheme("leander-global")`。见 `THEMES.md` → 一个共享组件库 + 逐主题 Signature。
+- **加一个主题** = 新 token + 一个 chrome `signature` 块 + 一个 `contentFidelity` profile(+ 可选封面素材)。绝不 fork 组件库。选择:从 `theme/tokens.js` 用 `getTheme("leander-global")`。见 `THEMES.md` / `THEME-FIDELITY.md`。
 
 ## 架构图——两种类型和何时用
 

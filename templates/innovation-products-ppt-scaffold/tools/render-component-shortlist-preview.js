@@ -17,6 +17,13 @@ function readJson(file, fallback = {}) { try { return JSON.parse(fs.readFileSync
 function esc(value) { return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 function content(contract) { return !/(?:cover|closing|transition|divider)/i.test(`${contract.relationship || ""} ${contract.expressionMode || ""}`); }
 function priority(contract) { return contract.highVisualRisk === true || /^(?:high|critical)$/i.test(String(contract.riskLevel || "")) || contract.anchorCandidate === true || contract.shortlistPreview === true; }
+function renderedSlidePath(assetDir, index) {
+  const candidates = [
+    path.join(assetDir, "slides", `slide-${String(index).padStart(2, "0")}.png`),
+    path.join(assetDir, "slides", `slide-${index}.png`)
+  ];
+  return candidates.find(file => fs.existsSync(file)) || candidates[0];
+}
 
 function contactSheet(rows) {
   const columns = Math.min(3, rows.length), cardW = 640, cardH = 430, gap = 28, margin = 36;
@@ -53,7 +60,7 @@ function main() {
   const rows = (preview.manifest || []).map(item => ({
     name: item.name,
     pages: pageMap.filter(page => page.candidateComponents.includes(item.name)).map(page => page.page),
-    png: path.join(ASSETS, "slides", `slide-${item.index}.png`)
+    png: renderedSlidePath(ASSETS, item.index)
   }));
   const missingPngs = rows.filter(row => !fs.existsSync(row.png));
   if (missingPngs.length) throw new Error(`Real component PNG preview missing: ${missingPngs.map(row => row.name).join(", ")}`);

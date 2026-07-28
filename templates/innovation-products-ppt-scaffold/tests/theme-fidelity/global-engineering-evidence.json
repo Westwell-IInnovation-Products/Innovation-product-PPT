@@ -1,0 +1,53 @@
+{
+  "id": "global-engineering-evidence",
+  "title": "Engineering scenario evidence",
+  "relationship": "evidence",
+  "expressionMode": "screenshot-evidence",
+  "contentDensity": "high",
+  "contentShape": { "maxItems": 14 },
+  "visualSelection": {
+    "selectedRoute": { "route": "page-specific-custom", "name": "custom-composition" }
+  },
+  "themeFidelity": {
+    "version": "theme-fidelity.v1",
+    "theme": "leander-global",
+    "archetype": "global.engineering-evidence",
+    "features": [
+      "evidence-dominant-main",
+      "compact-kpi-rail",
+      "engineering-variable-table",
+      "delta-comparison",
+      "pending-simulation-state",
+      "asymmetric-technical-layout",
+      "precise-callout-anchors",
+      "ruled-information-hierarchy"
+    ],
+    "composition": {
+      "uniformCardGrid": { "rows": 0, "columns": 0, "emptyCards": 0, "uniform": false },
+      "secondaryInfoCards": 0,
+      "evidenceDominant": true,
+      "evidenceSlots": 1,
+      "calloutAnchors": 4,
+      "tableRows": 8,
+      "deltaPairs": 3,
+      "pendingStates": 2,
+      "inventedPendingValues": 0,
+      "kpiRail": { "count": 6, "compact": true }
+    }
+  },
+  "_testModuleFidelity": {
+    "version": "theme-fidelity.v1",
+    "theme": "leander-global",
+    "archetype": "global.engineering-evidence",
+    "features": [
+      "evidence-dominant-main",
+      "compact-kpi-rail",
+      "engineering-variable-table",
+      "delta-comparison",
+      "pending-simulation-state",
+      "asymmetric-technical-layout",
+      "precise-callout-anchors",
+      "ruled-information-hierarchy"
+    ]
+  }
+}

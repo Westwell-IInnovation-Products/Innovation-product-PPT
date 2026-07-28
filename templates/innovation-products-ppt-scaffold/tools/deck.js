@@ -22,7 +22,7 @@ const ROOT = path.join(__dirname, "..");
 const PAGES = path.join(ROOT, "pages");
 
 // Keep in sync with .leander-scaffold-version.json; regression blackbox fails on drift.
-const SCAFFOLD_VERSION = "0.6.0-beta.20";
+const SCAFFOLD_VERSION = "0.6.0-beta.23";
 function verifyScaffoldVersion() {
   const file = path.join(ROOT, ".leander-scaffold-version.json");
   let version = "";
@@ -63,6 +63,7 @@ function verifyQualityBaseline() {
 function verifyPagePreflight() {
   const pages = selectedPageNames();
   try {
+    cp.execFileSync(process.execPath, [path.join(__dirname, "verify-theme-fidelity.js"), ...(pages.length ? ["--pages", pages.join(",")] : [])], { stdio: "inherit" });
     cp.execFileSync(process.execPath, [path.join(__dirname, "verify-page-preflight.js"), ...(pages.length ? ["--pages", pages.join(",")] : [])], { stdio: "inherit" });
   } catch (e) { process.exit(1); }
 }

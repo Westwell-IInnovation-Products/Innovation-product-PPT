@@ -1,87 +1,107 @@
-# Changelog
+# 版本历史
+
+本文件记录实际发布或形成可追溯快照的版本。未列出的 beta 序号未形成独立公开版本，不补写不存在的发布内容。
+
+## 0.6.0-beta.23 - 2026-07-28
+
+- 在主题 chrome 审计结果中写入当前 `inputDigest`，确保封面和封底在强制重渲染后也能通过 QA v5 的主题保真证据校验。
+- 增加封面、封底跳过内容层审计时仍需保留输入摘要的回归断言。
+
+## 0.6.0-beta.22 - 2026-07-28
+
+- 修复 Gate 1.5 组件候选预览校验：兼容 Windows/LibreOffice 输出的零补位文件名，例如 `slide-01.png`。
+
+## 0.6.0-beta.21 - 2026-07-28
+
+- 为 Leander Base、Base2、Leander Global 增加可执行的 `contentFidelity` 内容层主题档案；档案包含主题特征、推荐原型、禁用模式和 Global 高容量工程页面模式，主题不再只由颜色和 chrome 定义。
+- 增加 `verify-theme-fidelity.js`、`theme-fidelity.v1` 页面/自定义构图证据、主题 QA 规则、设计/预检/渲染门禁及 Global 正反例。即使 Global 配色和 chrome 正确，“2×3 空指标卡 + 普通信息卡”仍会被阻塞。
+- 在同一共享组件库中增加 `evidenceBoard`、`compactKpiRail`、`engineeringVariableTable`、`deltaCompare` 渲染器，支持 Global 紧凑几何和显式待仿真状态。
+- 扩展锚点覆盖：封面/品牌页、截图证据页、数据密集页，以及缺少素材但需要高指标容量的变量/待仿真页；同时更新脚手架同步、迁移文档和回归测试。
 
 ## 0.6.0-beta.20 - 2026-07-23
 
-- Single-task mode: a whole deck is produced in one Codex task. `task-portfolio.js` now plans exactly one job (was 3–6 adaptive root tasks); `deck.config.js` sets `preferredRootTasks`/`maxPlannedRootTasks` to 1 and zeroes the budget thresholds.
-- Retire the token budget ceiling, rotation, and active-task/observability fail-closed enforcement. `context-budget-gate.js` no longer blocks: no 260k/180k/220k limit, no rotation lock, no INACTIVE-TASK/observability block, no `[水位]` water-line. The Token ledger stays for cost measurement only.
-- User-approval checkpoints (plan/blueprint/anchor/production-mode) and every quality gate (Gate 0 freshness, tool-freeze, quality baseline, geometry audit, user-feedback, source-evidence, agent receipts, final-gate pixel compare, cover/closing chrome) are unchanged — the retired stops are only the token-based task-splitting ones.
-- Trim `hard-gate-contract.js` and `hard-gate-blackbox.js` to the still-active workflow contracts (drop the retired budget/rotation/task-binding assertions); update `context-budget-gate` / `task-portfolio` self-tests. Rewrite SKILL.md, README.md, TOKEN-BUDGET.md, FAST-RUN.md, HARD-GATE.md, SCAFFOLD.md accordingly.
+- 切换为单任务模式：一份完整演示文稿在同一个 Codex 任务中生产。`task-portfolio.js` 固定规划一个任务；`deck.config.js` 将 `preferredRootTasks`、`maxPlannedRootTasks` 设为 1，并取消预算阈值。
+- 移除 Token 预算上限、任务轮换和活动任务/可观测性失败即阻塞机制。`context-budget-gate.js` 不再因 180K/220K/260K 阈值、轮换锁、INACTIVE-TASK、可观测性或 `[水位]` 提示阻塞；Token ledger 仅保留成本统计用途。
+- 用户审批检查点和所有质量门禁保持不变，包括 Gate 0 新鲜度、工具冻结、质量基线、几何审计、用户反馈、来源证据、Agent 回执、终版像素对比以及封面/封底 chrome。
+- 精简 `hard-gate-contract.js` 与 `hard-gate-blackbox.js`，移除已退役的预算、轮换和任务绑定断言；同步更新自测及 SKILL、README、TOKEN-BUDGET、FAST-RUN、HARD-GATE、SCAFFOLD 文档。
 
 ## 0.6.0-beta.18 - 2026-07-23
 
-- Cut the agent roster from 6 to 4. Merge `layout-architect-zh` into `planner-zh`: story/outline and the whole-deck layout blueprint are one planning decision, produced in a single pass (`planner-zh` now triggers on both `storyChanged` and `layoutChanged`).
-- Remove `presenter-zh` as a role. Speaker notes (`speaker-notes.md`) become a main-agent deliverable step, so the capability is kept without spending a fresh-fork review pass; the `rehearsalRequested` event is retired.
-- Update the role wiring end to end: `deck.config.js` triggers/events, `context-pack.js` role reads, `plan-agent-events.js` input digests and fresh-review scope, `artifact-map.js` speaker-notes labelling (now file-existence based), and `migrate-agent-collaboration-v3.js` active-role list. Historical evidence in existing projects is still preserved — `migrate()` copies pre-existing role entries through verbatim.
-- Route `references/QUALITY-LOCK.md` from the SKILL phase map so it is reachable instead of orphaned.
+- Agent 角色由 6 个精简为 4 个；将 `layout-architect-zh` 合并到 `planner-zh`，使故事/大纲与全稿布局蓝图在同一次规划中完成。
+- 移除 `presenter-zh` 独立角色；演讲备注 `speaker-notes.md` 改由主 Agent 交付，保留能力但不再消耗一次独立复核。
+- 全链路更新角色触发和事件：`deck.config.js`、`context-pack.js`、`plan-agent-events.js`、`artifact-map.js`、`migrate-agent-collaboration-v3.js`；既有项目的历史证据仍原样保留。
+- 从 Skill 阶段地图显式链接 `references/QUALITY-LOCK.md`，避免质量锁文档成为孤立文件。
 
 ## 0.6.0-beta.17 - 2026-07-23
 
+- 形成内部 Minimalist/Base3 主题实验快照，验证零圆角、零阴影、细规则线和多信号色工程版式。
+- 该实验主题未进入当前公开分享包；当前可用主题以 README 和 manifest 为准。
 
 ## 0.6.0-beta.15 - 2026-07-23
 
-- Bind delta revisions to baseline page hashes and actual diffs.
-- Bind claims to hashed source snapshots and close render/runtime dependencies.
-- Require approval and agent-run receipts for formal workflow evidence.
-- Route formal verification through one fail-closed final gate.
-- Build to staging, render and pixel-compare the final PPTX, then atomically publish.
-- Isolate and watermark draft builds so they cannot overwrite canonical output.
-- Distinguish `stateFlow.current/currentState` from `failed` in both renderer and registry contracts.
-- Allow component-led pages to declare page-local extensions explicitly through `localExtensionSlots`; undeclared or orphan slots fail preflight.
-- Require full-size visual evidence to bind semantically to the inspected PNG set while agent receipts bind the final report, removing the former circular hash dependency.
-- Hash render-diversity evidence semantically so volatile generation timestamps cannot invalidate an otherwise identical render set.
-- Keep component metadata overrides authoritative during registry enrichment, including `stateFlow.currentState` and the `closing` component.
-- Render and geometrically lint the `tension-bridge` blueprint family so a broken governance bridge cannot bypass preview coverage.
-- Bound external tool version probes in `environment-doctor` and fail closed on timeout, non-zero exit, or empty output.
+- 将增量修订绑定到基线页面哈希和真实差异。
+- 将结论绑定到带哈希的来源快照，并闭合渲染与运行时依赖。
+- 正式流程证据必须包含用户审批回执和 Agent 执行回执。
+- 所有正式验证统一进入失败即阻塞的终版门禁。
+- 构建先进入暂存区，再渲染并做像素比对，最后原子发布。
+- 草稿构建相互隔离并带水印，不能覆盖正式输出。
+- 在渲染器和组件注册合同中区分 `stateFlow.current/currentState` 与 `failed`。
+- 组件主导页面可通过 `localExtensionSlots` 显式声明页面级扩展；未声明或孤立的扩展槽会阻塞预检。
+- 全尺寸视觉证据与被检查的 PNG 集合建立语义绑定，Agent 回执绑定最终报告，消除循环哈希依赖。
+- 渲染多样性证据采用语义哈希，避免生成时间变化使相同渲染集失效。
+- 组件注册表增强时继续以 metadata overrides 为权威来源，包括 `stateFlow.currentState` 和 `closing`。
+- 对 `tension-bridge` 蓝图家族执行渲染和几何 lint，防止损坏的治理桥绕过预览覆盖。
+- `environment-doctor` 的外部工具版本探测增加超时边界；超时、非零退出或空输出均阻塞。
 
 ## 0.6.0-beta.14 - 2026-07-23
 
-- Require hash-bound `full-size-inspection.v1` evidence for every final reviewer page.
-- Reject generic QA observations and require explicit contrast cardinality/scale evidence.
-- Require final reviewer full-size coverage for every current page.
+- 每一页终版 reviewer 证据必须使用与哈希绑定的 `full-size-inspection.v1`。
+- 拒绝泛化 QA 观察，要求明确记录对比基数、映射方式或尺度证据。
+- 最终 reviewer 必须覆盖当前版本的全部页面。
 
 ## 0.6.0-beta.13 - 2026-07-23
 
-- Carry prior user approvals forward on a verified `delta-revision`: `workflow-gate.js init redesign` now preserves the approved `designTermsState`/`theme`/`layoutBlueprint`/`anchorSample`/`productionMode` (re-stamped under the new `runId` with a `carriedFromRunId` provenance) and reopens only `plan` for the user to confirm the revision scope, instead of resetting every checkpoint and forcing a full pipeline re-walk.
-- Keep `full-rebuild` and first-time `create` resetting all checkpoints; delta reuses the existing task portfolio instead of force-replanning it.
-- Add a deterministic `workflow-gate.js --self-test` (pure `planCheckpointTransition`) and register it in the regression suite; document the carry-forward and the delta short pipeline in `SKILL.md` and `references/REVISION-MODE.md`.
+- 已验证的 `delta-revision` 可继承此前用户审批：`workflow-gate.js init redesign` 保留 `designTermsState`、`theme`、`layoutBlueprint`、`anchorSample`、`productionMode`，用新 `runId` 重签并记录 `carriedFromRunId`；只重新打开 `plan` 让用户确认修订范围。
+- `full-rebuild` 和首次 `create` 仍会重置全部检查点；增量修订复用现有任务组合，不强制重新规划。
+- 增加确定性的 `workflow-gate.js --self-test`，纳入回归套件，并在 SKILL 与 `references/REVISION-MODE.md` 中记录审批继承和增量短流程。
 
 ## 0.6.0-beta.12 - 2026-07-22
 
-- Replace recent-call-only pacing with cumulative per-root-task accounting that includes descendant subagents; add 180K execution-stop, 220K handoff-only, 260K contract limit, and a 40K completion reserve.
-- Ship the new budget policy in `report-only` mode first. Main-call and subagent counts are telemetry, not hard caps; enforced rotation is enabled only after real-deck calibration.
-- Add `task-portfolio.js` for adaptive 3–6 job planning and `resume-job.js` for one-command attach/handoff/context/job continuation.
-- Make context packs strict by default and auto-prune optional reads before failing required context.
-- Add `qa-evidence-index.js` so reviewers consume compact per-rule digests and changed/failed page scope instead of repeatedly loading all page QA evidence.
-- Update event planning to V3 delta-first reviewer scope and reject duplicate runs only when the same event digest is reviewed more than once.
+- Token 管理从“最近调用”改为按根任务累计，并计入所有子 Agent；增加 180K 停止执行、220K 仅允许交接、260K 合同上限和 40K 完成预留。
+- 新预算策略先以 `report-only` 模式发布；主 Agent 和子 Agent 调用次数仅作为遥测，待真实项目校准后再启用强制轮换。
+- 增加 `task-portfolio.js` 自适应规划 3–6 个任务，增加 `resume-job.js` 一键完成 attach、handoff、context 和 job 续接。
+- context pack 默认严格校验，并在缺少必要上下文前自动裁剪可选读取项。
+- 增加 `qa-evidence-index.js`，reviewer 读取紧凑规则摘要和变更/失败页面范围，不再反复加载全部页面证据。
+- 事件规划升级为 V3 的 delta-first reviewer 范围；仅当相同事件摘要被重复复核时才拒绝重复运行。
 
 ## 0.6.0-beta.11 - 2026-07-21
 
-- Add `Base2` as a fourth built-in theme for internal mechanism, evidence, status, governance, and decision decks.
-- Add reusable radius, elevation, stroke, and component-style tokens while keeping Leander Base brand chrome and backward-compatible component fallbacks.
-- Register `Base2` across the component library, document its semantic color and state-rail rules, and add deterministic theme-contract regression coverage.
+- 增加 Base2 内置主题，面向内部机制、证据、状态、治理和决策类演示文稿。
+- 增加可复用的圆角、层级、描边和组件样式 Token，同时保留 Leander Base 品牌 chrome 和向后兼容的组件回退。
+- 在组件库中注册 Base2，记录其语义颜色与状态 rail 规则，并增加确定性的主题合同回归测试。
 
 ## 0.6.0-beta.10 - 2026-07-21
 
-Cost + design-repetition round, driven by the first complete beta.9 field run (team-skill deck, 20 pages, 1,085 calls / 115.8M input).
+本轮聚焦成本和设计重复，依据 beta.9 首次完整实战数据：20 页团队 Skill 演示文稿共 1,085 次调用、115.8M 输入 Token。
 
-- Kill the SVG contact-sheet token trap: `render-contact-sheet.js` inlines every page PNG as base64, so the full-deck `.svg` is ~2.27MB (~568k text tokens). `context-pack.js` now (a) prices `.svg` as text instead of a zero-cost visual, so the budget can no longer be blind to it, and (b) points `visual-designer-zh` / `reviewer-zh` read lists at the model-readable `.png` contact sheet, not the `.svg`. `run-phase.js` now generates the `--png` sheet in-pipeline so the PNG the downstream consumers already prefer actually exists.
-- `primaryShapeClass` guard against rendered-shape duplication (the p12≈p14 case: distinct `skeletonFamily` labels, identical diamond-fanout render). New controlled-vocabulary blueprint field (11 shapes); `lint-layout-blueprint.js` validates it and caps reuse (>3 same class blocks, 2-3 warns), `render-diversity.js` forces same-class page pairs into mandatory side-by-side review. Occupancy features cannot see shape gestalt; this closes that gap.
-- Chapter authoring rhythm: SKILL.md Session Rhythm + PRODUCTION.md now separate the authoring/QA-fill unit (chapter — read a chapter's page.js and fill its qa-results in one pass) from the storage/digest unit (page — keep incremental re-render). Never merge a chapter into one folder or one qa-result.
-- Delta re-review: reviewer-zh brief + AGENT-COLLABORATION.md require the FIX-FIRST follow-up review to read only changed pages + open findings, not the whole batch again (a top token sink in the field run).
-- Threshold ladder unchanged from beta.9 (nag 120k / plan-handoff 180k / hard 260k).
-- Review-budget follow-on (config + docs only, no tool change, no re-sync): the template `deck.config.js` drops `fullDeckRendered` from `visual-designer-zh`'s triggers, so final review defaults to reviewer-only — opening `fullDeckRendered` no longer pulls a redundant full-deck visual re-review (the anchor already locks style and the final reviewer covers visual/composition/shape-class). Field evidence: the team-skill deck ran a 3-role final (reviewer+visual+presenter) purely because it opened `fullDeckRendered` and `rehearsalRequested`; the visual-final alone cost ~2.78M. SKILL.md + deck.config comments now state that each opened event adds a fresh-fork review role (real token cost) and presenter is a deliverable step, not a gate.
+- 解决 SVG 联系表的 Token 陷阱：`render-contact-sheet.js` 会把全部 PNG 以 base64 内联，导致约 2.27 MB、约 568K 文本 Token。`context-pack.js` 改为按文本计算 `.svg` 成本，并让 `visual-designer-zh`、`reviewer-zh` 读取模型可见的 `.png` 联系表；`run-phase.js` 在流程中直接生成 PNG。
+- 增加 `primaryShapeClass` 防止渲染轮廓重复。蓝图新增 11 类受控字段；`lint-layout-blueprint.js` 校验复用上限，`render-diversity.js` 强制相同 shape class 页面做并排复核。
+- 明确章节生产节奏：章节是编写与 QA 回填单元，页面仍是存储、摘要和增量重渲染单元；不能把整章合并为单一页面目录或 QA 文件。
+- FIX-FIRST 后续复核仅读取已变更页面和未关闭问题，不再重新读取整批页面。
+- 预算阈值保持 beta.9 的 120K 提醒、180K 规划交接、260K 强制轮换。
+- 优化终版复核预算：默认只触发 reviewer，`fullDeckRendered` 不再重复触发 visual-designer 全稿复核；每个打开的事件都会产生一次新的独立复核成本。
 
 ## 0.6.0-beta.9 - 2026-07-17
 
-- Cost round (evidence: beta8 field run, 9 threads / 683 calls / 100.65M raw input; one mixed-job thread burned 40%): pace by one-job sessions instead of thresholds.
-- Auto token checkpoints inside `enforceBudget` so `deck.js render/verify/build` and `run-phase.js` phases record gate-level deltas without manual `token-ledger.js checkpoint` calls (fixes the post-blueprint accounting gap).
-- Context watermark surfaced everywhere: `context-budget-gate.js --tail` advisory line after every `deck.js` verb and a `watermark` field in every `run-phase.js` summary.
-- Threshold ladder rescaled: nag 80k -> 120k, plan-handoff 120k -> 180k, hard rotate 180k -> 260k (Gate 0 refusal mirrors 180k/260k); rotation stays a backstop while `SKILL.md` codifies Session Rhythm (one job per session, review offloaded to disposable subagents).
-- Model-readable review evidence: `render-contact-sheet.js --png` grid sheet and new `tools/zoom-crop.js` for pixel-level overlap verification.
-- `run-phase.js status` no longer hard-fails on the fixed 3k status context-pack budget (production-scale state files exceeded it; the strict exit only ever blocked its own outputs).
+- 根据 beta.8 实战数据（9 个任务、683 次调用、100.65M 原始输入）改为“一项工作一个会话”的节奏，避免混合任务集中消耗上下文。
+- 在 `enforceBudget` 内自动记录 Token 检查点，使 `deck.js render/verify/build` 和 `run-phase.js` 自动记录门禁级增量。
+- 全流程显示上下文水位：每个 `deck.js` 动作后输出 `context-budget-gate.js --tail` 提示，`run-phase.js` 摘要增加 `watermark` 字段。
+- 阈值调整为 120K 提醒、180K 规划交接、260K 强制轮换；Gate 0 同步执行 180K/260K 拒绝规则。
+- 增加模型可读的 PNG 联系表和 `tools/zoom-crop.js`，用于像素级重叠核验。
+- `run-phase.js status` 不再因固定 3K 的状态 context-pack 预算而阻塞生产级状态文件。
 
 ## 0.6.0-beta.8 - 2026-07-16
 
-- Establish the current release-clean Codex-only Innovation-Products_ppt baseline in the shared repository.
-- Add fail-closed Gate, context rotation, rendered QA, risk-tier review, component registry V3, and release hygiene tooling from the installed Skill.
-- Introduce the team contribution and curator promotion pilot without shipping project state, raw feedback, or render evidence.
+- 建立当前可发布、仅面向 Codex 的 Innovation-Products_ppt 共享基线。
+- 从本地安装版引入失败即阻塞的 Gate、上下文轮换、渲染 QA、风险分级复核、组件注册表 V3 和发布卫生工具。
+- 引入团队贡献与 curator 提升试点，但不发布项目状态、原始反馈或渲染证据。

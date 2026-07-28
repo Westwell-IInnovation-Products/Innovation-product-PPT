@@ -196,7 +196,17 @@ node tools/build-qa-profile.js pages/<id>/page.json --write
 
 - 是否说明为什么不用已有组件。
 - 是否没有退化为一堆临时文本框。
+- 是否在 `page.json` 与 `page.js` 同时落实 `theme-fidelity.v1`，且至少三个特征跨两个类别。
+- 是否改变了主体构图；颜色、字体、页眉和页脚正确但内容仍是通用卡墙时必须失败。
 - 如果这个自定义结构可复用，是否应该积累为组件。
+
+### 主题保真
+
+- Base 主体是否由规则、分栏、轨道、扁平内容面和单一焦点组织，而不是阴影卡墙。
+- Base2 是否存在有意义的主板/内嵌层、状态轨或决策层级，而不是均匀圆角卡墙。
+- Global 高容量页是否使用证据主画面、紧凑 KPI rail、工程变量表、Δ 对比或显式待仿真状态。
+- Global 的 2×3 空指标卡 + 三张普通信息卡即使配色/chrome 正确，也必须由 `t.global.no-card-wall` 阻塞。
+- `output/theme-fidelity-audit.json` 的机器 FAIL 不能被 reviewer 自然语言覆盖；机器 PASS 仍需联系表/全尺寸人工相似度审查。
 
 ## QA 输出格式
 

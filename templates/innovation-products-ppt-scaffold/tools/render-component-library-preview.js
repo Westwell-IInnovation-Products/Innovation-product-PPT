@@ -68,6 +68,56 @@ function sampleFor(c) {
       return { ...d, items: items4.slice(0, 3).map((x, i) => ({ ...x, consequence: ["rework", "drift", "token waste"][i] })) };
     case "metricCards":
       return { ...d, items: metrics, caveat: "Numbers are sample values for component preview only." };
+    case "evidenceBoard":
+      return {
+        ...d,
+        placeholder: "ENGINEERING EVIDENCE — SOURCE SLOT",
+        source: "Approved screenshot or simulation render",
+        callouts: [
+          { title: "Operating zone", body: "Anchor the first finding to a precise visible location.", focus: true },
+          { title: "Constraint", body: "Show the engineering boundary beside the evidence." },
+          { title: "Result state", body: "Separate observed proof from pending work." },
+          { title: "Decision", body: "State the action supported by this evidence." }
+        ]
+      };
+    case "compactKpiRail":
+      return {
+        ...d,
+        items: [
+          { label: "CYCLE TIME", value: "48.2", unit: "s", delta: "-3.8%", focus: true },
+          { label: "THROUGHPUT", value: "126", unit: "moves/h", delta: "+6.1%" },
+          { label: "QUEUE", value: "7", unit: "units", delta: "-2" },
+          { label: "UTILIZATION", value: "84.6", unit: "%", delta: "+4.2%" },
+          { label: "ENERGY", value: "18.4", unit: "kWh", delta: "-1.6%" },
+          { label: "CONFLICTS", value: "2", unit: "events", delta: "-3" }
+        ],
+        notes: [
+          { label: "Reading", body: "One compact metric rail keeps the engineering scale shared." },
+          { label: "Boundary", body: "Preview values are illustrative and must be replaced by sourced project data." }
+        ]
+      };
+    case "engineeringVariableTable":
+      return {
+        ...d,
+        rows: [
+          { variable: "Vehicle count", unit: "unit", baseline: "18", scenario: "22", delta: "+4", source: "scenario input" },
+          { variable: "Mean speed", unit: "km/h", baseline: "14.8", scenario: "15.6", delta: "+0.8", source: "simulation output" },
+          { variable: "Cycle time", unit: "s", baseline: "52.0", scenario: "48.2", delta: "-3.8", source: "simulation output" },
+          { variable: "Queue threshold", unit: "unit", baseline: "8", scenario: "7", delta: "-1", source: "control rule" },
+          { variable: "Energy model", unit: "kWh", state: "PENDING SIMULATION" },
+          { variable: "Conflict rate", unit: "event/h", state: "PENDING MEASUREMENT" }
+        ]
+      };
+    case "deltaCompare":
+      return {
+        ...d,
+        rows: [
+          { label: "Cycle time", baseline: "52.0 s", scenario: "48.2 s", delta: -3.8, deltaLabel: "-3.8 s" },
+          { label: "Throughput", baseline: "118 /h", scenario: "126 /h", delta: 8, deltaLabel: "+8 /h" },
+          { label: "Queue length", baseline: "9", scenario: "7", delta: -2, deltaLabel: "-2" },
+          { label: "Energy", baseline: "18.4 kWh", state: "PENDING SIMULATION" }
+        ]
+      };
     case "statBand":
       return { ...d, focus: 1, stats: metrics.concat({ value: "24", label: "Slides", sub: "full deck example" }) };
     case "bigWordCardMatrix":

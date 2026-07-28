@@ -255,12 +255,24 @@ function select(page) {
     implementation: {
       expectedBinding: { route: selected.route, name: selected.name },
       pageJsMustExport: "visualBinding",
+      pageJsMustExportThemeFidelity: selected.route === "page-specific-custom",
       compositionContract: selected.route === "component-library"
         ? "组件只承担主体区块：页面仍需标题带、结论带和至少一个自定义区（图例/标注/对比/证据）；单组件直出仅限封面与章节页。"
         : "按蓝图视觉签名手工构图：标题带 + 2-3 个信息区 + 结论带；组件可作为局部积木调用。"
     },
     reviewFocus: ["所选路线是否保持蓝图视觉签名？", "必需槽位和内容容量是否匹配？", "低置信或小分差是否已由组件管理员复核？"]
   };
+  const declaredThemeFeatures = [...new Set([...(page.themeFeatures || []), ...(blueprint?.themeFeatures || [])])];
+  const themeArchetype = page.themeArchetype || blueprint?.themeArchetype || "";
+  if (declaredThemeFeatures.length || themeArchetype || page.themeFidelity) {
+    result.themeFidelity = page.themeFidelity || {
+      version: "theme-fidelity.v1",
+      theme: context.theme,
+      archetype: themeArchetype,
+      features: declaredThemeFeatures,
+      composition: page.themeComposition || {}
+    };
+  }
   if (selected.route === "image2") result.promptSpec = { file: `assets/${page.id || "page"}-image2-prompt.md`, constraints: ["一个核心意象", "不画小字", "不画复杂流程", "说明背景融合方式"] };
   if (selected.route === "page-specific-custom") result.customJustification = `页面专属构图为一等路线：按蓝图视觉签名（${expressionMode}）手工构图，组件可作为局部积木参与。`;
   return result;

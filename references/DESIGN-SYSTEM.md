@@ -33,6 +33,7 @@ warning 可以在有明确理由时接受，error 必须阻断视觉生产。
 - 哪些颜色分别代表焦点、风险、当前状态、稳定结构、证据或品牌？
 - 哪些页面应该信息密度高，哪些页面应该留白更多？
 - 什么时候适合用卡片、截图、大字、image2 或机制图？
+- 所选主题的内容层 signature 是什么；主体必须体现哪些构图特征、偏好 archetype 和禁用模式？
 
 不要把 DESIGN.md 参考包里的示例当成本项目默认审美。项目需求和用户反馈才决定最终审美。
 
@@ -43,6 +44,7 @@ warning 可以在有明确理由时接受，error 必须阻断视觉生产。
 - `theme/theme.json` 和 `theme/tokens.js`：可执行的 PPT token。
 - `layout-blueprint.md/json`：整套 PPT 的叙事节奏和布局合同。
 - `page.json`：页面级表达模式、截图槽位和颜色意图。
+- `theme/content-fidelity.js` 与 `page.json.themeFidelity`：主题内容签名、构图证据和机器代理。
 - `qa.md` 和动态 QA：渲染后的检查证据。
 
 如果 `DESIGN.md` 和已经确认的用户反馈冲突，先更新 `DESIGN.md`，重新运行 lint，再继续生产页面。

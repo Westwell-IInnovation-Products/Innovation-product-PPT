@@ -1,4 +1,7 @@
+const { getContentFidelity, normalizeThemeId } = require("./content-fidelity");
+
 const theme = {
+  id: "leander-base",
   fonts: {
     cn: "Microsoft YaHei",
     en: "Century Gothic",
@@ -60,6 +63,7 @@ const theme = {
     closing: "center-warm",
     conclusion: "plain"
   },
+  contentFidelity: getContentFidelity("leander-base"),
   container: { round: true, radius: 8, shadow: false },
   grid: {
     w: 1920,
@@ -102,6 +106,7 @@ function getTheme(name) {
   const normalized = /^base-?2$/i.test(raw) ? "base2" : raw;
   const t = themes[normalized];
   if (!t || t === theme) return theme;
+  const themeId = normalizeThemeId(t.id || normalized);
   return {
     ...theme, ...t,
     fonts: { ...theme.fonts, ...t.fonts },
@@ -119,7 +124,8 @@ function getTheme(name) {
     stroke: { ...(theme.stroke || {}), ...(t.stroke || {}) },
     componentStyle: { ...(theme.componentStyle || {}), ...(t.componentStyle || {}) },
     container: t.container || { round: true, shadow: true },
-    signature: t.signature || theme.signature
+    signature: t.signature || theme.signature,
+    contentFidelity: getContentFidelity(themeId)
   };
 }
 

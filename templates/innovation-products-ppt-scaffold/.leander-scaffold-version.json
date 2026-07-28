@@ -1,5 +1,5 @@
 {
-  "version": "0.6.0-beta.20",
+  "version": "0.6.0-beta.23",
   "qualityLock": "render-quality-evidence.v4+visual-geometry-policy.v1+final-artifact-lock.v2",
   "contextPack": "leander-context-pack.v3-strict",
   "tokenLedger": "leander-token-report.zh.v2-conversations",
@@ -18,5 +18,6 @@
   "finalArtifactReceipt": "leander-final-artifact-receipt.v2",
   "geometryAudit": "render-geometry-audit.v1",
   "userFeedback": "user-feedback.v1",
-  "qaResult": "qa-result.zh.v3"
+  "qaResult": "qa-result.zh.v3",
+  "themeFidelity": "theme-fidelity.v1+theme-fidelity-audit.v1"
 }

@@ -1,6 +1,6 @@
 // Upgrade only Skill-managed workflow tools in an existing Innovation-Products_ppt project.
-// Project pages, theme, project-local components, config, content, state and approvals are preserved.
-// Explicitly listed shared component-library assets are Skill-managed and may be upgraded.
+// Project pages, selected theme/config, project-local extensions, content, state and approvals are preserved.
+// Explicitly listed shared theme contracts and the core component library are Skill-managed and may be upgraded.
 const fs = require("fs");
 const path = require("path");
 const cp = require("child_process");
@@ -11,10 +11,12 @@ const check = process.argv.includes("--check");
 const managed = [
   "tools/artifact-map.js", "tools/build-qa-profile.js", "tools/context-pack.js", "tools/context-budget-gate.js", "tools/deck.js",
   "tools/environment-doctor.js", "tools/approval-receipt.js", "tools/agent-run-receipt.js", "tools/verify-source-evidence.js",
+  "tools/verify-theme-fidelity.js",
   "tools/final-gate.js", "tools/final-artifact-gate.js", "tools/gate-adversarial-suite.js",
   "tools/geometry-policy.js", "tools/render-geometry-audit.js", "tools/user-feedback-gate.js", "tools/visual-gate-regression.js",
   "tests/visual-gate/arrow-text-collision.json", "tests/visual-gate/connector-imbalance.json", "tests/visual-gate/reserved-zone-collision.json",
   "tests/visual-gate/clean-layout.json", "tests/visual-gate/intentional-overlap.json",
+  "tests/theme-fidelity/global-generic-dashboard.json", "tests/theme-fidelity/global-engineering-evidence.json",
   "tools/regression-tests.js", "tools/hard-gate-contract.js", "tools/hard-gate-blackbox.js", "tools/render-diversity.js", "tools/render-risk.js", "tools/tool-freeze.js",
   "tools/change-impact.js", "tools/migrate-evidence-v2.js", "tools/migrate-agent-collaboration-v3.js", "tools/page-digests.js", "tools/phase-handoff.js",
   "tools/plan-agent-events.js", "tools/qa-batch.js", "tools/qa-evidence-index.js", "tools/requirements-trace.js", "tools/resume-job.js", "tools/rollout-usage.js", "tools/task-portfolio.js", "tools/token-ledger.js",
@@ -27,7 +29,7 @@ const managed = [
   "tools/select-visual-route.js", "tools/visual-selection-diversity.js", "tools/verify-agent-collaboration.js",
   "tools/verify-checkpoints.js", "tools/verify-design-gates.js", "tools/verify-page-preflight.js", "tools/verify-qa-result.js",
   "tools/verify-quality-baseline.js", "tools/verify-state-memory.js", "tools/verify-terminology.js",
-  "tools/workflow-gate.js",
+  "tools/workflow-gate.js", "theme/content-fidelity.js", "components/ppt-components.js",
   "components/extensions/evidence-legend.js", "components/extensions/stage-gate-rail.js", "components/extensions/status-legend.js"
 ];
 function same(a, b) { return fs.existsSync(a) && fs.existsSync(b) && fs.readFileSync(a).equals(fs.readFileSync(b)); }
@@ -42,7 +44,11 @@ const packageData = JSON.parse(fs.readFileSync(packageFile, "utf8"));
 packageData.dependencies = packageData.dependencies || {};
 const dependencyChanged = packageData.dependencies.pngjs !== "7.0.0";
 const packageVersionChanged = packageData.version !== expectedVersion.version;
-const qualityTargetMissing = !fs.existsSync(path.join(target, "quality-target.json"));
+const qualityTargetFile = path.join(target, "quality-target.json");
+const qualityTargetMissing = !fs.existsSync(qualityTargetFile);
+const requiredAnchorCoverage = ["tone-or-cover", "modal-content", "complex-structure", "screenshot-evidence", "data-dense", "asset-gap-high-capacity"];
+const qualityTargetData = qualityTargetMissing ? {} : (() => { try { return JSON.parse(fs.readFileSync(qualityTargetFile, "utf8")); } catch { return {}; } })();
+const qualityTargetNeedsThemeFidelity = requiredAnchorCoverage.some(name => !(qualityTargetData.anchorCoverage || []).includes(name));
 const sourceEvidenceFile = path.join(target, "source-evidence-index.json");
 const sourceEvidenceMissing = !fs.existsSync(sourceEvidenceFile);
 const sourceEvidenceVersion = (() => { try { return JSON.parse(fs.readFileSync(sourceEvidenceFile, "utf8")).version || "missing"; } catch { return "missing"; } })();
@@ -50,8 +56,8 @@ const sourceEvidenceNeedsMigration = sourceEvidenceVersion !== "source-evidence-
 const collaborationFile = path.join(target, "agent-collaboration.json");
 const collaborationNeedsMigration = (() => { try { const value = JSON.parse(fs.readFileSync(collaborationFile, "utf8")); return value.version !== "agent-collaboration.v3" || value.policy !== "event-driven.v3" || Object.values(value.roles || {}).some(role => !Array.isArray(role.runs)); } catch { return true; } })();
 if (check) {
-  if (changed.length || dependencyChanged || packageVersionChanged || qualityTargetMissing || sourceEvidenceNeedsMigration || collaborationNeedsMigration || targetVersion.version !== expectedVersion.version) {
-    console.error(`Scaffold stale: tools=${changed.length}, dependencyChanged=${dependencyChanged}, packageVersionChanged=${packageVersionChanged}, qualityTargetMissing=${qualityTargetMissing}, sourceEvidenceVersion=${sourceEvidenceVersion}, collaborationNeedsMigration=${collaborationNeedsMigration}, version=${targetVersion.version || "missing"}`);
+  if (changed.length || dependencyChanged || packageVersionChanged || qualityTargetMissing || qualityTargetNeedsThemeFidelity || sourceEvidenceNeedsMigration || collaborationNeedsMigration || targetVersion.version !== expectedVersion.version) {
+    console.error(`Scaffold stale: tools=${changed.length}, dependencyChanged=${dependencyChanged}, packageVersionChanged=${packageVersionChanged}, qualityTargetMissing=${qualityTargetMissing}, themeFidelityAnchorMigration=${qualityTargetNeedsThemeFidelity}, sourceEvidenceVersion=${sourceEvidenceVersion}, collaborationNeedsMigration=${collaborationNeedsMigration}, version=${targetVersion.version || "missing"}`);
     changed.forEach(item => console.error(`- ${item}`)); process.exit(1);
   }
   console.log(`Scaffold tools are current: ${expectedVersion.version}`); process.exit(0);
@@ -61,7 +67,12 @@ changed.forEach(rel => {
   fs.mkdirSync(path.dirname(dst), { recursive: true });
   fs.copyFileSync(src, dst);
 });
-if (qualityTargetMissing) fs.copyFileSync(path.join(TEMPLATE, "quality-target.json"), path.join(target, "quality-target.json"));
+if (qualityTargetMissing) {
+  fs.copyFileSync(path.join(TEMPLATE, "quality-target.json"), qualityTargetFile);
+} else if (qualityTargetNeedsThemeFidelity) {
+  qualityTargetData.anchorCoverage = [...new Set([...(qualityTargetData.anchorCoverage || []), ...requiredAnchorCoverage])];
+  fs.writeFileSync(qualityTargetFile, JSON.stringify(qualityTargetData, null, 2) + "\n", "utf8");
+}
 if (sourceEvidenceMissing) fs.copyFileSync(path.join(TEMPLATE, "source-evidence-index.json"), path.join(target, "source-evidence-index.json"));
 packageData.version = expectedVersion.version;
 fs.writeFileSync(packageFile, JSON.stringify(packageData, null, 2) + "\n", "utf8");
@@ -98,7 +109,7 @@ const doctor = cp.spawnSync(process.execPath, [path.join(target, "tools", "envir
 if (doctor.status !== 0) { console.error((doctor.stderr || doctor.stdout || "Environment doctor failed before tool freeze.").trim()); process.exit(doctor.status || 1); }
 const frozen = cp.spawnSync(process.execPath, [path.join(target, "tools", "tool-freeze.js"), "capture", "scaffold-sync"], { cwd: target, encoding: "utf8" });
 if (frozen.status !== 0) { console.error((frozen.stderr || frozen.stdout || "Failed to capture tool freeze after sync.").trim()); process.exit(frozen.status || 1); }
-console.log(`Synced Innovation-Products_ppt scaffold ${version.version}: ${changed.length} managed files updated; dependencyChanged=${dependencyChanged}; packageVersionChanged=${packageVersionChanged}; qualityTargetCreated=${qualityTargetMissing}; collaborationMigrated=${collaborationNeedsMigration}; project content preserved.`);
+console.log(`Synced Innovation-Products_ppt scaffold ${version.version}: ${changed.length} managed files updated; dependencyChanged=${dependencyChanged}; packageVersionChanged=${packageVersionChanged}; qualityTargetCreated=${qualityTargetMissing}; themeFidelityAnchorsMigrated=${qualityTargetNeedsThemeFidelity}; collaborationMigrated=${collaborationNeedsMigration}; project content preserved.`);
 if (sourceEvidenceNeedsMigration && !sourceEvidenceMissing) {
   console.log(`SOURCE EVIDENCE MIGRATION REQUIRED: preserved ${sourceEvidenceVersion}; convert it to source-evidence-index.v2 with real source/snapshot hashes before final verification.`);
 }

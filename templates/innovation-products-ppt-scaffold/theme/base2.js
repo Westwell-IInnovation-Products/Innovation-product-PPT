@@ -76,7 +76,9 @@ const base2Theme = {
     cover: "warm-right",
     closing: "center-warm",
     conclusion: "band"
-  }
+  },
+  // Resolved to the executable profile by theme/tokens.js.
+  contentFidelityProfile: "base2"
 };
 
 module.exports = { base2Theme };

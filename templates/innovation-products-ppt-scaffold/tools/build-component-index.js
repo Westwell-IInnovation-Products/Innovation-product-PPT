@@ -55,6 +55,7 @@ const enriched = registry.components.map(base => {
     qaRisks: (c.qaRisks || []).slice(0, 5),
     contentCapacity: c.contentCapacity || null,
     themeCompatibility: c.themeCompatibility || [],
+    themeFidelityFeatures: c.themeFidelityFeatures || {},
     metadataSource: c.metadataSource || "unknown",
     metadataReviewStatus: c.metadataReviewStatus || "pending",
     reviewedAt: c.reviewedAt || null,

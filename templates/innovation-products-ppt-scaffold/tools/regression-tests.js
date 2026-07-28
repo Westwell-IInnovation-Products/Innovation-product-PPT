@@ -81,6 +81,21 @@ function assertBase2Contract() {
   console.log("PASS Base2 theme contract");
 }
 assertBase2Contract();
+function assertThemeFidelityContract() {
+  const { getTheme } = require(path.join(ROOT, "theme", "tokens"));
+  const { loadComponentRuntime } = require(path.join(ROOT, "tools", "component-runtime"));
+  const global = getTheme("leander-global");
+  if (global.contentFidelity?.id !== "leander-global") throw new Error("Global theme must expose its content-fidelity profile");
+  for (const feature of ["evidence-dominant-main", "compact-kpi-rail", "engineering-variable-table", "delta-comparison", "pending-simulation-state"]) {
+    if (!global.contentFidelity.features[feature]) throw new Error(`Global content-fidelity feature missing: ${feature}`);
+  }
+  const runtime = loadComponentRuntime("leander-global");
+  for (const name of ["evidenceBoard", "compactKpiRail", "engineeringVariableTable", "deltaCompare"]) {
+    if (typeof runtime.components[name] !== "function") throw new Error(`Shared high-capacity renderer missing: ${name}`);
+  }
+  console.log("PASS theme fidelity profile and shared renderer contract");
+}
+assertThemeFidelityContract();
 function assertStateFlowContract() {
   const componentFile = path.join(ROOT, "components", "ppt-components.js");
   const registryFile = path.join(ROOT, "tools", "component-registry.json");
@@ -124,6 +139,8 @@ assertBlueprintRendererContract();
 const scripts = fs.readdirSync(TOOLS).filter(name => name.endsWith(".js")).sort();
 scripts.forEach(name => run(`syntax ${name}`, ["--check", path.join(TOOLS, name)]));
 const behaviors = [
+  ["theme content fidelity profiles", path.join(ROOT, "theme", "content-fidelity.js")],
+  ["theme fidelity negative/positive fixtures", "verify-theme-fidelity.js"],
   ["environment doctor bounded probes", "environment-doctor.js"],
   ["rollout usage", "rollout-usage.js"], ["token ledger", "token-ledger.js"], ["context budget", "context-budget-gate.js"],
   ["page digests", "page-digests.js"], ["change impact", "change-impact.js"], ["QA result", "verify-qa-result.js"],
@@ -137,5 +154,5 @@ const behaviors = [
   ["hard Gate adversarial black-box", "hard-gate-blackbox.js"], ["revision mode", "revision-mode.js"], ["requirements trace", "requirements-trace.js"],
   ["workflow gate carry-forward", "workflow-gate.js"]
 ];
-behaviors.forEach(([label, file]) => run(label, [path.join(TOOLS, file), "--self-test"]));
+behaviors.forEach(([label, file]) => run(label, [path.isAbsolute(file) ? file : path.join(TOOLS, file), "--self-test"]));
 console.log(`PASS Innovation-Products_ppt regression suite: ${scripts.length} syntax checks, ${behaviors.length} behavior tests.`);

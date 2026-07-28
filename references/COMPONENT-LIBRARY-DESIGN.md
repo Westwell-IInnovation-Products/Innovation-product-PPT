@@ -262,7 +262,7 @@ page pattern + layout block + visual parts
 - `000000` 仅用于导入资产或特殊黑色标记，并需要人工复核。
 - 其他固定色值应先进入 `theme/tokens.js` 和对应命名主题，再被组件引用。
 
-如果一个组件在 `leander-base` 下好看，但切到 `leander-global` 后出现低对比、白字压浅色、红色语义混乱，优先修 token 或组件前景色规则，而不是复制一份新组件。
+如果一个组件在 `leander-base` 下好看，但切到 `leander-global` 后出现低对比、白字压浅色、红色语义混乱，优先修 token 或组件前景色规则，而不是复制一份新组件。如果颜色正确但主体仍像通用 dashboard/卡墙,修 `contentFidelity` 变体、组件参数或主题 archetype；不要把这类问题误判成纯换色缺陷。
 ## Registry / Renderer / Selector Contract
 
 组件库必须保持三层一致：

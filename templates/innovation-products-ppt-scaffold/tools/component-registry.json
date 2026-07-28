@@ -2,10 +2,10 @@
   "schemaVersion": "component-registry.v3",
   "libraryCounts": {
     "themeLibraries": 3,
-    "baseComponents": 63,
+    "baseComponents": 67,
     "editorialComponents": 7,
     "bespokeComponents": 6,
-    "totalExecutableComponents": 76,
+    "totalExecutableComponents": 80,
     "image2Components": 0
   },
   "themes": [
@@ -5525,7 +5525,10 @@
       "semanticBindings": [
         "region label",
         "zone heading",
-        "structural eyebrow"
+        "structural eyebrow",
+        "organization tree",
+        "tool hierarchy",
+        "layered model"
       ],
       "composable": "high",
       "slots": [
@@ -5533,7 +5536,8 @@
       ],
       "variants": [
         "base",
-        "centered"
+        "centered",
+        "line"
       ],
       "avoidWhen": [
         "the block already carries a clear title of its own",
@@ -5542,7 +5546,10 @@
       "qaRisks": [
         "eyebrow competing with the page title",
         "uppercase labels overused until they stop signalling",
-        "label not matching the region beneath it"
+        "label not matching the region beneath it",
+        "crooked branches",
+        "unclear parent-child relation",
+        "misaligned levels"
       ],
       "themeTokensUsed": [
         "colors.mute",
@@ -5593,7 +5600,10 @@
         "risk tier",
         "routing outcome",
         "status row",
-        "gate result"
+        "gate result",
+        "page isolation",
+        "state memory",
+        "local repair boundary"
       ],
       "composable": "high",
       "slots": [
@@ -5605,7 +5615,8 @@
       "variants": [
         "base",
         "blocked",
-        "tiered"
+        "tiered",
+        "line"
       ],
       "avoidWhen": [
         "there is no real status or tier to encode",
@@ -5614,7 +5625,11 @@
       "qaRisks": [
         "colour used as the only status channel",
         "tier colour not matching its written label",
-        "too many tiers competing on one page"
+        "too many tiers competing on one page",
+        "fake file/state structure",
+        "unclear current state",
+        "over-dense expansion",
+        "block forced into a full-page role"
       ],
       "themeTokensUsed": [
         "colors.surface",
@@ -5672,7 +5687,10 @@
       "semanticBindings": [
         "page takeaway",
         "scope boundary",
-        "closing statement"
+        "closing statement",
+        "sharing boundary",
+        "priority decision",
+        "tradeoff recommendation"
       ],
       "composable": "medium",
       "slots": [
@@ -5690,7 +5708,11 @@
       "qaRisks": [
         "conclusion restating the title",
         "takeaway running longer than one line",
-        "band colliding with the footer rule"
+        "band colliding with the footer rule",
+        "unclear criteria",
+        "fake scoring",
+        "recommendation not prominent",
+        "block forced into a full-page role"
       ],
       "themeTokensUsed": [
         "colors.surface",
@@ -5708,11 +5730,441 @@
         "maxLabelChars": 24,
         "maxBodyChars": 64
       }
+    },
+    {
+      "name": "evidenceBoard",
+      "library": "base",
+      "route": "component-library",
+      "editable": "yes",
+      "designStatus": "usable",
+      "designReviewPriority": "P1",
+      "themeCompatibility": [
+        "base2",
+        "leander-base",
+        "leander-global"
+      ],
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "reviewedAt": "2026-07-28",
+      "reviewedBy": "component-curator",
+      "selectionConfidenceCap": 0.9,
+      "relationships": [
+        "evidence",
+        "scene"
+      ],
+      "secondaryRelationships": [
+        "decision"
+      ],
+      "tags": [
+        "screenshot",
+        "evidence",
+        "engineering",
+        "callout",
+        "global-fidelity"
+      ],
+      "density": "high",
+      "level": "page-pattern",
+      "relationPrimitive": "evidence",
+      "expressionCapability": "give a real screenshot, engineering diagram, or approved render the dominant body region and bind compact numbered explanations to precise evidence locations",
+      "semanticBindings": [
+        "screenshot proof",
+        "engineering drawing review",
+        "source-backed visual evidence",
+        "metric proof",
+        "trend evidence",
+        "source-backed finding"
+      ],
+      "composable": "limited",
+      "slots": [
+        "imageOrDiagram",
+        "callouts",
+        "sourceBoundary",
+        "caption"
+      ],
+      "variants": [
+        "base",
+        "global-compact",
+        "pending-source",
+        "compact",
+        "image-or-evidence",
+        "reduced-density"
+      ],
+      "avoidWhen": [
+        "there is no real evidence object or explicit pending source slot",
+        "callouts cannot be anchored precisely",
+        "the image would be decorative",
+        "only a small local visual part is needed",
+        "the page has low information density or needs a breathing transition",
+        "there is no source, data boundary, or proof object"
+      ],
+      "qaRisks": [
+        "evidence object too small",
+        "callouts not tied to visible locations",
+        "missing source boundary",
+        "unsupported claims",
+        "chart readability",
+        "hard-coded semantics instead of reusable relationship",
+        "text overflow or unreadable labels"
+      ],
+      "themeFidelityFeatures": {
+        "leander-global": [
+          "evidence-dominant-main",
+          "asymmetric-technical-layout",
+          "precise-callout-anchors"
+        ],
+        "base2": [
+          "layered-evidence-board",
+          "region-eyebrows"
+        ],
+        "leander-base": [
+          "asymmetric-explanation",
+          "source-boundary-strip"
+        ]
+      },
+      "contentCapacity": {
+        "maxItems": 8,
+        "maxLabelChars": 24,
+        "maxBodyChars": 72
+      },
+      "themeTokensUsed": [
+        "colors.bg",
+        "colors.surface",
+        "colors.primary",
+        "colors.accent",
+        "colors.line",
+        "fonts.cn",
+        "fonts.en",
+        "type.*"
+      ]
+    },
+    {
+      "name": "compactKpiRail",
+      "library": "base",
+      "route": "component-library",
+      "editable": "yes",
+      "designStatus": "usable",
+      "designReviewPriority": "P1",
+      "themeCompatibility": [
+        "base2",
+        "leander-base",
+        "leander-global"
+      ],
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "reviewedAt": "2026-07-28",
+      "reviewedBy": "component-curator",
+      "selectionConfidenceCap": 0.88,
+      "relationships": [
+        "evidence"
+      ],
+      "secondaryRelationships": [
+        "contrast"
+      ],
+      "tags": [
+        "kpi",
+        "rail",
+        "compact",
+        "engineering",
+        "global-fidelity"
+      ],
+      "density": "high",
+      "level": "page-pattern",
+      "relationPrimitive": "evidence",
+      "expressionCapability": "show four to ten sourced engineering metrics in one ruled rail with shared baselines, units, deltas, and a compact reading area",
+      "semanticBindings": [
+        "engineering KPI rail",
+        "scenario summary",
+        "simulation metric overview",
+        "metric proof",
+        "trend evidence",
+        "source-backed finding"
+      ],
+      "composable": "limited",
+      "slots": [
+        "metrics",
+        "units",
+        "deltas",
+        "engineeringNotes",
+        "sourceBoundary"
+      ],
+      "variants": [
+        "base",
+        "global-compact",
+        "compact",
+        "image-or-evidence",
+        "reduced-density"
+      ],
+      "avoidWhen": [
+        "fewer than four metrics exist",
+        "metrics do not share one evidence boundary",
+        "large independent cards are required",
+        "only a small local visual part is needed",
+        "the page has low information density or needs a breathing transition",
+        "there is no source, data boundary, or proof object"
+      ],
+      "qaRisks": [
+        "units omitted",
+        "metrics read as unrelated cards",
+        "unsupported values",
+        "unsupported claims",
+        "chart readability",
+        "missing source boundary",
+        "hard-coded semantics instead of reusable relationship",
+        "text overflow or unreadable labels"
+      ],
+      "themeFidelityFeatures": {
+        "leander-global": [
+          "compact-kpi-rail",
+          "ruled-information-hierarchy"
+        ],
+        "base2": [
+          "region-eyebrows",
+          "tiered-radius-depth"
+        ],
+        "leander-base": [
+          "linear-divider-structure",
+          "source-boundary-strip"
+        ]
+      },
+      "contentCapacity": {
+        "maxItems": 10,
+        "maxLabelChars": 18,
+        "maxBodyChars": 48
+      },
+      "themeTokensUsed": [
+        "colors.bg",
+        "colors.surface",
+        "colors.primary",
+        "colors.accent",
+        "colors.line",
+        "fonts.cn",
+        "fonts.en",
+        "type.*"
+      ]
+    },
+    {
+      "name": "engineeringVariableTable",
+      "library": "base",
+      "route": "component-library",
+      "editable": "yes",
+      "designStatus": "usable",
+      "designReviewPriority": "P0",
+      "themeCompatibility": [
+        "base2",
+        "leander-base",
+        "leander-global"
+      ],
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "reviewedAt": "2026-07-28",
+      "reviewedBy": "component-curator",
+      "selectionConfidenceCap": 0.92,
+      "relationships": [
+        "evidence",
+        "state"
+      ],
+      "secondaryRelationships": [
+        "contrast"
+      ],
+      "tags": [
+        "variables",
+        "table",
+        "simulation",
+        "pending",
+        "engineering",
+        "global-fidelity"
+      ],
+      "density": "high",
+      "level": "page-pattern",
+      "relationPrimitive": "evidence",
+      "expressionCapability": "show a dense engineering variable register with units, baseline, scenario, delta, state, and source while preserving explicit pending simulation rows",
+      "semanticBindings": [
+        "simulation variable register",
+        "engineering parameter table",
+        "pending measurement matrix",
+        "metric proof",
+        "trend evidence",
+        "source-backed finding"
+      ],
+      "composable": "limited",
+      "slots": [
+        "variables",
+        "units",
+        "baseline",
+        "scenario",
+        "delta",
+        "stateOrSource"
+      ],
+      "variants": [
+        "base",
+        "global-compact",
+        "pending-simulation",
+        "compact",
+        "image-or-evidence",
+        "reduced-density"
+      ],
+      "avoidWhen": [
+        "variables have no units or state boundary",
+        "a relationship diagram is the primary message",
+        "pending values would be fabricated",
+        "only a small local visual part is needed",
+        "the page has low information density or needs a breathing transition",
+        "there is no source, data boundary, or proof object"
+      ],
+      "qaRisks": [
+        "invented pending values",
+        "misaligned units",
+        "rows too dense to read",
+        "missing source state",
+        "unsupported claims",
+        "chart readability",
+        "missing source boundary",
+        "hard-coded semantics instead of reusable relationship",
+        "text overflow or unreadable labels"
+      ],
+      "themeFidelityFeatures": {
+        "leander-global": [
+          "engineering-variable-table",
+          "pending-simulation-state",
+          "ruled-information-hierarchy"
+        ],
+        "base2": [
+          "state-rail",
+          "tiered-radius-depth"
+        ],
+        "leander-base": [
+          "flat-content-plane",
+          "source-boundary-strip"
+        ]
+      },
+      "contentCapacity": {
+        "maxItems": 12,
+        "maxLabelChars": 28,
+        "maxBodyChars": 40
+      },
+      "themeTokensUsed": [
+        "colors.bg",
+        "colors.surface",
+        "colors.primary",
+        "colors.accent",
+        "colors.line",
+        "fonts.cn",
+        "fonts.en",
+        "type.*"
+      ]
+    },
+    {
+      "name": "deltaCompare",
+      "library": "base",
+      "route": "component-library",
+      "editable": "yes",
+      "designStatus": "usable",
+      "designReviewPriority": "P1",
+      "themeCompatibility": [
+        "base2",
+        "leander-base",
+        "leander-global"
+      ],
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "reviewedAt": "2026-07-28",
+      "reviewedBy": "component-curator",
+      "selectionConfidenceCap": 0.9,
+      "relationships": [
+        "contrast",
+        "evidence"
+      ],
+      "secondaryRelationships": [
+        "state"
+      ],
+      "tags": [
+        "delta",
+        "baseline",
+        "scenario",
+        "engineering",
+        "global-fidelity"
+      ],
+      "density": "high",
+      "level": "page-pattern",
+      "relationPrimitive": "contrast",
+      "expressionCapability": "compare baseline and scenario values row by row, expose their delta on one scale, and keep pending scenario rows explicit",
+      "semanticBindings": [
+        "scenario delta study",
+        "before versus candidate engineering comparison",
+        "simulation sensitivity summary",
+        "before and after",
+        "problem versus mechanism",
+        "option comparison"
+      ],
+      "composable": "limited",
+      "slots": [
+        "variables",
+        "baseline",
+        "scenario",
+        "delta",
+        "relativeChange",
+        "state"
+      ],
+      "variants": [
+        "base",
+        "global-compact",
+        "pending-simulation",
+        "compact",
+        "reduced-density"
+      ],
+      "avoidWhen": [
+        "baseline and scenario are not comparable",
+        "deltas have no units or direction",
+        "a qualitative two-option comparison is intended",
+        "only a small local visual part is needed",
+        "the page has low information density or needs a breathing transition",
+        "the two sides are not comparable on the same dimension"
+      ],
+      "qaRisks": [
+        "delta sign ambiguity",
+        "incomparable scales",
+        "pending rows shown as zero",
+        "unequal comparison sides",
+        "decorative red without meaning",
+        "weak conclusion",
+        "hard-coded semantics instead of reusable relationship",
+        "text overflow or unreadable labels"
+      ],
+      "themeFidelityFeatures": {
+        "leander-global": [
+          "delta-comparison",
+          "ruled-information-hierarchy",
+          "pending-simulation-state"
+        ],
+        "base2": [
+          "state-rail",
+          "decision-band"
+        ],
+        "leander-base": [
+          "linear-divider-structure",
+          "plain-conclusion"
+        ]
+      },
+      "contentCapacity": {
+        "maxItems": 9,
+        "maxLabelChars": 28,
+        "maxBodyChars": 36
+      },
+      "themeTokensUsed": [
+        "colors.bg",
+        "colors.surface",
+        "colors.primary",
+        "colors.accent",
+        "colors.line",
+        "fonts.cn",
+        "fonts.en",
+        "type.*"
+      ]
     }
   ],
   "maintenance": {
     "metadataVersion": "component-metadata.v3",
-    "updatedAt": "2026-07-24T02:11:46.544Z",
+    "updatedAt": "2026-07-28T02:28:50.250Z",
     "note": "Inferred metadata is labeled and confidence-capped. New components remain review-required until manual semantic and render review."
   }
 }

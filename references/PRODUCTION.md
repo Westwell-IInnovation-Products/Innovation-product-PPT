@@ -162,9 +162,9 @@ pages/
 
 第一份生产证明不是线框。它必须是一份真实可编辑的 PPTX 样张。
 
-1. 做 2-3 张标杆页:封面/定调、密集内容页、最难的图示页。
+1. 做至少 3 张、通常 4 张标杆页，并让活动样张共同覆盖：封面/品牌定调、真实截图证据、数据密集结构、缺素材但需高指标容量的变量/待仿真页。同一页可以覆盖多个类别。
 2. 把标杆页渲染成 PNG。
-3. 跑自检,并在启用时,把 `visual-designer-zh` 证据或备用记录在 `agent-collaboration.json`。
+3. 跑自检和 `node tools/verify-theme-fidelity.js`,并在启用时,把 `visual-designer-zh` 证据或备用记录在 `agent-collaboration.json`。
 4. 修 fail 项。
 5. 停下来等用户审批。
 

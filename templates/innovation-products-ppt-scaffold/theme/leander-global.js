@@ -1,6 +1,6 @@
 // Leander Global: external, international, formal Westwell theme.
-// Content components are shared with Leander Base and reskin through theme tokens.
-// Only cover/header/footer/closing chrome should vary through signature tokens.
+// Content components remain shared. Body composition is constrained by the
+// executable content-fidelity profile resolved in theme/tokens.js.
 const globalTheme = {
   id: "leander-global",
   fonts: {
@@ -68,6 +68,7 @@ const globalTheme = {
     coverPhoto: "",
     coverInk: "0A0E14"
   },
+  contentFidelityProfile: "leander-global",
   grid: {
     w: 1920,
     h: 1080,

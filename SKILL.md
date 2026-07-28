@@ -46,6 +46,7 @@ description: "Create, redesign, standardize, review, or polish editable PPTX dec
 - 在 Gate 0 冻结框架的 workflow 工具。如果某个受管工具在成片过程中发生了变化,停止本次 deck 运行,写出 `state/skill-defect.json`,单独修复/测试共享 Skill,再重新 sync 后继续。
 - 对既有 deck,在新的 `redesign` Gate 0、归档现有页面或改变内容基线之前,必须运行 `node tools/revision-mode.js verify`。页数变化、新增/删除页、主题确认或概括性的“继续”都不能单独作为 full rebuild 授权或跨 checkpoint 批准。
 - 每张内容页的 `page.js` 都必须导出 `visualBinding: { route, name }`,并与 `page.json.visualSelection.selectedRoute` 一致。若某条组件库路线所绑定的组件在运行时 trace 里不存在,只触发一条评审警告(确认这是不是有意的手工构图),不构成阻塞。
+- 内容页必须通过 `tools/verify-theme-fidelity.js`。`page-specific-custom` 必须在 `page.json` 与 `page.js` 声明同一 `theme-fidelity.v1` 合同,落实至少三个、跨至少两类的内容层主题特征；只换颜色、字体或 chrome 不算。Global 高容量页禁止均匀空指标卡墙,优先证据主画面、紧凑 KPI rail、工程变量表、Δ 对比和显式待仿真状态。
 - 主题 chrome 是例外且实行硬绑定：`cover` 必须且只能调用一次 `ui.cover()`，`closing` 必须且只能调用一次 `ui.closing()`；禁止 custom 覆盖、局部扩展和显式 tagline 覆盖。静态页面合同与运行时 trace 任一不符都阻塞 render、verify 和 build。
 - 报告质量之前先 render。瞄一眼代码不算 QA。
 - 每个 required agent 结论都必须有 `leander-agent-run-receipt.v1`,把 Codex collaboration tool 返回的 thread/run、事件摘要、输入摘要和输出文件哈希绑定起来。手填一个 `threadId` 或只有 Markdown 报告不算独立运行证据。
@@ -114,7 +115,7 @@ Context 成本仍会累加(一个会话里每次调用都把已读过的再背�
 | 1. Brief | 定义来源、受众、目标、deck 类型、边界；保存原始任务快照并建立需求追踪 | `references/BRIEF.md` + `references/REQUIREMENTS-TRACE.md` |
 | 1. Outline | 规划故事、页面、视觉意图、证据、锚点 | `references/OUTLINE.md` + `references/NARRATIVE-FRAMEWORK.md` + `references/SLIDE-CRAFT.md` |
 | 1.1 设计 / 术语 / State | 建立项目设计系统、视觉方向、规范术语、运行记忆 | `references/DESIGN-SYSTEM.md` + `references/VISUAL-COMPOSITION.md` + `references/TERMINOLOGY.md` + `references/STATE-MEMORY.md` |
-| 1.3 主题 | 选择 Leander Base / Global 或其他 PPT 安全主题,并定义颜色语义 | `references/THEMES.md` |
+| 1.3 主题 | 选择 Leander Base / Base2 / Global,并定义颜色语义与内容层主题签名 | `references/THEMES.md` + `references/THEME-FIDELITY.md` |
 | 1.5 布局蓝图 | 在已审批的主题语义内,规划整片节奏、视觉特征、布局约束 | `references/LAYOUT-BLUEPRINT.md` |
 | 3. 标杆样张 | 做出 2-3 张真实可编辑的样张并渲染 PNG | `references/SLIDE-CRAFT.md` + `references/VISUAL-COMPOSITION.md` + `references/QA.md` |
 | 4. 生产 | 按批或整片实现活跃页面,选视觉路线、render、评审、组装 | `references/PRODUCTION.md` + `references/SCAFFOLD.md` |
@@ -190,6 +191,7 @@ node tools/deck.js build
 - 当用户不需要逐批视觉审批时,标准 deck 推荐 Mode B。Mode A 留给刻意的按章评审;Mode C 留给真正独立的章节。生产模式仍由用户审批。
 - 页面实现之前,先为视觉形态选路线,查看关系/槽位/容量/主题/风险证据以及置信裕度,然后再画。
 - 实现/渲染之前运行 `verify-page-preflight.js`;缺失 Image2 prompt 文件或丢失蓝图签名,都是生产阻塞项。
+- 实现/渲染之前运行 `verify-theme-fidelity.js`;机器 PASS 后仍在联系表与全尺寸 PNG 上核对主体构图,不能只看主题配色。
 - 把"内容页 100% 全部选用组件库"当作阻塞项,除非记录了明确的通用 override 和逐页理由。
 - 在评估过 component-library、external-graphic、image2、page-specific-custom 这几条路线之前,不要用自定义盒子绕开组件库。
 - 把组件库维护当作一个单独的临时模式。只在演进共享组件时才运行 `enrich-component-registry`、`build-component-index`、`lint-component-library --strict`,常规页面生产时不跑。

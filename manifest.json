@@ -1,8 +1,8 @@
 {
   "name": "innovation-products-ppt",
-  "version": "0.6.0-beta.20",
+  "version": "0.6.0-beta.23",
   "category": "Presentation / Internal Reporting",
-  "description": "Turn source material into a formal editable PPTX through the mandatory Innovation-Products_ppt gated workflow. Uses one continuous task per deck, explicit user checkpoints, strict context packs, delta-scoped QA evidence, deterministic phase runners, risk-tiered review, and fresh independent final roles.",
+  "description": "Turn source material into a formal editable PPTX through the mandatory Innovation-Products_ppt gated workflow. Adds executable content-layer theme fidelity, explicit custom-page evidence, Global engineering high-capacity archetypes, deterministic phase runners, rendered QA, and fresh independent final roles.",
   "compat": [
     "codex"
   ]

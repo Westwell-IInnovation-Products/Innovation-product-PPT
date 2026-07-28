@@ -9,6 +9,8 @@ const INDEX_FILE = path.join(__dirname, "component-index.min.json");
 const INDEX = fs.existsSync(INDEX_FILE) ? JSON.parse(fs.readFileSync(INDEX_FILE, "utf8").replace(/^\uFEFF/, "")) : { components: [] };
 const BLUEPRINT_FILE = path.join(ROOT, "layout-blueprint.json");
 const BLUEPRINT = fs.existsSync(BLUEPRINT_FILE) ? JSON.parse(fs.readFileSync(BLUEPRINT_FILE, "utf8").replace(/^\uFEFF/, "")) : null;
+const CONFIG = (() => { try { return require(path.join(ROOT, "deck.config.js")); } catch { return {}; } })();
+const { normalizeThemeId } = require("../theme/content-fidelity");
 
 function usage() { console.error("usage: node tools/build-qa-profile.js <page.json> [--write]"); process.exit(1); }
 function readJson(file) { return JSON.parse(fs.readFileSync(file, "utf8").replace(/^\uFEFF/, "")); }
@@ -45,6 +47,8 @@ function buildProfile(page) {
   const relationship = chromeRelationship || normalizeRelationship(vs.relationship || page.relationship || "decision");
   const component = findComponent(selected.name || page.component);
   const ruleSets = ["universal"];
+  const themeId = normalizeThemeId(page.themeFidelity?.theme || CONFIG.theme || "leander-base");
+  if (RULES.ruleSets[`theme.${themeId}`]) ruleSets.push(`theme.${themeId}`);
   if (RULES.ruleSets[`relationship.${relationship}`]) ruleSets.push(`relationship.${relationship}`);
   if (selected.route && RULES.ruleSets[`route.${selected.route}`]) ruleSets.push(`route.${selected.route}`);
   if (blueprint) ruleSets.push("blueprint.contract");
@@ -58,6 +62,7 @@ function buildProfile(page) {
   if (page.takeaway || vs.intent) pageRules.push(pageRule(`page.${pageId}.message`, `核心信息必须由视觉结构支撑：${page.takeaway || vs.intent}`, "P1"));
 
   const requiredEvidence = ["render-sha256", "visual-location"];
+  if (!["cover", "closing"].includes(relationship)) requiredEvidence.push("theme-fidelity-audit");
   if (selected.route === "component-library") requiredEvidence.push("component-trace");
   if (ruleSets.includes("evidence.implementation") || ruleSets.includes("evidence.screenshot")) requiredEvidence.push("source-reference");
 

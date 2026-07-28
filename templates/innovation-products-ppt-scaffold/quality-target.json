@@ -6,5 +6,5 @@
   "referenceMode": "rubric-and-approved-anchor",
   "referenceArtifacts": [],
   "requireBlindFinalReview": true,
-  "anchorCoverage": ["tone-or-cover", "modal-content", "complex-structure", "evidence-or-image"]
+  "anchorCoverage": ["tone-or-cover", "modal-content", "complex-structure", "screenshot-evidence", "data-dense", "asset-gap-high-capacity"]
 }

@@ -162,9 +162,12 @@ const THEME = {
 
 只有**一个**组件库(`components/ppt-components.js`,即 `makeComponents(pptx, theme)` 闭包),被所有主题共享——不是每个主题一个库。
 
+主题同时拥有两类 signature：`signature` 控制 chrome，`contentFidelity` 控制主体构图。详细合同见 `THEME-FIDELITY.md`。Base 偏好线性规则与扁平解释；Base2 偏好分层证据板、状态轨和单层纵深；Global 偏好证据主画面、紧凑 KPI rail、工程变量表、Δ 对比和显式待仿真状态。只替换颜色、字体、标题线和页脚不算主题保真。
+
 - **内容组件自动换主题。** 每个内容组件都读 `theme.colors` / `theme.fonts`;需要几何和纵深时还读取 `theme.shape` / `theme.elevation` / `theme.stroke`。所以选一个主题就会给整份 deck 重新上色和调整层级,无需改动组件。组件加一次,在每个主题里都能用。
 - **容器语言由 `theme.container` 单点强制。** `rect()` 与 `shp()` 是唯一收口点,读 `container = { round, radius, shadow }`:`shadow:false` 时整份 deck 一律不出阴影;`round:false` 时不走圆角矩形;`radius` 是主题没有 `shape.radius` 时的兜底半径。这让"扁平 vs 纵深"变成**选了主题就生效**的结果,而不是画页面时靠自觉。未声明 `container` 的主题取默认 `{ round:true, shadow:true }`,行为与历史一致；`leander-global` 可按其设计语言覆盖容器策略。
 - **三个可直接复用的 signature 元件。** `ui.regionEyebrow()`(letter-spaced 全大写分区眉标)、`ui.barCard()`(左色条状态卡,`tier=low/mid/high/done/warn`,位置+色条+填充+标签四通道表达状态)、`ui.conclusionBand()`(结论带,按 `signature.conclusion` 在 plain / band 之间切换)。三者都走 `rect()`,所以在 Base 下自动扁平、在 Base2 下自动圆角带阴影,页面层不需要写主题分支。
+- **四个共享高容量工程模式。** `evidenceBoard()`、`compactKpiRail()`、`engineeringVariableTable()`、`deltaCompare()` 共用一套 renderer,并读取主题签名调整密度/几何。Global 用它们避免平均铺满的大卡片阵列；Base/Base2 仍可在关系匹配时复用。
 - **Chrome 跟随主题 `signature`。** 只有 chrome(`cover` / `header` / `footer` / `closing`)随主题变化,由主题 token 里的一个 `signature` 块驱动(`titleColor`、`headerRule`、`footer`、`divider`、`cover`、`closing`、`coverPhoto`)。这就是 Base 和 Global 在不 fork 库的情况下看起来确实不同的原因。`footer` 支持 `bar` / `thin` / `wordmark` / `none`;`divider` 支持 `big-number` / `white-underline`;`conclusion` 支持 `plain`(居中红字、无容器)/ `band`(描边圆角带 + 眉标)。要加一个新主题:加 token + 一个 `signature`;不要复制组件。
 - **封面和尾页是纯 chrome 页面。** `cover` 角色必须且只能以 `ui.cover()` 生成，`closing` 角色必须且只能以 `ui.closing()` 生成；页面不得用 custom 构图替代、不得覆盖主题 tagline、不得通过局部扩展槽继续堆行动或证据。需要额外解释时，放到相邻内容页，不要稀释主题首页/尾页。
 - **选择一个主题:** `const { getTheme } = require("./theme/tokens"); const theme = getTheme("Base2");` 然后 `makeComponents(pptx, theme)`。注册表住在 `theme/tokens.js`(`themes`、`getTheme`);变体主题 token 分别在 `theme/base2.js` 与 `theme/leander-global.js`。默认(`theme`)仍为 Leander Base,以向后兼容。

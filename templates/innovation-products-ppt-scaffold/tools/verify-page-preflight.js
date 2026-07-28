@@ -6,6 +6,8 @@ const PAGES = path.join(ROOT, "pages");
 const INDEX = JSON.parse(fs.readFileSync(path.join(__dirname, "component-index.min.json"), "utf8").replace(/^\uFEFF/, ""));
 const { buildProfile } = require("./build-qa-profile");
 const { inspectSelectionDiversity } = require("./visual-selection-diversity");
+const { inspectPage: inspectThemeFidelity } = require("./verify-theme-fidelity");
+const cfg = require(path.join(ROOT, "deck.config.js"));
 const REQUIRED_ROUTES = ["component-library", "external-graphic", "image2", "page-specific-custom"];
 function readJson(file, fallback = null) { try { return JSON.parse(fs.readFileSync(file, "utf8").replace(/^\uFEFF/, "")); } catch { return fallback; } }
 function norm(value) { return String(value || "").toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]+/g, ""); }
@@ -89,6 +91,11 @@ function implementationBinding(page, pageDir) {
   if (!fs.existsSync(file)) return null;
   try { delete require.cache[require.resolve(file)]; return require(file).visualBinding || null; } catch { return null; }
 }
+function implementationThemeFidelity(pageDir) {
+  const file = path.join(pageDir, "page.js");
+  if (!fs.existsSync(file)) return null;
+  try { delete require.cache[require.resolve(file)]; return require(file).themeFidelity || null; } catch { return null; }
+}
 function inspect(pageDir) {
   const page = readJson(path.join(pageDir, "page.json"), {}), vs = page.visualSelection || {}, selected = vs.selectedRoute || {}, errors = [], warnings = [];
   const bp = blueprint(page);
@@ -110,6 +117,12 @@ function inspect(pageDir) {
   const source = fs.existsSync(pageJs) ? fs.readFileSync(pageJs, "utf8") : "";
   errors.push(...inspectThemeChromeContract(page, bp || {}, selected, binding, source));
   const chromeRole = themeChromeRole(page, bp || {}, vs);
+  const fidelity = inspectThemeFidelity(page, {
+    theme: cfg.theme,
+    moduleThemeFidelity: implementationThemeFidelity(pageDir)
+  });
+  errors.push(...fidelity.errors);
+  warnings.push(...fidelity.warnings);
   if (!vs.visualSignature) errors.push("visualSignature missing");
   if (bp?.visualSignature && norm(bp.visualSignature) !== norm(vs.visualSignature)) errors.push("blueprint visualSignature was not preserved");
   const requiredSlots = [...new Set([...(bp?.requiredSlots || []), ...(page.requiredSlots || []), ...(vs.requiredSlots || [])])];
@@ -147,7 +160,7 @@ function inspect(pageDir) {
     if (actual.scope !== expected.scope) errors.push("qaProfile scope is stale");
     if (actual.rulesVersion !== expected.rulesVersion) errors.push("qaProfile rulesVersion is stale");
   }
-  return { id: String(page.id || path.basename(pageDir)), dir: path.basename(pageDir), ok: !errors.length, errors, warnings };
+  return { id: String(page.id || path.basename(pageDir)), dir: path.basename(pageDir), ok: !errors.length, errors, warnings, themeFidelity: fidelity };
 }
 function dirs() {
   const i = process.argv.indexOf("--pages"), wanted = new Set(i >= 0 && process.argv[i + 1] ? process.argv[i + 1].split(",") : []);
@@ -201,6 +214,25 @@ function selfTest() {
     {}, { route: "component-library", name: "closing" }, { route: "component-library", name: "closing" }, "ui.closing(slide, {});"
   );
   if (!sceneClosing.some(item => /relationship must be "closing"/.test(item))) throw new Error("closing disguised as scene was not blocked");
+  const genericGlobal = {
+    id: "generic-global",
+    contentDensity: "high",
+    contentShape: { maxItems: 9 },
+    visualSelection: { selectedRoute: { route: "page-specific-custom", name: "custom-composition" } },
+    themeFidelity: {
+      version: "theme-fidelity.v1", theme: "leander-global", archetype: "global.generic-dashboard",
+      features: ["ruled-information-hierarchy"],
+      composition: {
+        uniformCardGrid: { rows: 2, columns: 3, emptyCards: 6, uniform: true },
+        secondaryInfoCards: 3
+      }
+    }
+  };
+  const genericErrors = inspectThemeFidelity(genericGlobal, {
+    theme: "leander-global",
+    moduleThemeFidelity: { theme: "leander-global", archetype: "global.generic-dashboard", features: ["ruled-information-hierarchy"] }
+  }).errors;
+  if (!genericErrors.some(item => /generic uniform card wall/.test(item))) throw new Error("Global skin-only card wall was not blocked");
   console.log("PASS page preflight local extension slot contract");
 }
 function main() {
