@@ -1,0 +1,33 @@
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Release hygiene
+        run: node scripts/release-hygiene.js
+
+      - name: Scope hygiene
+        run: node templates/innovation-products-ppt-scaffold/tools/lint-scope-hygiene.js --skill-root .
+
+      - name: Regression suite
+        run: node scripts/regression-tests.js
