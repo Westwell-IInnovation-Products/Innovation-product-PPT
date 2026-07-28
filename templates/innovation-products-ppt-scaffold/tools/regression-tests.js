@@ -45,6 +45,13 @@ function assertBase2Contract() {
     cardShadowBlur: 8,
     focusShadowOpacity: 0.18,
     focusShadowBlur: 2,
+    railThickness: 6,
+    railEdgeInset: 1,
+    railCrossInset: 12,
+    reviewRail: "blue",
+    blockedRail: "danger",
+    statusCardFill: "surface",
+    activeStateFill: "accentSoft",
     headerRule: "solid",
     footerStyle: "bar",
     divider: "big-number",
@@ -63,6 +70,13 @@ function assertBase2Contract() {
     cardShadowBlur: theme.elevation.card.blur,
     focusShadowOpacity: theme.elevation.focus.opacity,
     focusShadowBlur: theme.elevation.focus.blur,
+    railThickness: theme.rail.thickness,
+    railEdgeInset: theme.rail.edgeInset,
+    railCrossInset: theme.rail.crossInset,
+    reviewRail: theme.rail.meanings.review,
+    blockedRail: theme.rail.meanings.blocked,
+    statusCardFill: theme.componentStyle.statusCard.fill,
+    activeStateFill: theme.componentStyle.activeState.fill,
     headerRule: theme.signature.headerRule.style,
     footerStyle: theme.signature.footer.style,
     divider: theme.signature.divider,
@@ -81,6 +95,85 @@ function assertBase2Contract() {
   console.log("PASS Base2 theme contract");
 }
 assertBase2Contract();
+function assertBase2ComponentContract() {
+  const { loadComponentRuntime } = require(path.join(ROOT, "tools", "component-runtime"));
+  const runtime = loadComponentRuntime("base2");
+  for (const name of ["surface", "semanticRail", "insetRow", "statusCard", "semanticConclusion", "base2GovernanceChain"]) {
+    if (typeof runtime.components[name] !== "function") throw new Error(`Base2 renderer missing: ${name}`);
+  }
+  const fakeSlide = {
+    addShape() {},
+    addText() {}
+  };
+  const review = runtime.components.statusCard(fakeSlide, 0, 0, 320, 100, {
+    state: "review",
+    title: "Review"
+  });
+  const blocked = runtime.components.statusCard(fakeSlide, 0, 0, 320, 100, {
+    state: "blocked",
+    title: "Blocked"
+  });
+  if (review.active || review.surfaceRole !== "statusCard") {
+    throw new Error(`Base2 review must remain neutral with a blue rail: ${JSON.stringify(review)}`);
+  }
+  if (!blocked.active || blocked.surfaceRole !== "activeState") {
+    throw new Error(`Base2 blocked state must use the active red surface: ${JSON.stringify(blocked)}`);
+  }
+  const reviewRail = runtime.components.semanticRail(fakeSlide, 0, 0, 320, 100, "review");
+  if (reviewRail.color !== runtime.theme.colors.blue || reviewRail.edgeInset !== 1 || reviewRail.crossInset !== 12) {
+    throw new Error(`Base2 review rail geometry/meaning drifted: ${JSON.stringify(reviewRail)}`);
+  }
+  console.log("PASS Base2 component and state semantic contract");
+}
+assertBase2ComponentContract();
+function assertCrossThemeStateSemantics() {
+  const { loadComponentRuntime } = require(path.join(ROOT, "tools", "component-runtime"));
+  const expected = {
+    "leander-base": { review: "blue", blocked: "danger", blockedSurface: "FFFFFF" },
+    base2: { review: "blue", blocked: "danger", blockedSurface: "FBECEB" },
+    "leander-global": { review: "blue", blocked: "danger", blockedSurface: "FBECEB" }
+  };
+  for (const [themeId, contract] of Object.entries(expected)) {
+    const runtime = loadComponentRuntime(themeId);
+    const capture = state => {
+      const shapes = [];
+      const slide = {
+        addShape(type, options) {
+          shapes.push({
+            fill: options?.fill?.color || "",
+            line: options?.line?.color || ""
+          });
+        },
+        addText() {}
+      };
+      const result = runtime.components.statusCard(slide, 0, 0, 320, 100, { state, title: state });
+      return { result, surface: shapes[0] || {}, rail: shapes[1] || {} };
+    };
+    const review = capture("review");
+    const blocked = capture("blocked");
+    if (review.result.active || review.surface.fill !== runtime.theme.colors.surface || review.rail.fill !== runtime.theme.colors[contract.review]) {
+      throw new Error(`${themeId} review must remain neutral with a blue rail: ${JSON.stringify(review)}`);
+    }
+    if (!blocked.result.active || blocked.surface.fill !== contract.blockedSurface || blocked.rail.fill !== runtime.theme.colors[contract.blocked]) {
+      throw new Error(`${themeId} blocked must use danger semantics: ${JSON.stringify(blocked)}`);
+    }
+    const barShapes = [];
+    runtime.components.barCard({
+      addShape(type, options) {
+        barShapes.push({
+          fill: options?.fill?.color || "",
+          line: options?.line?.color || ""
+        });
+      },
+      addText() {}
+    }, 0, 0, 320, 100, { tier: "high", label: "Blocked" });
+    if (barShapes[0]?.line !== runtime.theme.colors.danger || barShapes[1]?.fill !== runtime.theme.colors.danger) {
+      throw new Error(`${themeId} high/blocked barCard must use danger semantics: ${JSON.stringify(barShapes)}`);
+    }
+  }
+  console.log("PASS cross-theme review/blocked state semantic contract");
+}
+assertCrossThemeStateSemantics();
 function assertThemeFidelityContract() {
   const { getTheme } = require(path.join(ROOT, "theme", "tokens"));
   const { loadComponentRuntime } = require(path.join(ROOT, "tools", "component-runtime"));
@@ -92,6 +185,13 @@ function assertThemeFidelityContract() {
   const runtime = loadComponentRuntime("leander-global");
   for (const name of ["evidenceBoard", "compactKpiRail", "engineeringVariableTable", "deltaCompare"]) {
     if (typeof runtime.components[name] !== "function") throw new Error(`Shared high-capacity renderer missing: ${name}`);
+  }
+  const base2 = getTheme("base2");
+  for (const feature of ["layered-evidence-board", "state-rail", "tiered-radius-depth", "region-eyebrows", "semantic-focus-panel", "decision-band"]) {
+    if (!base2.contentFidelity.features[feature]) throw new Error(`Base2 content-fidelity feature missing: ${feature}`);
+  }
+  if (!base2.contentFidelity.componentFeatureMap.base2GovernanceChain?.includes("decision-band")) {
+    throw new Error("Base2 governance-chain renderer must map to the decision-band fidelity feature");
   }
   console.log("PASS theme fidelity profile and shared renderer contract");
 }

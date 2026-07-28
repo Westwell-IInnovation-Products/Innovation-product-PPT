@@ -62,6 +62,33 @@ function sampleFor(c) {
       return { ...d, slogan: [{ text: "Build once, " }, { text: "reuse well.", hot: true }], tagline: "Theme tagline" };
     case "sectionDivider":
       return { ...d, number: "01", title: "Component Library", subtitle: "Real rendered component preview" };
+    case "base2GovernanceChain":
+      return {
+        ...d,
+        title: "Governed Promotion Chain",
+        subtitle: "One evidence board, one current gate, one explicit decision boundary",
+        sourceTitle: "Source bundle",
+        sourceDesc: "Prepared evidence entering the mechanism",
+        sourceFacts: ["declared scope", "source boundary", "review context"],
+        steps: [
+          { title: "Prepare", desc: "Normalize the candidate input." },
+          { title: "Compare", desc: "Check overlap and conflict." },
+          { title: "Decide", desc: "Human gate controls promotion.", key: true },
+          { title: "Version", desc: "Create an auditable boundary." },
+          { title: "Recover", desc: "Keep a tested rollback path." }
+        ],
+        receiptTitle: "Governed output",
+        receiptDesc: "A traceable and recoverable result",
+        receiptFacts: ["traceable", "reviewed", "recoverable"],
+        takeaway: "Automation prepares evidence; the explicit gate decides whether the result becomes governed."
+      };
+    case "statusCard":
+      return {
+        ...d,
+        state: "review",
+        title: "REVIEW · independent judgment required",
+        desc: "The surface stays neutral while the blue rail and written label carry the review state."
+      };
     case "stepNav":
       return { ...d, current: 1, steps: steps4 };
     case "painCards":
@@ -353,6 +380,25 @@ async function main() {
           align: "center",
           fontFace: "Century Gothic",
         });
+        ui.footer(slide);
+      } else if (c.name === "statusCard") {
+        ui.header(slide, c.name, `${c.library || "component"} / ${c.level || "layout-block"} / ${c.relationPrimitive || "state"}`);
+        fn(slide, 180, 330, 1560, 150, sampleFor(c));
+        ui.statusCard(slide, 180, 530, 1560, 150, {
+          state: "blocked",
+          title: "BLOCKED · explicit intervention required",
+          desc: "Only blocked or explicitly active states use the soft red surface and red outline."
+        });
+        ui.conclusionBand(slide, { y: 760, eyebrow: "STATE SEMANTICS", text: "Review stays neutral and blue; blocked/current/Gate is red." });
+        ui.footer(slide);
+      } else if (c.name === "barCard") {
+        ui.header(slide, c.name, `${c.library || "component"} / ${c.level || "layout-block"} / ${c.relationPrimitive || "state"}`);
+        fn(slide, 180, 330, 1560, 140, { tier: "mid", label: "REVIEW", meta: "Neutral surface + blue state rail", tag: "MEDIUM", outcome: "WAIT FOR JUDGMENT" });
+        fn(slide, 180, 520, 1560, 140, { tier: "high", blocked: true, label: "BLOCKED", meta: "Soft red surface is reserved for the blocked state", tag: "HIGH", outcome: "STOP" });
+        ui.footer(slide);
+      } else if (c.name === "conclusionBand") {
+        ui.header(slide, c.name, `${c.library || "component"} / ${c.level || "layout-block"} / ${c.relationPrimitive || "decision"}`);
+        fn(slide, { y: 650, eyebrow: "DECISION BOUNDARY", text: "Close the page with one explicit conclusion instead of leaving the body suspended above the footer." });
         ui.footer(slide);
       } else if (EMBEDDED_PREVIEW_COMPONENTS.has(c.name)) {
         ui.header(slide, c.name, `${c.library || "component"} / ${c.level || "layout-block"} / ${c.relationPrimitive || "visual"}`);

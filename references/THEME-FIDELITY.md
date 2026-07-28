@@ -34,7 +34,20 @@
 | Base2 | 主证据板 + 内嵌层、状态轨、分级半径、单层纵深、分区眉标、决策带 | 均匀圆角卡墙、多层阴影、装饰性淡红、平均卡片阵列 |
 | Leander Global | 证据主画面、紧凑 KPI rail、工程变量表、Δ 对比、待仿真状态、精确标注 | 均匀指标格、通用卡墙、dashboard skin、空 KPI 卡 |
 
+跨主题状态语义固定为：`review = 中性卡面 + 蓝色状态轨`，`blocked/high = danger 红色状态轨与阻断面`。主题的通用 `accent` 不能覆盖这一规则；尤其 Global 的 `accent` 是天蓝色，只用于结构性信号，不承担阻断语义。
+
 Global 高容量页面优先使用共享组件：`evidenceBoard`、`compactKpiRail`、`engineeringVariableTable`、`deltaCompare`。这些组件属于同一个共享库。不要为 Base、Base2、Global 复制 renderer；让 renderer 读取主题签名和 `contentFidelity` 参数。
+
+## Base2 基准合同
+
+Base2 的发布态视觉锚点是 `docs/theme-samples/02-base2-contact-sheet.jpg` 与对应可编辑参考 deck。检查时看主体构图，不只看颜色：
+
+- 内容页通常由 2–3 个有明确职责的大区组成，并有一个占主导的证据板、机制核心、风险路由或审计面板。
+- 普通支撑信息进入灰蓝内嵌层；不要把所有信息提升成同权重、同圆角、同阴影的卡片。
+- `review` 是中性卡面 + 蓝色状态轨；`blocked`、当前 Gate、显式 active 或决策边界才使用淡红底与红描边。
+- 页面底部的 decision/boundary band 是主体闭环的一部分。无结论带时，蓝图必须解释为什么正文仍能在安全区内形成完整的纵向视觉中心。
+- 当页面同时出现红色激活面和蓝色 rail 时，必须证明它们表达两个不同且不冲突的语义；“review 被通用 hot 逻辑染红”直接判为失败。
+- 共享组件优先使用 `statusCard`、`barCard`、`insetRow`、`conclusionBand`；五阶段治理链可使用 `base2GovernanceChain`。页面专属构图仍应复用这些语义积木。
 
 ## page-specific-custom 证据
 

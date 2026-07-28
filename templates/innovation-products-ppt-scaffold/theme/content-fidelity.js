@@ -66,6 +66,9 @@ const profiles = {
       stateFlow: ["state-rail", "semantic-focus-panel"],
       stageGateRail: ["state-rail", "region-eyebrows"],
       barCard: ["semantic-focus-panel", "tiered-radius-depth"],
+      statusCard: ["state-rail", "tiered-radius-depth"],
+      conclusionBand: ["decision-band", "tiered-radius-depth"],
+      base2GovernanceChain: ["layered-evidence-board", "region-eyebrows", "semantic-focus-panel", "decision-band"],
       evidenceBoard: ["layered-evidence-board", "region-eyebrows"],
       engineeringVariableTable: ["state-rail", "tiered-radius-depth"]
     }

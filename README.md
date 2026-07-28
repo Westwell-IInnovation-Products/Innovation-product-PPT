@@ -6,7 +6,7 @@
 |---|---|
 | 安装目录 | `innovation-products-ppt` |
 | 调用方式 | `$innovation-products-ppt` |
-| 当前版本 | `0.6.0-beta.23` |
+| 当前版本 | `0.6.0-beta.25` |
 | 公开主题 | `leander-base`、`base2`、`leander-global` |
 | 主要输出 | 可编辑 PPTX、逐页渲染图与总览图 |
 
@@ -254,6 +254,8 @@ git pull --ff-only origin main
 
 | 版本 | 日期 | 主要变化 |
 |---|---|---|
+| `0.6.0-beta.25` | 2026-07-28 | 统一三套主题的 review/blocked 状态语义，修复 Global 阻断状态误用天蓝强调色，并增加跨主题回归测试。 |
+| `0.6.0-beta.24` | 2026-07-28 | 恢复 Base2 状态轨、内嵌层与决策带语义，新增 `statusCard` 和 `base2GovernanceChain`，并锁定 review/blocked 状态回归。 |
 | `0.6.0-beta.23` | 2026-07-28 | 修复封面、封底在强制重渲染后的主题审计输入摘要绑定，并增加对应回归测试。 |
 | `0.6.0-beta.22` | 2026-07-28 | 修复 Windows/LibreOffice 零补位预览文件名导致的 Gate 1.5 校验问题。 |
 | `0.6.0-beta.21` | 2026-07-28 | 增加内容层主题保真档案、Global 高容量工程页面模式、主题 QA 门禁和正反例测试。 |

@@ -2012,21 +2012,23 @@ function makeComponents(pptx, theme) {
   // 左色条卡：容器级状态编码。tier=low/mid/high/done/warn，或用 barColor 自定义。
   // 位置 + 色条 + 填充 + 标签四通道表达状态，颜色不是唯一通道。
   function barCard(slide, x, y, w, h, data = {}) {
-    const tierColor = { low: C.primary, mid: C.blue, high: C.accent, done: C.green, warn: C.warn };
+    const danger = C.danger || C.accent;
+    const dangerSoft = C.dangerSoft || C.accentSoft;
+    const tierColor = { low: C.primary, mid: C.blue, high: danger, done: C.green, warn: C.warn };
     const col = data.barColor || tierColor[data.tier] || C.primary;
     const blocked = data.blocked || data.tier === "high";
     rect(slide, x, y, w, h, {
-      fill: blocked ? C.accentSoft : C.surface,
-      line: blocked ? C.accent : C.line,
+      fill: blocked ? dangerSoft : C.surface,
+      line: blocked ? danger : C.line,
       lineWidth: blocked ? 1.4 : 1,
       round: true,
       shadow: true
     });
     rect(slide, x + 10, y + 12, 5, Math.max(8, h - 24), { fill: col, round: true, radius: 3 });
-    if (data.label) addText(slide, x + 30, y + 14, w - 210, 26, data.label, { size: theme.type.cap || 16, color: blocked ? C.accent : C.primary, bold: true, fontFace: F.en, charSpacing: 0.8 });
+    if (data.label) addText(slide, x + 30, y + 14, w - 210, 26, data.label, { size: theme.type.cap || 16, color: blocked ? danger : C.primary, bold: true, fontFace: F.en, charSpacing: 0.8 });
     if (data.meta) addText(slide, x + 30, y + 44, w - 210, 24, data.meta, { size: theme.type.micro || 14, color: C.mute });
     if (data.tag) addText(slide, x + w - 180, y + 15, 160, 22, data.tag, { size: theme.type.micro || 14, color: C.mute, align: "right" });
-    if (data.outcome) addText(slide, x + w - 330, y + 42, 310, 28, data.outcome, { size: theme.type.bodyLg || 22, color: blocked ? C.accent : C.primary, bold: true, align: "right" });
+    if (data.outcome) addText(slide, x + w - 330, y + 42, 310, 28, data.outcome, { size: theme.type.bodyLg || 22, color: blocked ? danger : C.primary, bold: true, align: "right" });
   }
 
   // 结论带：base=居中红字、无容器；base2=描边圆角带 + 眉标。由 signature.conclusion 决定。
@@ -2041,6 +2043,237 @@ function makeComponents(pptx, theme) {
       return;
     }
     addText(slide, x, y + 20, w, 40, data.text || "", { size: theme.type.lead || 28, color: C.accent, bold: true, align: "center" });
+  }
+
+  // Base2 compositional primitives. They intentionally expose semantic roles
+  // instead of asking page code to hand-author fills, radii, rails, and shadows.
+  function surface(slide, x, y, w, h, role = "card", opts = {}) {
+    const style = theme.componentStyle?.[role] || theme.componentStyle?.card || {};
+    const radiusName = style.radius || (role === "panel" || role === "gate" ? "panel" : "card");
+    const radius = opts.radius ?? theme.shape?.radius?.[radiusName] ?? 18;
+    const fill = opts.fill ?? (style.fill && C[style.fill]) ?? C.surface;
+    const styledLine = style.line === "none" ? undefined : (style.line && C[style.line]);
+    const lineColor = opts.line === undefined ? styledLine : opts.line;
+    const strokeRole = style.stroke || (role === "gate" ? "gate" : role === "activeState" ? "focus" : role === "panel" ? "emphasized" : "neutral");
+    const lineWidth = opts.lineWidth ?? theme.stroke?.[strokeRole] ?? 1;
+    const elevation = opts.shadow === undefined
+      ? (style.elevation && style.elevation !== "none" ? shadowToken(style.elevation) : false)
+      : opts.shadow;
+    rect(slide, x, y, w, h, {
+      ...opts,
+      fill,
+      line: lineColor,
+      lineWidth,
+      round: radius > 0,
+      radius,
+      shadow: elevation
+    });
+    return { role, fill, line: lineColor, lineWidth, radius };
+  }
+
+  function surfaceRail(slide, x, y, w, h, opts = {}) {
+    const side = opts.side || "left";
+    const token = theme.rail || {};
+    const thickness = opts.thickness ?? token.thickness ?? 6;
+    const edgeInset = opts.edgeInset ?? token.edgeInset ?? 1;
+    const crossInset = opts.crossInset ?? token.crossInset ?? 12;
+    const radius = opts.radius ?? theme.shape?.radius?.[token.radius || "micro"] ?? 5;
+    const color = opts.color || C.primary;
+    if (side === "top" || side === "bottom") {
+      const railY = side === "top" ? y + edgeInset : y + h - edgeInset - thickness;
+      rect(slide, x + crossInset, railY, Math.max(1, w - crossInset * 2), thickness, { fill: color, round: true, radius });
+    } else {
+      const railX = side === "left" ? x + edgeInset : x + w - edgeInset - thickness;
+      rect(slide, railX, y + crossInset, thickness, Math.max(1, h - crossInset * 2), { fill: color, round: true, radius });
+    }
+    return { side, thickness, edgeInset, crossInset, color };
+  }
+
+  // Rails encode state, never decoration. In particular, review stays on a
+  // neutral surface with a blue rail; only blocked/current/Gate states turn red.
+  function semanticRail(slide, x, y, w, h, meaning = "stable", opts = {}) {
+    const meanings = theme.rail?.meanings || {
+      stable: "primary", review: "blue", blocked: "danger", pass: "green", warning: "warn"
+    };
+    const colorRole = meanings[meaning];
+    if (!colorRole) throw new Error(`Base2 semanticRail requires one of: ${Object.keys(meanings).join(", ")}`);
+    return surfaceRail(slide, x, y, w, h, {
+      side: opts.side || theme.rail?.preferredSide || "left",
+      color: opts.color || C[colorRole] || colorRole,
+      thickness: opts.thickness,
+      edgeInset: opts.edgeInset,
+      crossInset: opts.crossInset,
+      radius: opts.radius
+    });
+  }
+
+  function sectionLabel(slide, x, y, w, text, opts = {}) {
+    const tone = opts.tone || "stable";
+    const color = tone === "boundary" ? C.accent : tone === "muted" ? C.mute : C.primary;
+    addText(slide, x, y, w, opts.h || 24, text, {
+      size: opts.size || theme.type.micro,
+      color,
+      bold: true,
+      align: opts.align || "left",
+      fontFace: F.en,
+      charSpacing: opts.charSpacing ?? 2.1
+    });
+  }
+
+  function numberBadge(slide, x, y, number, opts = {}) {
+    const active = opts.active === true;
+    const fill = active ? C.accent : (opts.fill || C.surface3);
+    const ink = active ? C.onAccent : (opts.color || C.primary);
+    const size = opts.size || 44;
+    rect(slide, x, y, size, size, {
+      fill,
+      line: active ? C.accent : (opts.line || C.line),
+      lineWidth: active ? 1.4 : 1,
+      round: true,
+      radius: size / 2
+    });
+    addText(slide, x, y + Math.round(size * 0.23), size, Math.round(size * 0.5), String(number), {
+      size: opts.textSize || theme.type.micro,
+      color: ink,
+      bold: true,
+      align: "center",
+      fontFace: F.en
+    });
+  }
+
+  function insetRow(slide, x, y, w, h, data = {}) {
+    surface(slide, x, y, w, h, data.role || "insetRow", {
+      fill: data.fill,
+      line: data.line,
+      lineWidth: data.lineWidth,
+      shadow: false
+    });
+    if (data.number != null) numberBadge(slide, x + 16, y + (h - 38) / 2, data.number, { size: 38, active: data.active });
+    const left = x + (data.number != null ? 70 : 20);
+    const rightReserve = data.trailing ? (data.trailingWidth || 150) : 0;
+    addText(slide, left, y + 12, w - (left - x) - 20 - rightReserve, 26, data.title || "", {
+      size: data.titleSize || theme.type.bodySm,
+      color: data.active ? C.accent : (data.titleColor || C.primary),
+      bold: true,
+      fontFace: data.fontFace
+    });
+    if (data.desc) addText(slide, left, y + 42, w - (left - x) - 20 - rightReserve, Math.max(18, h - 50), data.desc, {
+      size: data.descSize || theme.type.micro,
+      color: data.descColor || C.mute,
+      valign: data.descValign || "top"
+    });
+    if (data.trailing) addText(slide, x + w - rightReserve - 16, y + 12, rightReserve, h - 24, data.trailing, {
+      size: data.trailingSize || theme.type.micro,
+      color: data.trailingColor || C.primary,
+      bold: !!data.trailingBold,
+      align: "right",
+      valign: "middle",
+      fontFace: data.trailingFontFace
+    });
+  }
+
+  function statusCard(slide, x, y, w, h, data = {}) {
+    const state = data.state || data.railMeaning || "stable";
+    const active = data.active === true || state === "blocked";
+    const surfaceRole = active ? "activeState" : (data.role || "statusCard");
+    surface(slide, x, y, w, h, surfaceRole, data.surface || {});
+    if (state) semanticRail(slide, x, y, w, h, state, { side: data.railSide || "left" });
+    const activeColor = state === "blocked" ? (C.danger || C.accent) : C.accent;
+    addText(slide, x + 28, y + 18, w - 56, 30, data.title || "", {
+      size: data.titleSize || theme.type.body,
+      color: active ? activeColor : (data.titleColor || C.primary),
+      bold: true,
+      align: data.align || "left",
+      fontFace: data.fontFace
+    });
+    if (data.desc) addText(slide, x + 28, y + 56, w - 56, h - 72, data.desc, {
+      size: data.descSize || theme.type.micro,
+      color: data.descColor || C.mute,
+      align: data.align || "left",
+      valign: data.descValign || "top"
+    });
+    return { state, active, surfaceRole };
+  }
+
+  // Compatibility wrapper for approved Base2 pages. New pages may call
+  // conclusionBand directly; both variants preserve the same decision-band
+  // geometry and semantic color contract.
+  function semanticConclusion(slide, data = {}) {
+    const tone = data.tone || "boundary";
+    const role = tone === "stable" ? "stableConclusion" : "conclusionBand";
+    const ink = tone === "stable" ? C.primary : C.accent;
+    const x = data.x ?? 96, y = data.y ?? 850, w = data.w ?? 1728, h = data.h ?? 78;
+    surface(slide, x, y, w, h, role);
+    if (data.label) sectionLabel(slide, x + 24, y + 12, w - 48, data.label, {
+      tone: tone === "stable" ? "stable" : "boundary",
+      align: "center",
+      h: 20,
+      size: theme.type.micro,
+      charSpacing: 1.3
+    });
+    addText(slide, x + 28, y + (data.label ? 40 : 22), w - 56, data.label ? 28 : 34, data.text || "", {
+      size: data.textSize || theme.type.bodySm,
+      color: ink,
+      bold: true,
+      align: "center",
+      valign: "middle"
+    });
+  }
+
+  // A reusable Base2 page pattern: supporting source and receipt zones flank
+  // one dominant governance board. This prevents the common equal-card-wall
+  // regression while preserving a full-height decision band.
+  function base2GovernanceChain(slide, data = {}) {
+    header(slide, data.title, data.subtitle);
+    const stages = (data.steps || []).slice(0, 5);
+    sectionLabel(slide, 96, 246, 250, data.sourceLabel || "SOURCE", { tone: "muted" });
+    sectionLabel(slide, 382, 246, 1156, data.chainLabel || "GOVERNANCE CHAIN", { align: "center" });
+    sectionLabel(slide, 1574, 246, 250, data.receiptLabel || "GOVERNED OUTPUT", { align: "right" });
+
+    surface(slide, 96, 310, 250, 438, "evidencePanel");
+    addText(slide, 122, 330, 198, 54, data.sourceTitle || "Source bundle", { size: theme.type.body, color: C.primary, bold: true, align: "center", valign: "middle" });
+    addText(slide, 122, 392, 198, 50, data.sourceDesc || "Prepared evidence entering the mechanism", { size: theme.type.bodySm, color: C.mute, align: "center", valign: "middle" });
+    (data.sourceFacts || ["declared scope", "source boundary", "review context"]).slice(0, 3).forEach((fact, i) => {
+      insetRow(slide, 120, 456 + i * 72, 202, 54, { title: fact, titleSize: theme.type.micro });
+    });
+
+    surface(slide, 382, 284, 1156, 490, "evidencePanel");
+    addText(slide, 418, 314, 720, 30, data.boardTitle || "REQUIRED LINKS", { size: theme.type.body, color: C.primary, bold: true, fontFace: F.en, charSpacing: 1.1 });
+    addText(slide, 1200, 318, 302, 24, data.boardNote || "Each link must remain explicit and auditable", { size: theme.type.micro, color: C.mute, align: "right" });
+    line(slide, 418, 366, 1502, 366, { color: C.line, width: 1.2 });
+
+    const nodeY = 410, nodeH = 228, gap = 30, innerX = 414, innerW = 1092;
+    const nodeW = (innerW - gap * 4) / 5;
+    stages.forEach((stage, i) => {
+      const x = innerX + i * (nodeW + gap);
+      const active = !!stage.key;
+      surface(slide, x, nodeY, nodeW, nodeH, active ? "activeState" : "insetRow", { shadow: active ? undefined : false });
+      numberBadge(slide, x + (nodeW - 46) / 2, nodeY + 24, String(i + 1).padStart(2, "0"), { size: 46, active });
+      addText(slide, x + 14, nodeY + 88, nodeW - 28, 30, stage.title || "", { size: theme.type.body, color: active ? C.accent : C.primary, bold: true, align: "center" });
+      addText(slide, x + 16, nodeY + 134, nodeW - 32, 64, stage.desc || "", { size: theme.type.micro, color: C.mute, align: "center", valign: "middle", lineSpacingMultiple: 1.15 });
+      if (i < stages.length - 1) line(slide, x + nodeW + 5, nodeY + nodeH / 2, x + nodeW + gap - 5, nodeY + nodeH / 2, {
+        color: active ? C.accent : C.line,
+        width: active ? 1.8 : 1.4,
+        arrow: "triangle"
+      });
+    });
+    addText(slide, 418, 680, 1084, 24, data.chainNote || "prepare → check → decide → version → recover", { size: theme.type.micro, color: C.primary, bold: true, align: "center" });
+
+    surface(slide, 1574, 310, 250, 438, "evidencePanel");
+    addText(slide, 1600, 330, 198, 54, data.receiptTitle || "Governed output", { size: theme.type.body, color: C.primary, bold: true, align: "center", valign: "middle" });
+    addText(slide, 1600, 392, 198, 50, data.receiptDesc || "A traceable and recoverable result", { size: theme.type.bodySm, color: C.mute, align: "center", valign: "middle" });
+    (data.receiptFacts || ["traceable", "reviewed", "recoverable"]).slice(0, 3).forEach((fact, i) => {
+      insetRow(slide, 1598, 456 + i * 72, 202, 54, { number: i + 1, title: fact, titleSize: theme.type.micro });
+    });
+    line(slide, 346, 526, 382, 526, { color: C.primary, width: 1.8, arrow: "triangle" });
+    line(slide, 1538, 526, 1574, 526, { color: C.primary, width: 1.8, arrow: "triangle" });
+
+    semanticConclusion(slide, {
+      tone: "boundary",
+      label: data.conclusionLabel || "DECISION BOUNDARY",
+      text: data.takeaway || "A governed result needs explicit checks, a decision boundary, versioning, and recovery."
+    });
+    footer(slide);
   }
 
   // Global-capable high-capacity engineering patterns. They remain shared
@@ -2191,7 +2424,8 @@ function makeComponents(pptx, theme) {
 
   return {
     U, PT, addText, rect, line, logo, header, footer, cover, closing,
-    regionEyebrow, barCard, conclusionBand,
+    regionEyebrow, sectionLabel, surface, semanticRail, numberBadge, insetRow, statusCard,
+    barCard, conclusionBand, semanticConclusion, base2GovernanceChain,
     evidenceBoard, compactKpiRail, engineeringVariableTable, deltaCompare,
     metricCards, bigWordCardMatrix, fourColumnMechanism,
     sectionDivider, sectionDividerBigNumber, sectionDividerUnderline, systemArchitectureCenter, hubSpokeCapability, roadmapSwimlane,

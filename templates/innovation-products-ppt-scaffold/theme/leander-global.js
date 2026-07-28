@@ -25,6 +25,7 @@ const globalTheme = {
     green: "2F8A5B",
     warn: "E8A100",
     danger: "C51516",
+    dangerSoft: "FBECEB",
     onPrimary: "FFFFFF",
     onAccent: "002060",
     inverseText: "FFFFFF",
@@ -42,6 +43,28 @@ const globalTheme = {
     accentLineSoft: "B9E8FA",
     accentPanelSoft: "E5F5FD",
     accentPale: "E5F5FD"
+  },
+  rail: {
+    thickness: 6,
+    edgeInset: 1,
+    crossInset: 12,
+    contentClearance: 14,
+    connectorClearance: 12,
+    radius: "micro",
+    preferredSide: "left",
+    horizontalPolicy: "group-only",
+    horizontalFallbackSide: "left",
+    meanings: {
+      stable: "primary",
+      review: "blue",
+      blocked: "danger",
+      pass: "green",
+      warning: "warn"
+    }
+  },
+  componentStyle: {
+    statusCard: { fill: "surface", line: "line", radius: "card", elevation: "none", stroke: "neutral" },
+    activeState: { fill: "dangerSoft", line: "danger", radius: "card", elevation: "none", stroke: "focus" }
   },
   brand: {
     nameEN: "WESTWELL",

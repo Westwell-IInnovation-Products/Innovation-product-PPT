@@ -59,12 +59,41 @@ const base2Theme = {
     gate: 2.2,
     connector: 1.5
   },
+  // Approved Base2 state-rail geometry. The rail stays visually attached to
+  // the container edge; large insets make it look like an unrelated blue line.
+  rail: {
+    thickness: 6,
+    edgeInset: 1,
+    crossInset: 12,
+    contentClearance: 14,
+    connectorClearance: 12,
+    radius: "micro",
+    preferredSide: "left",
+    horizontalPolicy: "group-only",
+    horizontalFallbackSide: "left",
+    meanings: {
+      stable: "primary",
+      review: "blue",
+      blocked: "danger",
+      pass: "green",
+      warning: "warn"
+    }
+  },
   componentStyle: {
-    card: { fill: "surface", line: "line", radius: "card", elevation: "card" },
+    card: { fill: "surface", line: "line", radius: "card", elevation: "card", stroke: "neutral" },
+    panel: { fill: "surface", line: "line", radius: "panel", elevation: "card", stroke: "emphasized" },
+    evidencePanel: { fill: "surface", line: "line", radius: "panel", elevation: "card", stroke: "emphasized" },
+    statusCard: { fill: "surface", line: "line", radius: "card", elevation: "card", stroke: "neutral" },
+    outcomeCard: { fill: "surface", line: "line", radius: "card", elevation: "card", stroke: "neutral" },
+    stableCard: { fill: "primary", line: "primary", radius: "card", elevation: "card", stroke: "neutral" },
     inset: { fill: "surface2", line: "none", radius: "control", elevation: "none" },
-    support: { fill: "surface3", line: "none", radius: "inset", elevation: "none" },
-    activeState: { fill: "accentSoft", line: "accent", radius: "card", elevation: "card" },
-    conclusionBand: { fill: "accentSoft", line: "accent", radius: "band", elevation: "card" }
+    insetRow: { fill: "surface3", line: "none", radius: "control", elevation: "none" },
+    support: { fill: "surface3", line: "line", radius: "inset", elevation: "none", stroke: "neutral" },
+    activeState: { fill: "accentSoft", line: "accent", radius: "card", elevation: "card", stroke: "focus" },
+    decisionGate: { fill: "accentSoft", line: "accent", radius: "panel", elevation: "focus", stroke: "gate" },
+    gate: { fill: "accentSoft", line: "accent", radius: "panel", elevation: "focus", stroke: "gate" },
+    conclusionBand: { fill: "accentSoft", line: "accent", radius: "band", elevation: "card", stroke: "emphasized" },
+    stableConclusion: { fill: "surface3", line: "primary", radius: "band", elevation: "card", stroke: "emphasized" }
   },
   signature: {
     id: "base2",

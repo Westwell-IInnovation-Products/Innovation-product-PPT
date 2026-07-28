@@ -145,11 +145,15 @@ const THEME = {
 - **容器语言**：沿用默认 `container = { round: true, shadow: true }`，配合 `shape.radius` 的分级半径，因此**同样的组件调用**在 Base2 下自动出圆角带阴影、在 Base 下自动变扁平——不要为了"看起来像 Base2"在页面里手写圆角和阴影。
 - **结论带**用 `signature.conclusion: "band"`（描边圆角带 + 全大写眉标），配 `ui.conclusionBand({ eyebrow, text })`。
 - **优先复用 signature 元件**：`ui.barCard()` 表达风险档位 / 路由结果 / 状态行，`ui.regionEyebrow()` 给每个区块加分区眉标。这两者是 Base2 的招牌词汇，能省掉大量手画方块。
+- **状态语义固定**：`review` 使用白色/中性卡面 + 蓝色状态轨；`blocked`、当前 Gate 或显式 `active` 才使用淡红填充 + 红色描边。禁止把 `review` 先画成红色激活卡，再叠加蓝色 rail。
+- **主体构图固定**：内容页优先 2–3 个大区、一个主证据板或决策核心、灰蓝内嵌层和一个底部决策带。不能用一组同尺寸圆角卡替代主体关系；结论带不能无故删除后把正文悬在上半页。
+- 发布态视觉基准见 `docs/theme-samples/02-base2-contact-sheet.jpg` 和对应可编辑 `02-base2-reference.pptx`。它们是 Base2 的布局语言参考，不是项目业务内容模板。
 - 适合证据板、状态轨、机制链、协作流程、治理边界和决策路径。若页面只是常规企业汇报且不需要层级纵深，优先 Leander Base。
 
 ### Leander Global(`leander-global`)
 
 - 干净白底 `#FFFFFF`、藏青 `#002060`(结构/标题)、天蓝 `#00B0F0`(唯一的信号色)、中蓝 `#0070C0`(真正的第二类别)。**红色被降级为仅状态**(`colors.danger`,✗/error)——绝不是结构性高亮。
+- 状态组件同样遵守跨主题语义：`review` 保持白色/中性卡面 + 蓝色状态轨；`blocked` / `high` 必须使用 `danger` 红色轨、红色描边和淡红状态面，不能把 Global 的天蓝 `accent` 当作阻断色。
 - Century Gothic 英文优先;中日韩经由雅黑(chrome 在选字面之前自动检测 CJK)。
 - 标题尺寸 + 副标题颜色遵循 **FMS 技术介绍** 参考(实测):大藏青标题 **约 38–40pt**(`signature.titleSize: 76`,对比 Base 40→20pt)+ **浅蓝 `#539ED4` 副标题**(`signature.subtitleColor`)。
 - **两条反复出现的规则是从 CTN 参考 1:1 复制的,不是重画的**(用户指令):(a)标题/副标题横线是 CTN 的精确连接线——**`#0070C0` 中蓝、`lgDash` 大虚线、0.25pt**,宽度跟随标题(`signature.headerRule: {style:"dash", color:"blue", dash:"lgDash", weight:0.25, track:true}`);(b)页面底部条是 **CTN 自己的页脚 PNG**(`theme/assets/footer-westwell.png` = 灰色 WESTWELL 字标 + `FROM HUMAN TO HUMAN` + 烘焙进去的线),满宽放在底部(`signature.footer: {style:"image", img, x,y,w,h}`)——`footer()` 只是放下这张图,它不画线/字标。

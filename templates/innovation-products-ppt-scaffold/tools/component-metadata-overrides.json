@@ -299,6 +299,32 @@
       "reviewedBy": "component-curator",
       "metadataSource": "manual",
       "metadataReviewStatus": "manual-reviewed"
+    },
+    "statusCard": {
+      "relationships": ["state"],
+      "secondaryRelationships": ["decision", "evidence"],
+      "expressionCapability": "show one explicitly labeled state using a neutral surface and semantic rail, reserving the red active surface for blocked or explicitly active states",
+      "slots": ["state", "title", "description", "railSide", "active"],
+      "avoidWhen": ["there is no real state to encode", "the row needs several independent metrics", "color would be the only state channel"],
+      "qaRisks": ["review is incorrectly rendered as a red active card", "rail color conflicts with the written state", "red and blue encode the same state simultaneously", "too many status cards become an equal-weight card wall"],
+      "selectionConfidenceCap": 0.88,
+      "reviewedAt": "2026-07-28",
+      "reviewedBy": "primary-agent",
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed"
+    },
+    "base2GovernanceChain": {
+      "relationships": ["lifecycle", "decision"],
+      "secondaryRelationships": ["evidence", "state"],
+      "expressionCapability": "show supporting source and governed-output zones around one dominant auditable mechanism chain with a bounded decision conclusion",
+      "slots": ["sourceEvidence", "mechanismStages", "currentGate", "governedOutput", "decisionBoundary"],
+      "avoidWhen": ["there is no governed destination or decision boundary", "the page only needs a small local visual part", "stages cannot share one auditable sequence", "the page is a simple equal-weight list"],
+      "qaRisks": ["stage labels overflow", "connectors imply an unreviewed automatic promotion", "red is used outside the current gate or boundary", "supporting wings compete with the central evidence board", "bottom decision band is omitted or collides with the footer"],
+      "selectionConfidenceCap": 0.86,
+      "reviewedAt": "2026-07-28",
+      "reviewedBy": "primary-agent",
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed"
     }
   }
 }

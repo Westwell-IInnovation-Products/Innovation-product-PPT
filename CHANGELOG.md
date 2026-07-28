@@ -2,6 +2,19 @@
 
 本文件记录实际发布或形成可追溯快照的版本。未列出的 beta 序号未形成独立公开版本，不补写不存在的发布内容。
 
+## 0.6.0-beta.25 - 2026-07-28
+
+- 统一 Leander Base、Base2 与 Leander Global 的状态语义：`review = 中性卡面 + 蓝色 rail`，`blocked/high = danger 红色 rail / 描边 / 状态面`。
+- 修复 Global 主题把天蓝 `accent` 误用于阻断状态的问题，并让 `statusCard`、`barCard` 共同读取危险色语义。
+- 新增跨主题运行时回归测试，锁定三套主题的 review/blocked 卡面、状态轨和高风险条形卡颜色。
+
+## 0.6.0-beta.24 - 2026-07-28
+
+- 恢复 Base2 的语义 surface、状态轨、内嵌行、状态卡和决策带兼容能力。
+- 固定 `review = 中性卡面 + 蓝色 rail`、`blocked/current/Gate = 淡红面 + 红色描边`，阻止红框叠蓝线的语义冲突。
+- 新增可选择的 `statusCard` layout block 与 `base2GovernanceChain` page pattern，并补充真实 Base2 组件预览。
+- 将既有 Base2 参考 deck/contact sheet 明确为发布态视觉锚点，增加主题与组件回归断言。
+
 ## 0.6.0-beta.23 - 2026-07-28
 
 - 在主题 chrome 审计结果中写入当前 `inputDigest`，确保封面和封底在强制重渲染后也能通过 QA v5 的主题保真证据校验。

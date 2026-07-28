@@ -2,10 +2,10 @@
   "schemaVersion": "component-registry.v3",
   "libraryCounts": {
     "themeLibraries": 3,
-    "baseComponents": 67,
+    "baseComponents": 69,
     "editorialComponents": 7,
     "bespokeComponents": 6,
-    "totalExecutableComponents": 80,
+    "totalExecutableComponents": 82,
     "image2Components": 0
   },
   "themes": [
@@ -6054,6 +6054,212 @@
       ]
     },
     {
+      "name": "statusCard",
+      "library": "base",
+      "route": "component-library",
+      "editable": "yes",
+      "designStatus": "usable",
+      "designReviewPriority": "P1",
+      "themeCompatibility": [
+        "base2"
+      ],
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "reviewedAt": "2026-07-28",
+      "reviewedBy": "primary-agent",
+      "selectionConfidenceCap": 0.88,
+      "relationships": [
+        "state"
+      ],
+      "secondaryRelationships": [
+        "decision",
+        "evidence"
+      ],
+      "tags": [
+        "status",
+        "review",
+        "blocked",
+        "semantic-rail",
+        "base2-fidelity"
+      ],
+      "density": "medium",
+      "level": "layout-block",
+      "relationPrimitive": "state",
+      "expressionCapability": "show one explicitly labeled state using a neutral surface and semantic rail, reserving the red active surface for blocked or explicitly active states",
+      "semanticBindings": [
+        "review state",
+        "blocked state",
+        "pass state",
+        "workflow outcome",
+        "page isolation",
+        "state memory",
+        "local repair boundary"
+      ],
+      "composable": "high",
+      "slots": [
+        "state",
+        "title",
+        "description",
+        "railSide",
+        "active"
+      ],
+      "variants": [
+        "stable",
+        "review",
+        "blocked",
+        "pass",
+        "warning",
+        "line"
+      ],
+      "avoidWhen": [
+        "there is no real state to encode",
+        "the row needs several independent metrics",
+        "color would be the only state channel"
+      ],
+      "qaRisks": [
+        "review is incorrectly rendered as a red active card",
+        "rail color conflicts with the written state",
+        "red and blue encode the same state simultaneously",
+        "too many status cards become an equal-weight card wall",
+        "fake file/state structure",
+        "unclear current state",
+        "over-dense expansion",
+        "block forced into a full-page role"
+      ],
+      "themeFidelityFeatures": {
+        "base2": [
+          "state-rail",
+          "tiered-radius-depth"
+        ]
+      },
+      "contentCapacity": {
+        "maxItems": 1,
+        "maxLabelChars": 24,
+        "maxBodyChars": 72
+      },
+      "themeTokensUsed": [
+        "colors.surface",
+        "colors.primary",
+        "colors.accent",
+        "colors.accentSoft",
+        "colors.blue",
+        "colors.green",
+        "colors.warn",
+        "colors.line",
+        "shape.radius.*",
+        "elevation.*",
+        "rail.*",
+        "fonts.cn",
+        "fonts.en",
+        "type.*"
+      ]
+    },
+    {
+      "name": "base2GovernanceChain",
+      "library": "base",
+      "route": "component-library",
+      "editable": "yes",
+      "designStatus": "usable",
+      "designReviewPriority": "P1",
+      "themeCompatibility": [
+        "base2"
+      ],
+      "metadataSource": "manual",
+      "metadataReviewStatus": "manual-reviewed",
+      "reviewedAt": "2026-07-28",
+      "reviewedBy": "primary-agent",
+      "selectionConfidenceCap": 0.86,
+      "relationships": [
+        "lifecycle",
+        "decision"
+      ],
+      "secondaryRelationships": [
+        "evidence",
+        "state"
+      ],
+      "tags": [
+        "governance-chain",
+        "evidence-board",
+        "decision-boundary",
+        "base2-fidelity"
+      ],
+      "density": "high",
+      "level": "page-pattern",
+      "relationPrimitive": "governance-chain",
+      "expressionCapability": "show supporting source and governed-output zones around one dominant auditable mechanism chain with a bounded decision conclusion",
+      "semanticBindings": [
+        "candidate promotion workflow",
+        "controlled publishing pipeline",
+        "asset governance lifecycle",
+        "learning loop",
+        "team iteration",
+        "feedback promotion"
+      ],
+      "composable": "limited",
+      "slots": [
+        "sourceEvidence",
+        "mechanismStages",
+        "currentGate",
+        "governedOutput",
+        "decisionBoundary"
+      ],
+      "variants": [
+        "base2",
+        "compact",
+        "five-stage",
+        "reduced-density"
+      ],
+      "avoidWhen": [
+        "there is no governed destination or decision boundary",
+        "the page only needs a small local visual part",
+        "stages cannot share one auditable sequence",
+        "the page is a simple equal-weight list",
+        "only a small local visual part is needed",
+        "the page has low information density or needs a breathing transition",
+        "the relationship is linear rather than cyclic/evolutionary"
+      ],
+      "qaRisks": [
+        "stage labels overflow",
+        "connectors imply an unreviewed automatic promotion",
+        "red is used outside the current gate or boundary",
+        "supporting wings compete with the central evidence board",
+        "bottom decision band is omitted or collides with the footer",
+        "loop direction ambiguity",
+        "feedback/promotion unclear",
+        "too many colors",
+        "hard-coded semantics instead of reusable relationship",
+        "text overflow or unreadable labels"
+      ],
+      "themeFidelityFeatures": {
+        "base2": [
+          "layered-evidence-board",
+          "region-eyebrows",
+          "semantic-focus-panel",
+          "decision-band"
+        ]
+      },
+      "contentCapacity": {
+        "maxItems": 5,
+        "maxLabelChars": 22,
+        "maxBodyChars": 64
+      },
+      "themeTokensUsed": [
+        "colors.bg",
+        "colors.surface",
+        "colors.surface3",
+        "colors.primary",
+        "colors.accent",
+        "colors.accentSoft",
+        "colors.line",
+        "shape.radius.*",
+        "elevation.*",
+        "rail.*",
+        "fonts.cn",
+        "fonts.en",
+        "type.*"
+      ]
+    },
+    {
       "name": "deltaCompare",
       "library": "base",
       "route": "component-library",
@@ -6164,7 +6370,7 @@
   ],
   "maintenance": {
     "metadataVersion": "component-metadata.v3",
-    "updatedAt": "2026-07-28T02:28:50.250Z",
+    "updatedAt": "2026-07-28T07:15:52.098Z",
     "note": "Inferred metadata is labeled and confidence-capped. New components remain review-required until manual semantic and render review."
   }
 }
