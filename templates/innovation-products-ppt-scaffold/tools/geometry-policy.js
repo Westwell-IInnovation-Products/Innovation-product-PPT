@@ -1,4 +1,4 @@
-const POLICY_VERSION = "visual-geometry-policy.v1";
+const POLICY_VERSION = "visual-geometry-policy.v2";
 
 const DEFAULTS = Object.freeze({
   slideWidth: 13.333,
@@ -10,7 +10,17 @@ const DEFAULTS = Object.freeze({
   minVisibleConnector: 0.167,
   connectorImbalanceRatio: 0.45,
   connectorImbalanceDelta: 0.50,
-  reservedZoneTolerance: 0.014
+  reservedZoneTolerance: 0.014,
+  bodyTop: 1.0,
+  bodyBottom: 6.9,
+  minBodyFontSizePt: 7.5,
+  smallBodyMinChars: 12,
+  smallBodyMinCount: 4,
+  smallBodyTotalChars: 180,
+  tallCardMinHeight: 1.4,
+  tallCardMaxHeight: 3.5,
+  tallCardMaxWidth: 4.2,
+  tallCardGapRatio: 0.42
 });
 
 function pairKey(a, b) {

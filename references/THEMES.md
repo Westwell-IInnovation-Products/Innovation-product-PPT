@@ -146,6 +146,7 @@ const THEME = {
 - **结论带**用 `signature.conclusion: "band"`（描边圆角带 + 全大写眉标），配 `ui.conclusionBand({ eyebrow, text })`。
 - **优先复用 signature 元件**：`ui.barCard()` 表达风险档位 / 路由结果 / 状态行，`ui.regionEyebrow()` 给每个区块加分区眉标。这两者是 Base2 的招牌词汇，能省掉大量手画方块。
 - **状态语义固定**：`review` 使用白色/中性卡面 + 蓝色状态轨；`blocked`、当前 Gate 或显式 `active` 才使用淡红填充 + 红色描边。禁止把 `review` 先画成红色激活卡，再叠加蓝色 rail。
+- **状态优先级固定**：命名状态优先于通用 `active/hot`。`review + active` 仍保持中性卡面 + 蓝色 rail；`blocked/high/current/Gate` 统一使用 danger 面、描边与 rail。rail 只属于真实状态，不属于 reviewer、owner 或类别标签。
 - **主体构图固定**：内容页优先 2–3 个大区、一个主证据板或决策核心、灰蓝内嵌层和一个底部决策带。不能用一组同尺寸圆角卡替代主体关系；结论带不能无故删除后把正文悬在上半页。
 - 发布态视觉基准见 `docs/theme-samples/02-base2-contact-sheet.jpg` 和对应可编辑 `02-base2-reference.pptx`。它们是 Base2 的布局语言参考，不是项目业务内容模板。
 - 适合证据板、状态轨、机制链、协作流程、治理边界和决策路径。若页面只是常规企业汇报且不需要层级纵深，优先 Leander Base。

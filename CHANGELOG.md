@@ -2,6 +2,15 @@
 
 本文件记录实际发布或形成可追溯快照的版本。未列出的 beta 序号未形成独立公开版本，不补写不存在的发布内容。
 
+## 0.6.0-beta.26 - 2026-07-29
+
+- 修复 `statusCard` 的状态优先级：`review + active` 必须保持中性卡面与蓝色 rail；`blocked`、`high`、`current`、`Gate` 和无显式状态的 active 统一使用淡红面、红色描边与红色 rail。
+- 为 Leander Base 补齐危险状态面和语义 rail token，使三套主题的 blocked/high 表达真正一致。
+- 扩展跨主题回归测试，覆盖 `review + active`、`high`、显式 active 和 rail 别名，防止红卡蓝轨再次出现。
+- 将状态卡正文默认字号从注释级提升为可读正文级，并在高卡片中采用自适应纵向对齐。
+- 几何审计升级到 V2：阻断大批长正文使用 6–7pt 注释字号，并检测卡片内部“顶部堆字、底部孤立标签、中间大面积空洞”的失衡布局。
+- 明确 rail 只能编码真实状态，角色、职责、类别或与 review 有关的名称不能仅因语义相近而获得 review rail。
+
 ## 0.6.0-beta.25 - 2026-07-28
 
 - 统一 Leander Base、Base2 与 Leander Global 的状态语义：`review = 中性卡面 + 蓝色 rail`，`blocked/high = danger 红色 rail / 描边 / 状态面`。

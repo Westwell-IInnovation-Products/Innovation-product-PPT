@@ -6085,7 +6085,7 @@
       "density": "medium",
       "level": "layout-block",
       "relationPrimitive": "state",
-      "expressionCapability": "show one explicitly labeled state using a neutral surface and semantic rail, reserving the red active surface for blocked or explicitly active states",
+      "expressionCapability": "show one explicitly labeled state using a neutral surface and semantic rail; named states take priority over generic active flags, review stays neutral, and blocked/high/current/Gate use one coherent danger surface and rail",
       "semanticBindings": [
         "review state",
         "blocked state",
@@ -6113,6 +6113,7 @@
       ],
       "avoidWhen": [
         "there is no real state to encode",
+        "the label names a reviewer, owner, role, responsibility, or category rather than a live state",
         "the row needs several independent metrics",
         "color would be the only state channel"
       ],
@@ -6120,6 +6121,8 @@
         "review is incorrectly rendered as a red active card",
         "rail color conflicts with the written state",
         "red and blue encode the same state simultaneously",
+        "a role or responsibility node is decorated with a review rail",
+        "long body copy falls back to tiny or micro annotation type",
         "too many status cards become an equal-weight card wall",
         "fake file/state structure",
         "unclear current state",

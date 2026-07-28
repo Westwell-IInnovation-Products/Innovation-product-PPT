@@ -24,6 +24,7 @@ const theme = {
     green: "2F8A5B",
     warn: "E8A100",
     danger: "C51516",
+    dangerSoft: "FBECEB",
     onPrimary: "FFFFFF",
     onAccent: "FFFFFF",
     inverseText: "FFFFFF",
@@ -65,6 +66,28 @@ const theme = {
   },
   contentFidelity: getContentFidelity("leander-base"),
   container: { round: true, radius: 8, shadow: false },
+  rail: {
+    thickness: 6,
+    edgeInset: 1,
+    crossInset: 12,
+    contentClearance: 14,
+    connectorClearance: 12,
+    radius: "micro",
+    preferredSide: "left",
+    horizontalPolicy: "group-only",
+    horizontalFallbackSide: "left",
+    meanings: {
+      stable: "primary",
+      review: "blue",
+      blocked: "danger",
+      pass: "green",
+      warning: "warn"
+    }
+  },
+  componentStyle: {
+    statusCard: { fill: "surface", line: "line", radius: "card", elevation: "none", stroke: "neutral" },
+    activeState: { fill: "dangerSoft", line: "danger", radius: "card", elevation: "none", stroke: "focus" }
+  },
   grid: {
     w: 1920,
     h: 1080,

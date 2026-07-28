@@ -2095,8 +2095,10 @@ function makeComponents(pptx, theme) {
     const meanings = theme.rail?.meanings || {
       stable: "primary", review: "blue", blocked: "danger", pass: "green", warning: "warn"
     };
-    const colorRole = meanings[meaning];
-    if (!colorRole) throw new Error(`Base2 semanticRail requires one of: ${Object.keys(meanings).join(", ")}`);
+    const rawMeaning = String(meaning || "stable").trim().toLowerCase();
+    const normalizedMeaning = ["high", "current", "gate", "active"].includes(rawMeaning) ? "blocked" : rawMeaning;
+    const colorRole = meanings[normalizedMeaning];
+    if (!colorRole) throw new Error(`semanticRail requires one of: ${[...Object.keys(meanings), "high", "current", "gate", "active"].join(", ")}`);
     return surfaceRail(slide, x, y, w, h, {
       side: opts.side || theme.rail?.preferredSide || "left",
       color: opts.color || C[colorRole] || colorRole,
@@ -2173,12 +2175,17 @@ function makeComponents(pptx, theme) {
   }
 
   function statusCard(slide, x, y, w, h, data = {}) {
-    const state = data.state || data.railMeaning || "stable";
-    const active = data.active === true || state === "blocked";
+    const hasNamedState = data.state != null || data.railMeaning != null;
+    const state = String(data.state || data.railMeaning || "stable").trim().toLowerCase();
+    const dangerState = ["blocked", "high", "current", "gate", "active"].includes(state);
+    // A named state wins over the generic active flag. In particular,
+    // review + active must never become a red surface with a blue rail.
+    const active = dangerState || (!hasNamedState && data.active === true) || (state === "stable" && data.active === true);
+    const railMeaning = active ? "blocked" : state;
     const surfaceRole = active ? "activeState" : (data.role || "statusCard");
     surface(slide, x, y, w, h, surfaceRole, data.surface || {});
-    if (state) semanticRail(slide, x, y, w, h, state, { side: data.railSide || "left" });
-    const activeColor = state === "blocked" ? (C.danger || C.accent) : C.accent;
+    if (railMeaning) semanticRail(slide, x, y, w, h, railMeaning, { side: data.railSide || "left" });
+    const activeColor = C.danger || C.accent;
     addText(slide, x + 28, y + 18, w - 56, 30, data.title || "", {
       size: data.titleSize || theme.type.body,
       color: active ? activeColor : (data.titleColor || C.primary),
@@ -2187,12 +2194,12 @@ function makeComponents(pptx, theme) {
       fontFace: data.fontFace
     });
     if (data.desc) addText(slide, x + 28, y + 56, w - 56, h - 72, data.desc, {
-      size: data.descSize || theme.type.micro,
+      size: data.descSize || (h >= 120 ? theme.type.bodySm : theme.type.cap),
       color: data.descColor || C.mute,
       align: data.align || "left",
-      valign: data.descValign || "top"
+      valign: data.descValign || (h >= 220 ? "middle" : "top")
     });
-    return { state, active, surfaceRole };
+    return { state, railMeaning, active, surfaceRole };
   }
 
   // Compatibility wrapper for approved Base2 pages. New pages may call

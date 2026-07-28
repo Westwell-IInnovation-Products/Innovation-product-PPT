@@ -1,5 +1,5 @@
 {
-  "version": "0.6.0-beta.25",
+  "version": "0.6.0-beta.26",
   "qualityLock": "render-quality-evidence.v4+visual-geometry-policy.v1+final-artifact-lock.v2",
   "contextPack": "leander-context-pack.v3-strict",
   "tokenLedger": "leander-token-report.zh.v2-conversations",

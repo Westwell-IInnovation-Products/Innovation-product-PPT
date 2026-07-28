@@ -47,6 +47,7 @@ Base2 的发布态视觉锚点是 `docs/theme-samples/02-base2-contact-sheet.jpg
 - `review` 是中性卡面 + 蓝色状态轨；`blocked`、当前 Gate、显式 active 或决策边界才使用淡红底与红描边。
 - 页面底部的 decision/boundary band 是主体闭环的一部分。无结论带时，蓝图必须解释为什么正文仍能在安全区内形成完整的纵向视觉中心。
 - 当页面同时出现红色激活面和蓝色 rail 时，必须证明它们表达两个不同且不冲突的语义；“review 被通用 hot 逻辑染红”直接判为失败。
+- 状态名优先于通用 `active/hot` 标记：`review + active` 仍是中性面 + 蓝 rail；`high/current/Gate` 归一为 blocked 危险语义。角色名、职责名或类别名不构成状态，不能触发 rail。
 - 共享组件优先使用 `statusCard`、`barCard`、`insetRow`、`conclusionBand`；五阶段治理链可使用 `base2GovernanceChain`。页面专属构图仍应复用这些语义积木。
 
 ## page-specific-custom 证据

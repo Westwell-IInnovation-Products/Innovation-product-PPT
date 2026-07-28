@@ -107,21 +107,33 @@ function assertBase2ComponentContract() {
   };
   const review = runtime.components.statusCard(fakeSlide, 0, 0, 320, 100, {
     state: "review",
+    active: true,
     title: "Review"
   });
   const blocked = runtime.components.statusCard(fakeSlide, 0, 0, 320, 100, {
     state: "blocked",
     title: "Blocked"
   });
-  if (review.active || review.surfaceRole !== "statusCard") {
+  const high = runtime.components.statusCard(fakeSlide, 0, 0, 320, 100, {
+    state: "high",
+    title: "High"
+  });
+  if (review.active || review.surfaceRole !== "statusCard" || review.railMeaning !== "review") {
     throw new Error(`Base2 review must remain neutral with a blue rail: ${JSON.stringify(review)}`);
   }
   if (!blocked.active || blocked.surfaceRole !== "activeState") {
     throw new Error(`Base2 blocked state must use the active red surface: ${JSON.stringify(blocked)}`);
   }
+  if (!high.active || high.surfaceRole !== "activeState" || high.railMeaning !== "blocked") {
+    throw new Error(`Base2 high state must normalize to blocked danger semantics: ${JSON.stringify(high)}`);
+  }
   const reviewRail = runtime.components.semanticRail(fakeSlide, 0, 0, 320, 100, "review");
   if (reviewRail.color !== runtime.theme.colors.blue || reviewRail.edgeInset !== 1 || reviewRail.crossInset !== 12) {
     throw new Error(`Base2 review rail geometry/meaning drifted: ${JSON.stringify(reviewRail)}`);
+  }
+  const highRail = runtime.components.semanticRail(fakeSlide, 0, 0, 320, 100, "high");
+  if (highRail.color !== runtime.theme.colors.danger) {
+    throw new Error(`Base2 high rail must normalize to danger: ${JSON.stringify(highRail)}`);
   }
   console.log("PASS Base2 component and state semantic contract");
 }
@@ -129,13 +141,13 @@ assertBase2ComponentContract();
 function assertCrossThemeStateSemantics() {
   const { loadComponentRuntime } = require(path.join(ROOT, "tools", "component-runtime"));
   const expected = {
-    "leander-base": { review: "blue", blocked: "danger", blockedSurface: "FFFFFF" },
+    "leander-base": { review: "blue", blocked: "danger", blockedSurface: "FBECEB" },
     base2: { review: "blue", blocked: "danger", blockedSurface: "FBECEB" },
     "leander-global": { review: "blue", blocked: "danger", blockedSurface: "FBECEB" }
   };
   for (const [themeId, contract] of Object.entries(expected)) {
     const runtime = loadComponentRuntime(themeId);
-    const capture = state => {
+    const capture = (state, extra = {}) => {
       const shapes = [];
       const slide = {
         addShape(type, options) {
@@ -146,16 +158,24 @@ function assertCrossThemeStateSemantics() {
         },
         addText() {}
       };
-      const result = runtime.components.statusCard(slide, 0, 0, 320, 100, { state, title: state });
+      const result = runtime.components.statusCard(slide, 0, 0, 320, 100, { state, title: state, ...extra });
       return { result, surface: shapes[0] || {}, rail: shapes[1] || {} };
     };
-    const review = capture("review");
+    const review = capture("review", { active: true });
     const blocked = capture("blocked");
+    const high = capture("high");
+    const explicitActive = capture(undefined, { active: true, title: "active" });
     if (review.result.active || review.surface.fill !== runtime.theme.colors.surface || review.rail.fill !== runtime.theme.colors[contract.review]) {
       throw new Error(`${themeId} review must remain neutral with a blue rail: ${JSON.stringify(review)}`);
     }
     if (!blocked.result.active || blocked.surface.fill !== contract.blockedSurface || blocked.rail.fill !== runtime.theme.colors[contract.blocked]) {
       throw new Error(`${themeId} blocked must use danger semantics: ${JSON.stringify(blocked)}`);
+    }
+    if (!high.result.active || high.result.railMeaning !== "blocked" || high.surface.fill !== contract.blockedSurface || high.rail.fill !== runtime.theme.colors[contract.blocked]) {
+      throw new Error(`${themeId} high must normalize to danger semantics: ${JSON.stringify(high)}`);
+    }
+    if (!explicitActive.result.active || explicitActive.result.railMeaning !== "blocked" || explicitActive.surface.fill !== contract.blockedSurface || explicitActive.rail.fill !== runtime.theme.colors[contract.blocked]) {
+      throw new Error(`${themeId} explicit active must use one coherent danger state: ${JSON.stringify(explicitActive)}`);
     }
     const barShapes = [];
     runtime.components.barCard({
@@ -247,7 +267,7 @@ const behaviors = [
   ["QA batch specificity", "qa-batch.js"], ["page preflight extensions", "verify-page-preflight.js"], ["component contract", "component-contract.js"],
   ["component metadata overrides", "lint-component-metadata-overrides.js"], ["component metadata audit", "component-metadata-audit.js"],
   ["visual route competition", "select-visual-route.js"], ["visual selection diversity", "visual-selection-diversity.js"], ["render risk", "render-risk.js"],
-  ["render diversity", "render-diversity.js"], ["grounded full-size inspection", "render-quality-gate.js"], ["agent independence", "verify-agent-collaboration.js"],
+  ["render diversity", "render-diversity.js"], ["render geometry typography and vertical balance", "render-geometry-audit.js"], ["grounded full-size inspection", "render-quality-gate.js"], ["agent independence", "verify-agent-collaboration.js"],
   ["approval receipt", "approval-receipt.js"], ["source evidence", "verify-source-evidence.js"], ["agent run receipt", "agent-run-receipt.js"],
   ["final artifact pixels", "final-artifact-gate.js"], ["gate adversarial suite", "gate-adversarial-suite.js"],
   ["agent collaboration migration", "migrate-agent-collaboration-v3.js"], ["hard Gate contract", "hard-gate-contract.js"],

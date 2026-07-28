@@ -48,6 +48,7 @@ description: "Create, redesign, standardize, review, or polish editable PPTX dec
 - 每张内容页的 `page.js` 都必须导出 `visualBinding: { route, name }`,并与 `page.json.visualSelection.selectedRoute` 一致。若某条组件库路线所绑定的组件在运行时 trace 里不存在,只触发一条评审警告(确认这是不是有意的手工构图),不构成阻塞。
 - 内容页必须通过 `tools/verify-theme-fidelity.js`。`page-specific-custom` 必须在 `page.json` 与 `page.js` 声明同一 `theme-fidelity.v1` 合同,落实至少三个、跨至少两类的内容层主题特征；只换颜色、字体或 chrome 不算。Global 高容量页禁止均匀空指标卡墙,优先证据主画面、紧凑 KPI rail、工程变量表、Δ 对比和显式待仿真状态。
 - Base2 页面必须遵守发布态视觉锚点：`review` 保持中性卡面并用蓝色状态轨，只有 `blocked`、当前 Gate、显式 active 或决策边界使用淡红面；主体使用 2–3 个大区、内嵌层和底部决策带，禁止用通用圆角卡墙替代页面关系。具体合同见 `references/THEMES.md` 与 `references/THEME-FIDELITY.md`。
+- `tiny/micro` 只能承担短标签、图例、来源或图内注释，不能批量承载长正文；高卡片不得把标题/正文钉在顶部、标签钉在底部而留下大面积中段空洞。上述问题由几何审计 V2 作为 P1 阻断。
 - 主题 chrome 是例外且实行硬绑定：`cover` 必须且只能调用一次 `ui.cover()`，`closing` 必须且只能调用一次 `ui.closing()`；禁止 custom 覆盖、局部扩展和显式 tagline 覆盖。静态页面合同与运行时 trace 任一不符都阻塞 render、verify 和 build。
 - 报告质量之前先 render。瞄一眼代码不算 QA。
 - 每个 required agent 结论都必须有 `leander-agent-run-receipt.v1`,把 Codex collaboration tool 返回的 thread/run、事件摘要、输入摘要和输出文件哈希绑定起来。手填一个 `threadId` 或只有 Markdown 报告不算独立运行证据。

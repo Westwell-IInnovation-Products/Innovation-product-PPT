@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
-const { POLICY_VERSION, policyFor, isDeclaredOverlap } = require("./geometry-policy");
+const { POLICY_VERSION, policyFor, isDeclaredOverlap, validReason } = require("./geometry-policy");
 
 function readJson(file, fallback = null) {
   try { return JSON.parse(fs.readFileSync(file, "utf8").replace(/^\uFEFF/, "")); } catch { return fallback; }
@@ -92,12 +92,17 @@ function sceneFromSlide(slide, pageId, page = {}) {
     };
   });
   return {
-    version: "render-geometry.v1",
+    version: "render-geometry.v2",
     policyVersion: POLICY_VERSION,
     pageId: String(pageId || page.id || ""),
+    relationship: String(page.relationship || ""),
+    contentDensity: String(page.contentDensity || ""),
+    whitespaceIntent: String(page.whitespaceIntent || ""),
+    typographyPolicy: page.geometryPolicy?.typography || {},
     elements,
     reservedZones: page.geometryPolicy?.reservedZones || [],
     intentionalOverlaps: page.geometryPolicy?.intentionalOverlaps || [],
+    suppressions: page.geometryPolicy?.suppressions || [],
     policy: page.geometryPolicy?.thresholds || {}
   };
 }
@@ -139,6 +144,19 @@ function textInkRect(element) {
       ? Number(element.y || 0) + (Number(element.h || 0) - h) / 2
       : Number(element.y || 0);
   return { x, y, w, h };
+}
+function compactLength(value) {
+  return String(value || "").replace(/\s+/g, "").length;
+}
+function centerInside(outer, inner) {
+  const cx = Number(inner.x || 0) + Number(inner.w || 0) / 2;
+  const cy = Number(inner.y || 0) + Number(inner.h || 0) / 2;
+  return cx >= outer.x && cx <= outer.x + outer.w && cy >= outer.y && cy <= outer.y + outer.h;
+}
+function allowsDesignedWhitespace(scene = {}) {
+  const density = String(scene.contentDensity || "").toLowerCase();
+  const intent = String(scene.whitespaceIntent || "").toLowerCase();
+  return density === "low" && ["focus", "pause", "tension", "image-led", "premium", "chapter-breathing"].includes(intent);
 }
 function segmentRectInterval(line, box) {
   const dx = line.x2 - line.x1, dy = line.y2 - line.y1;
@@ -199,6 +217,64 @@ function auditScene(scene = {}) {
   const elements = scene.elements || [];
   const texts = elements.filter(item => item.type === "text");
   const lines = elements.filter(item => item.type === "line");
+  const relationship = String(scene.relationship || "").toLowerCase();
+
+  const compactBodyAllowed = scene.typographyPolicy?.allowCompactBody === true
+    && validReason(scene.typographyPolicy?.reason);
+  if (!compactBodyAllowed && !["cover", "closing"].includes(relationship)) {
+    const smallBody = texts.filter(item => {
+      const length = compactLength(item.text);
+      return Number(item.y || 0) >= policy.bodyTop
+        && Number(item.y || 0) <= policy.bodyBottom
+        && Number(item.fontSize || 0) < policy.minBodyFontSizePt
+        && length >= policy.smallBodyMinChars;
+    });
+    const totalChars = smallBody.reduce((sum, item) => sum + compactLength(item.text), 0);
+    if (smallBody.length >= policy.smallBodyMinCount || totalChars >= policy.smallBodyTotalChars) {
+      findings.push(finding(
+        "u.typography.small-body",
+        "P1",
+        smallBody.slice(0, 12).map(item => item.id),
+        "大量长正文使用了注释级小字号；tiny/micro 只能承担标签、图例或来源说明。",
+        {
+          thresholdPt: policy.minBodyFontSizePt,
+          objectCount: smallBody.length,
+          totalChars,
+          minFontSizePt: rounded(Math.min(...smallBody.map(item => Number(item.fontSize || 0))))
+        }
+      ));
+    }
+  }
+
+  if (!allowsDesignedWhitespace(scene)) {
+    const cardShapes = elements.filter(item => item.type === "shape"
+      && Number(item.h || 0) >= policy.tallCardMinHeight
+      && Number(item.h || 0) <= policy.tallCardMaxHeight
+      && Number(item.w || 0) <= policy.tallCardMaxWidth);
+    for (const card of cardShapes) {
+      const inside = texts.map(item => ({ item, ink: textInkRect(item) }))
+        .filter(entry => centerInside(card, entry.ink))
+        .sort((a, b) => a.ink.y - b.ink.y);
+      if (inside.length < 3) continue;
+      let maxGap = 0;
+      for (let index = 1; index < inside.length; index += 1) {
+        maxGap = Math.max(maxGap, inside[index].ink.y - (inside[index - 1].ink.y + inside[index - 1].ink.h));
+      }
+      const first = inside[0].ink;
+      const last = inside[inside.length - 1].ink;
+      const gapRatio = maxGap / Math.max(0.001, Number(card.h || 0));
+      const spansCard = first.y < card.y + card.h * 0.35 && last.y + last.h > card.y + card.h * 0.65;
+      if (spansCard && gapRatio >= policy.tallCardGapRatio) {
+        findings.push(finding(
+          "u.layout.internal-dead-space",
+          "P1",
+          [card.id, ...inside.slice(0, 8).map(entry => entry.item.id)],
+          "高卡片内部出现顶部堆字、底部孤立标签和大面积中段空洞；应按内容定高或重建纵向视觉中心。",
+          { gapRatio: rounded(gapRatio), maxGap: rounded(maxGap), cardHeight: rounded(card.h) }
+        ));
+      }
+    }
+  }
 
   for (let i = 0; i < texts.length; i += 1) {
     for (let j = i + 1; j < texts.length; j += 1) {
@@ -272,7 +348,7 @@ function auditScene(scene = {}) {
 
   const active = findings.filter(item => !suppressed(scene, item));
   return {
-    version: "render-geometry-audit.v1",
+    version: "render-geometry-audit.v2",
     policyVersion: POLICY_VERSION,
     pageId: scene.pageId || "",
     generatedAt: new Date().toISOString(),
@@ -299,7 +375,7 @@ function verifyPageAudit(pageDir, page = readJson(path.join(pageDir, "page.json"
   const reportFile = path.join(pageDir, "out", "geometry-audit.json");
   const report = readJson(reportFile);
   const errors = [];
-  if (!report || report.version !== "render-geometry-audit.v1") errors.push("geometry audit missing or has the wrong version");
+  if (!report || report.version !== "render-geometry-audit.v2") errors.push("geometry audit missing or has the wrong version");
   if (report?.policyVersion !== POLICY_VERSION) errors.push("geometry audit policy version is stale");
   if (report?.renderSha256 !== shaFile(render)) errors.push("geometry audit render hash is stale");
   if (report?.verdict !== "PASS") {
@@ -319,7 +395,58 @@ function verifyProject(root, pages = []) {
   return { ok: rows.length > 0 && rows.every(row => row.ok), rows };
 }
 
+function selfTest() {
+  const smallTextScene = {
+    pageId: "small-body",
+    relationship: "decision",
+    elements: Array.from({ length: 4 }, (_, index) => ({
+      id: `small-${index}`,
+      type: "text",
+      x: 1,
+      y: 1.4 + index * 0.4,
+      w: 3,
+      h: 0.25,
+      fontSize: 6.5,
+      text: "This is long body copy that must not use annotation type."
+    }))
+  };
+  const smallReport = auditScene(smallTextScene);
+  if (!smallReport.findings.some(item => item.ruleId === "u.typography.small-body")) {
+    throw new Error("small-body typography regression was not detected");
+  }
+
+  const topHeavyScene = {
+    pageId: "top-heavy",
+    relationship: "decision",
+    elements: [
+      { id: "card", type: "shape", x: 1, y: 1.4, w: 3, h: 2.6 },
+      { id: "title", type: "text", x: 1.2, y: 1.55, w: 2.6, h: 0.25, fontSize: 11, text: "Question" },
+      { id: "body", type: "text", x: 1.2, y: 1.9, w: 2.6, h: 0.25, fontSize: 9, text: "One compact explanation" },
+      { id: "pill", type: "text", x: 1.5, y: 3.65, w: 2, h: 0.2, fontSize: 8, text: "Decision label" }
+    ]
+  };
+  const topHeavyReport = auditScene(topHeavyScene);
+  if (!topHeavyReport.findings.some(item => item.ruleId === "u.layout.internal-dead-space")) {
+    throw new Error("internal card dead-space regression was not detected");
+  }
+
+  const balancedScene = {
+    ...topHeavyScene,
+    pageId: "balanced",
+    elements: topHeavyScene.elements.map(item => item.id === "body" ? { ...item, y: 2.65 } : item)
+  };
+  const balancedReport = auditScene(balancedScene);
+  if (balancedReport.findings.some(item => item.ruleId === "u.layout.internal-dead-space")) {
+    throw new Error("balanced card was incorrectly flagged as internally empty");
+  }
+  console.log("PASS render geometry typography and vertical-balance self-test");
+}
+
 if (require.main === module) {
+  if (process.argv.includes("--self-test")) {
+    selfTest();
+    process.exit(0);
+  }
   const root = path.join(__dirname, "..");
   const index = process.argv.indexOf("--pages");
   const pages = index >= 0 && process.argv[index + 1] ? process.argv[index + 1].split(",").map(value => value.trim()).filter(Boolean) : [];
@@ -339,5 +466,6 @@ module.exports = {
   segmentRectInterval,
   textInkRect,
   lineLength,
-  shaFile
+  shaFile,
+  selfTest
 };
