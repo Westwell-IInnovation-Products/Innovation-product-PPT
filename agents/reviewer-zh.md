@@ -44,11 +44,12 @@ tools: Read, Glob, Grep
 11. 是否违反 `role-briefs.md` 中列出的本项目特定风险和用户确认事项。
 12. 是否满足 `references/QUALITY-BASELINE.md`，包括主张、支撑、边界、听众价值和可演讲性。
 13. 渲染级警告是否在真实全尺寸页面中被确认或修复，不能只接受字符串签名和组件名称的“多样性”。
-14. 构图丰富度是否达到标杆样张基准：内容页是否具备标题带、多信息区和结论带；单组件直出或“一个组件铺满全页”的内容页必须列为问题项。
+14. 构图丰富度是否达到标杆样张基准：内容页是否具备标题带、2–3 个有职责的大区和主证据/机制/决策核心；结论可由副标题、正文闭环或确有语义的 decision band 承担。单组件直出、均匀卡片墙或批量底部总结框必须列为问题项。
 15. `render-diversity-audit.json` 的 `sharedShapeClassPairs`：凡列出的页对，必须并排打开两张渲染图逐一确认它们的主视觉形状确有实质区分（不是同一种图换了文字）。占用特征审计看不见“两页都是菱形扇出”这类撞形，这条是唯一的备用。发现撞形按问题项报出，并给出其中一页应改成哪种形状类。
 16. 终版 `reviewer-zh` 必须用 `view_image` 逐页打开当前 PNG 原图，不得只看代码、SVG 文本或 contact sheet。每页至少记录 geometry、composition、semantics、readability 四类可被成图反证的观察，并覆盖该页全部 `qaProfile.pageRules`。
 17. 不得用“未发现问题”“符合要求”“由若干结构共同支撑”充当全尺寸证据。观察必须写出具体位置、对象、尺寸/基线/连线/字号或映射方式；对比页必须明确实际基数以及是否一一、组级、一对多或多对一。
 18. 对比页在 `full-size-inspection.v2` 中必须记录整数 `leftCount`、`rightCount` 与 `mapping`（`one-to-one`、`group-level`、`one-to-many`、`many-to-one`、`none`）；不能只写“左右对应”。任何 P0/P1 的 FAIL observation 都必须让本轮 verdict 成为 `FIX-FIRST`。机器几何 FAIL 不能被人工 PASS 覆盖。
+19. 当 revision visualImpact 要求视觉连续性复核时，逐页对照本轮锚点：Base 看线性规则与扁平面，Base2 看图形/线条融合和角色化阴影，Global 看证据主画面与精确规则层级。颜色相同不能替代构图一致。
 
 ## 复审只读增量（FIX-FIRST 之后）
 

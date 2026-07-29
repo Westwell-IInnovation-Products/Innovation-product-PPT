@@ -1994,8 +1994,8 @@ function makeComponents(pptx, theme) {
   }
 
   // ——— Base2 signature 元件（Round 2）———
-  // 三者都走 rect()/addText()，因此圆角与阴影自动跟随主题 container 策略：
-  // base 出扁平锐角、base2 出圆角带阴影，页面层无需做主题分支。
+  // 三者都走 rect()/addText()。圆角由主题收口，阴影由语义 surface
+  // role 决定；Base2 不是“所有矩形自动带阴影”。
 
   // 分区眉标：letter-spaced 全大写区域标，作为区块上方的导览层。
   function regionEyebrow(slide, x, y, w, text, opts = {}) {
@@ -2024,7 +2024,9 @@ function makeComponents(pptx, theme) {
       round: true,
       shadow: true
     });
-    rect(slide, x + 10, y + 12, 5, Math.max(8, h - 24), { fill: col, round: true, radius: 3 });
+    if (theme.rail?.enabled !== false && data.rail !== false) {
+      rect(slide, x + 10, y + 12, 5, Math.max(8, h - 24), { fill: col, round: true, radius: 3 });
+    }
     if (data.label) addText(slide, x + 30, y + 14, w - 210, 26, data.label, { size: theme.type.cap || 16, color: blocked ? danger : C.primary, bold: true, fontFace: F.en, charSpacing: 0.8 });
     if (data.meta) addText(slide, x + 30, y + 44, w - 210, 24, data.meta, { size: theme.type.micro || 14, color: C.mute });
     if (data.tag) addText(slide, x + w - 180, y + 15, 160, 22, data.tag, { size: theme.type.micro || 14, color: C.mute, align: "right" });
@@ -2092,6 +2094,9 @@ function makeComponents(pptx, theme) {
   // Rails encode state, never decoration. In particular, review stays on a
   // neutral surface with a blue rail; only blocked/current/Gate states turn red.
   function semanticRail(slide, x, y, w, h, meaning = "stable", opts = {}) {
+    if (theme.rail?.enabled === false || opts.enabled === false) {
+      return { skipped: true, reason: "theme.rail.enabled=false", meaning: String(meaning || "stable") };
+    }
     const meanings = theme.rail?.meanings || {
       stable: "primary", review: "blue", blocked: "danger", pass: "green", warning: "warn"
     };
@@ -2184,7 +2189,9 @@ function makeComponents(pptx, theme) {
     const railMeaning = active ? "blocked" : state;
     const surfaceRole = active ? "activeState" : (data.role || "statusCard");
     surface(slide, x, y, w, h, surfaceRole, data.surface || {});
-    if (railMeaning) semanticRail(slide, x, y, w, h, railMeaning, { side: data.railSide || "left" });
+    if (railMeaning && theme.rail?.enabled !== false && data.rail !== false) {
+      semanticRail(slide, x, y, w, h, railMeaning, { side: data.railSide || "left" });
+    }
     const activeColor = C.danger || C.accent;
     addText(slide, x + 28, y + 18, w - 56, 30, data.title || "", {
       size: data.titleSize || theme.type.body,

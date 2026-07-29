@@ -319,6 +319,7 @@ node tools/deck.js verify --final
    - 视觉形态/组件不匹配
    - 素材/图片问题
    - 说法/来源边界问题
+   把布局、视觉形态、阴影、线条、卡片、状态 rail、archetype、shape class、主题或组件变化明确写进 `revision-contract.pageMap[].change[]`。不能把视觉改动伪装成普通文字修改。
 3. 只修补受影响的幻灯片,除非问题是全局主题或重复的组件行为。
 4. 重新生成受影响的 PPTX。
 5. 重新导出受影响页,当节奏或一致性可能变化时加 contact sheet。
@@ -326,6 +327,8 @@ node tools/deck.js verify --final
 7. 报告改了什么、没动什么。
 
 不要为一页的反馈重新生成或重新设计整份 deck,除非用户要求、或根因是一个共享组件/主题 bug。
+
+`revision-mode.js` 会把修改分为 `content-only`、`page-level`、`deck-wide` 和 `shared-system`。单页视觉修复仍可直接改目标页；当视觉改动覆盖至少三页且达到全稿 35%，必须重新审批锚点并在终版做一次 fresh visual-designer 全稿评审；当 `DESIGN.md`、`visual-direction.md`、`theme-contract.md`、`theme/` 或 `components/` 发生变化，还必须重新审批 theme 与 layout blueprint。未在 revision contract 中声明的 archetype、shape class、主题或视觉路线变化会被阻塞。
 
 ## 修复范围决策树
 

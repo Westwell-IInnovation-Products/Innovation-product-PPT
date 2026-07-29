@@ -26,7 +26,7 @@ node tools/context-pack.js --mode agent --role reviewer-zh --pages p09,p11
 - 不要把整段旧对话粘贴或临时概括进任务。先把原始消息/历史任务保存为项目内快照,并由 `requirements-contract.json` 提炼且哈希绑定;合同、coverage 和项目产物才是续做约束。
 - 绝不靠散文携带审批:同样的 workflow receipt 和检查点哈希仍然是强制的。
 
-用数据包来决定打开哪些文件。把 `recommendedReads` 当作默认的 context 边界;只有当数据包显示路线过期、QA 缺失、故事改变、主题改变或共享组件受影响时才扩大。
+用数据包来决定打开哪些文件。把 `recommendedReads` 当作默认的 context 边界;只有当数据包显示路线过期、QA 缺失、故事改变、主题改变、共享组件受影响，或 revision `visualImpact` 不是 `content-only` 时才扩大。页面代码里的视觉改版同样会改变主题观感，不能因为没有动共享 theme 文件就忽略。
 
 在报告任何续做或修复的结果之前,更新产物标签:
 
@@ -92,6 +92,7 @@ node tools/artifact-map.js --write
 - 修复改变共享 theme token 或共享组件
 - 页面路线错了
 - 用户要求整片评审
+- revision-mode 报告多页视觉改版或共享视觉系统变化
 
 ### 快速 QA 模式(Fast QA Mode)
 
@@ -106,7 +107,7 @@ node tools/artifact-map.js --write
 - 主题 chrome 一致性
 - 受影响的用户反馈项
 
-只检查受影响页面,加上任何被共享组件触及的页面。
+纯内容修复只检查受影响页面,加上任何被共享组件触及的页面。多页视觉改版必须加上当前锚点和整片 contact sheet，终版由 fresh visual-designer 对照锚点检查主题构图语言。
 
 ### 深度 QA 模式(Deep QA Mode)
 
@@ -135,6 +136,6 @@ node tools/artifact-map.js --write
 映射反馈 -> 定位 page/component/token -> 打补丁 -> 重渲染受影响页 -> 快速 QA -> 更新 qa.md -> 更新 artifact-manifest -> 若通用则记录 lesson
 ```
 
-如果修复触及 `theme/` 或 `components/`,切到 Gate 7:渲染并评审整份 deck。
+如果修复触及 `theme/`、`components/`、`DESIGN.md` 或 `visual-direction.md`,切到 Gate 7:重新审批主题/蓝图并渲染评审整份 deck。即使共享文件没变，只要修改页数量较大或 change[] 涉及布局/视觉/阴影/线条/卡片等语言，也要重新出锚点并做终版视觉全稿复核；这仍然是 delta revision，不是 full rebuild。
 
 修复前用 `node tools/change-impact.js inspect`。QA/来源/候选路线证据可以在不做 PNG 渲染的情况下变化;选定路线的结果或渲染输入只使那一页失效;theme/组件变化使所有页面失效。用 `node tools/qa-batch.js init --pages <ids>`,让仍然有效的 QA 工作得到保留。

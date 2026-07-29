@@ -31,10 +31,10 @@
 | 主题 | 主体偏好 | 禁用模式 |
 |---|---|---|
 | Leander Base | 线性分隔、规则/轨道、扁平内容面、一个语义焦点、朴素结论 | 阴影卡墙、装饰 dashboard、平均卡片阵列、强调色遍地 |
-| Base2 | 主证据板 + 内嵌层、状态轨、分级半径、单层纵深、分区眉标、决策带 | 均匀圆角卡墙、多层阴影、装饰性淡红、平均卡片阵列 |
+| Base2 | 主证据/机制/决策核心 + 内嵌层、图形与规则线融合、分级半径、角色化单层纵深 | 均匀圆角卡墙、所有矩形统一阴影、多层阴影、装饰 rail、装饰性淡红 |
 | Leander Global | 证据主画面、紧凑 KPI rail、工程变量表、Δ 对比、待仿真状态、精确标注 | 均匀指标格、通用卡墙、dashboard skin、空 KPI 卡 |
 
-跨主题状态语义固定为：`review = 中性卡面 + 蓝色状态轨`，`blocked/high = danger 红色状态轨与阻断面`。主题的通用 `accent` 不能覆盖这一规则；尤其 Global 的 `accent` 是天蓝色，只用于结构性信号，不承担阻断语义。
+跨主题状态语义固定为：`review = 中性卡面 + 明确 Review 标签`，`blocked/high = danger 阻断面、描边和明确标签`。状态 rail 是项目可选通道：启用时 review 用蓝轨、blocked/high 用红轨；禁用时不得用其他装饰线代替。主题的通用 `accent` 不能覆盖阻断语义。
 
 Global 高容量页面优先使用共享组件：`evidenceBoard`、`compactKpiRail`、`engineeringVariableTable`、`deltaCompare`。这些组件属于同一个共享库。不要为 Base、Base2、Global 复制 renderer；让 renderer 读取主题签名和 `contentFidelity` 参数。
 
@@ -44,11 +44,40 @@ Base2 的发布态视觉锚点是 `docs/theme-samples/02-base2-contact-sheet.jpg
 
 - 内容页通常由 2–3 个有明确职责的大区组成，并有一个占主导的证据板、机制核心、风险路由或审计面板。
 - 普通支撑信息进入灰蓝内嵌层；不要把所有信息提升成同权重、同圆角、同阴影的卡片。
-- `review` 是中性卡面 + 蓝色状态轨；`blocked`、当前 Gate、显式 active 或决策边界才使用淡红底与红描边。
-- 页面底部的 decision/boundary band 是主体闭环的一部分。无结论带时，蓝图必须解释为什么正文仍能在安全区内形成完整的纵向视觉中心。
+- `review` 是中性卡面 + 明确标签；`blocked/high`、当前 Gate、显式 active 或决策边界才使用淡红底与红描边。rail 只有在项目启用并且确有状态时才出现。
+- 主 surface 使用一层轻阴影；support、inset、evidence row 和 control 保持平面。阴影层级按角色而不是按矩形数量决定。
+- 图形是主体，但至少存在一种承担关系的线性结构：连接线、时间轴、层级枝干、泳道边界、矩阵/表格规则或同等清晰的线性组织。
+- decision/boundary band 是可选语义组件，不是每页结构。无结论带时，标题下副标题或正文核心必须完成判断，并让主体自然使用下部安全区。
 - 当页面同时出现红色激活面和蓝色 rail 时，必须证明它们表达两个不同且不冲突的语义；“review 被通用 hot 逻辑染红”直接判为失败。
-- 状态名优先于通用 `active/hot` 标记：`review + active` 仍是中性面 + 蓝 rail；`high/current/Gate` 归一为 blocked 危险语义。角色名、职责名或类别名不构成状态，不能触发 rail。
-- 共享组件优先使用 `statusCard`、`barCard`、`insetRow`、`conclusionBand`；五阶段治理链可使用 `base2GovernanceChain`。页面专属构图仍应复用这些语义积木。
+- 状态名优先于通用 `active/hot` 标记：`review + active` 仍是中性面；`high/current/Gate` 归一为 blocked 危险语义。角色名、职责名、类别名和编号不构成状态，不能触发 rail。
+- 共享组件优先使用 `surface`、`insetRow` 与关系组件；只有真实状态/风险才使用 `statusCard`、`barCard`，只有真实决策/边界才使用 `conclusionBand`。
+
+## 修改后的视觉连续性
+
+`delta-revision` 不能只验证“哪些文件改了”。revision baseline 还会记录主题、archetype、theme features、primary shape class、视觉路线以及 `DESIGN.md`/`visual-direction.md`/theme/components 的摘要。
+
+- 纯内容修改默认保留这些视觉签名；未在 pageMap 中声明的主题、archetype、shape class 或视觉路线变化直接阻塞。
+- 修改页占整稿较大比例，或 change[] 明确涉及布局、主题、阴影、线条、卡片、颜色、rail 等视觉语言时，自动升级为视觉改版。
+- 多页视觉改版必须在本轮 revision contract 之后重新批准锚点，并在终版触发 fresh visual-designer 全稿复核。
+- 共享主题、组件、`DESIGN.md` 或 `visual-direction.md` 变化还必须重新批准 theme/layoutBlueprint，并按 Gate 7 扩大重渲。
+- 主题保真验证会把 `page.json.themeFidelity.composition` 与 `page.js` 的实际结构信号交叉核对；仅声明 feature 名称不能通过。
+
+Base2 新建页或视觉改版页的 `composition` 至少声明：
+
+```json
+{
+  "majorRegions": 2,
+  "primaryVisualCore": true,
+  "meaningfulLines": 2,
+  "shadowedPrimarySurfaces": 1,
+  "flatSupportLayers": 2,
+  "decorativeRails": 0,
+  "semanticStateRails": 0,
+  "statusStates": 0
+}
+```
+
+矩阵页面可以额外声明 `matrixPurpose: true`；否则 6 个以上同尺寸卡片的均匀网格按卡片墙阻塞。
 
 ## page-specific-custom 证据
 

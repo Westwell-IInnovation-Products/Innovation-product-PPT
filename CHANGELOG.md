@@ -2,6 +2,15 @@
 
 本文件记录实际发布或形成可追溯快照的版本。未列出的 beta 序号未形成独立公开版本，不补写不存在的发布内容。
 
+## 0.6.0-beta.27 - 2026-07-29
+
+- 增加增量修改的视觉连续性保护：revision baseline 记录主题、archetype、shape class、视觉路线与设计系统哈希；未声明的视觉语言变化会阻塞，跨多页视觉改版自动要求新锚点和终版 visual-designer 复核。
+- 三套主题统一禁止“修改后退化成卡片墙”。Base2 新增图形/线条融合与角色化阴影合同：主 surface 使用单层轻阴影，support/inset/control 保持平面，均匀卡片阵列和装饰 rail 直接失败。
+- Base2 的状态 rail 和底部 decision band 改为按语义选用，不再当作每页必备装饰；项目可以通过 `theme.rail.enabled=false` 禁用 rail，状态仍由卡面、描边、文字标签表达。
+- 主题保真自测新增 Base、Base2 的正反例；验证器把 page contract 与实际 `page.js` 结构信号交叉核对，避免只写声明字段就通过。
+- 终版事件规划在视觉改版影响多页、主题或共享设计系统时自动拉起 fresh visual-designer；纯内容修改仍保持增量短流程。
+- 合并本机已验证的主题审计稳定时间戳修复，语义未变化时不再反复刷新 `generatedAt`。
+
 ## 0.6.0-beta.26 - 2026-07-29
 
 - 修复 `statusCard` 的状态优先级：`review + active` 必须保持中性卡面与蓝色 rail；`blocked`、`high`、`current`、`Gate` 和无显式状态的 active 统一使用淡红面、红色描边与红色 rail。

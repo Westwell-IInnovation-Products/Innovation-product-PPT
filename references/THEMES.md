@@ -118,8 +118,8 @@ const THEME = {
 | 标题系统 | 实心红条,标题为红 | 与 Base 相同的品牌 chrome | 点线天蓝,标题为藏青 |
 | 页脚 | 红条 | 红条 | 图片字标页脚 |
 | 封面 | 暖底,右对齐红标题 | 暖底,右对齐红标题 | 项目审批的满幅图片,或干净的白色极简 |
-| 形状 / 层级 | 克制扁平,**主题强制**:`container = { round:true, radius:8, shadow:false }` | 主卡 18–22px、内嵌 12–14px、单层轻阴影(默认 `container.shadow:true`) | 取默认 container,未强制扁平 |
-| 结论带 | `conclusion:"plain"`,居中红字、无容器 | `conclusion:"band"`,描边圆角带 + 眉标 | 默认 `plain` |
+| 形状 / 层级 | 克制扁平,**主题强制**:`container = { round:true, radius:8, shadow:false }` | 主卡 18–22px、内嵌 12–14px；主 surface 单层轻阴影，support/inset/control 平面 | 取默认 container,未强制扁平 |
+| 结论表达 | 默认正文或朴素文字结论 | 默认正文闭环；确有决策/边界语义时可用描边 decision band | 默认正文或 `plain` |
 | 字体 | 雅黑 + Century Gothic | 雅黑 + Century Gothic | Century Gothic 英文优先 + 雅黑 |
 | 选择信号 | 企业内部、管理与方法分享 | 证据板、状态轨、机制链、决策路径需要柔和纵深 | 国际、客户、正式说明 |
 
@@ -139,15 +139,16 @@ const THEME = {
 
 - Base2 是 Leander Base 的柔和纵深变体：品牌色、logo、页眉、页脚、封面和封底保持一致，不建立第二套组件库。
 - 圆角按层级使用：主卡 `18px`、大面板 `22px`、内嵌支撑板 `14px`、控件 `12px`；不要让所有形状使用同一个半径。
-- 阴影只有单层轻阴影。普通卡片用低透明度、短偏移；焦点节点可以使用更小 blur 的聚焦阴影。禁止渐变、发光、多层投影和厚重浮层。
+- 阴影只有单层轻阴影，并按语义角色使用：`card/panel/evidencePanel/statusCard/outcomeCard/Gate` 等主 surface 可以有阴影；`support/inset/insetRow/control` 必须保持平面。禁止给所有矩形统一加阴影，也禁止渐变、发光、多层投影和厚重浮层。
 - 淡红 `accentSoft` 只编码当前态、Gate、阻塞、风险或结论带。普通编号、装饰圆点和中性容器继续使用藏青 / 灰色。
-- 状态轨同时使用位置、线型 / 描边和标签表达状态，颜色不是唯一通道；活动态可以淡红填充 + 红描边，非活动态保持白 / 灰蓝。
-- **容器语言**：沿用默认 `container = { round: true, shadow: true }`，配合 `shape.radius` 的分级半径，因此**同样的组件调用**在 Base2 下自动出圆角带阴影、在 Base 下自动变扁平——不要为了"看起来像 Base2"在页面里手写圆角和阴影。
-- **结论带**用 `signature.conclusion: "band"`（描边圆角带 + 全大写眉标），配 `ui.conclusionBand({ eyebrow, text })`。
-- **优先复用 signature 元件**：`ui.barCard()` 表达风险档位 / 路由结果 / 状态行，`ui.regionEyebrow()` 给每个区块加分区眉标。这两者是 Base2 的招牌词汇，能省掉大量手画方块。
-- **状态语义固定**：`review` 使用白色/中性卡面 + 蓝色状态轨；`blocked`、当前 Gate 或显式 `active` 才使用淡红填充 + 红色描边。禁止把 `review` 先画成红色激活卡，再叠加蓝色 rail。
-- **状态优先级固定**：命名状态优先于通用 `active/hot`。`review + active` 仍保持中性卡面 + 蓝色 rail；`blocked/high/current/Gate` 统一使用 danger 面、描边与 rail。rail 只属于真实状态，不属于 reviewer、owner 或类别标签。
-- **主体构图固定**：内容页优先 2–3 个大区、一个主证据板或决策核心、灰蓝内嵌层和一个底部决策带。不能用一组同尺寸圆角卡替代主体关系；结论带不能无故删除后把正文悬在上半页。
+- 状态轨是可选的状态编码，不是 Base2 装饰。启用时必须同时使用位置、描边和标签表达真实状态；项目可设 `theme.rail.enabled=false`，此时状态只用卡面、描边、标题色和文字标签表达。
+- **容器语言**：沿用圆角和分级半径，但阴影由 `componentStyle.<role>.elevation` 决定，不由“Base2 所有容器都悬浮”的全局假设决定。优先调用 `ui.surface(role)` / `ui.insetRow()`，不要在页面里重新定义一套圆角和阴影。
+- **图形/线条平衡**：Base2 以图形 surface 为主，但每张内容页仍需至少一种承担信息关系的线性结构，例如连接线、矩阵规则、时间轴、层级枝干、泳道边界或表格行。线必须解释关系，不能只是边缘装饰。
+- **结论表达**默认放在标题下副标题或正文闭环。只有页面确实存在决策、边界、Gate 或审批输出时，才使用 `ui.conclusionBand()`；不得批量给每页加底部总结框。
+- **优先复用语义元件**：`ui.surface()`、`ui.insetRow()`、`ui.regionEyebrow()` 和关系组件负责层级；`ui.statusCard()` / `ui.barCard()` 只用于真实状态或风险档位。
+- **状态语义固定**：`review` 使用白色/中性卡面、普通描边和明确标签；若项目启用 rail，可附蓝色状态轨。`blocked/high/current/Gate` 使用 danger 面、描边和文字标签；只有 rail 已启用时才附红轨。禁止把 `review` 先画成红色激活卡，再叠加蓝色 rail。
+- **状态优先级固定**：命名状态优先于通用 `active/hot`。rail 只属于真实状态，不属于 reviewer、owner、类别、编号或装饰分组。
+- **主体构图固定**：内容页优先 2–3 个大区、一个主证据板/机制核心/决策核心、灰蓝内嵌层和完整纵向视觉中心。不能用一组同尺寸圆角卡替代主体关系；没有 decision band 时，正文核心应自然延伸到下部安全区。
 - 发布态视觉基准见 `docs/theme-samples/02-base2-contact-sheet.jpg` 和对应可编辑 `02-base2-reference.pptx`。它们是 Base2 的布局语言参考，不是项目业务内容模板。
 - 适合证据板、状态轨、机制链、协作流程、治理边界和决策路径。若页面只是常规企业汇报且不需要层级纵深，优先 Leander Base。
 
@@ -167,11 +168,11 @@ const THEME = {
 
 只有**一个**组件库(`components/ppt-components.js`,即 `makeComponents(pptx, theme)` 闭包),被所有主题共享——不是每个主题一个库。
 
-主题同时拥有两类 signature：`signature` 控制 chrome，`contentFidelity` 控制主体构图。详细合同见 `THEME-FIDELITY.md`。Base 偏好线性规则与扁平解释；Base2 偏好分层证据板、状态轨和单层纵深；Global 偏好证据主画面、紧凑 KPI rail、工程变量表、Δ 对比和显式待仿真状态。只替换颜色、字体、标题线和页脚不算主题保真。
+主题同时拥有两类 signature：`signature` 控制 chrome，`contentFidelity` 控制主体构图。详细合同见 `THEME-FIDELITY.md`。Base 偏好线性规则与扁平解释；Base2 偏好图形 surface 与有意义线条融合、角色化单层纵深；Global 偏好证据主画面、紧凑 KPI rail、工程变量表、Δ 对比和显式待仿真状态。只替换颜色、字体、标题线和页脚不算主题保真。
 
 - **内容组件自动换主题。** 每个内容组件都读 `theme.colors` / `theme.fonts`;需要几何和纵深时还读取 `theme.shape` / `theme.elevation` / `theme.stroke`。所以选一个主题就会给整份 deck 重新上色和调整层级,无需改动组件。组件加一次,在每个主题里都能用。
-- **容器语言由 `theme.container` 单点强制。** `rect()` 与 `shp()` 是唯一收口点,读 `container = { round, radius, shadow }`:`shadow:false` 时整份 deck 一律不出阴影;`round:false` 时不走圆角矩形;`radius` 是主题没有 `shape.radius` 时的兜底半径。这让"扁平 vs 纵深"变成**选了主题就生效**的结果,而不是画页面时靠自觉。未声明 `container` 的主题取默认 `{ round:true, shadow:true }`,行为与历史一致；`leander-global` 可按其设计语言覆盖容器策略。
-- **三个可直接复用的 signature 元件。** `ui.regionEyebrow()`(letter-spaced 全大写分区眉标)、`ui.barCard()`(左色条状态卡,`tier=low/mid/high/done/warn`,位置+色条+填充+标签四通道表达状态)、`ui.conclusionBand()`(结论带,按 `signature.conclusion` 在 plain / band 之间切换)。三者都走 `rect()`,所以在 Base 下自动扁平、在 Base2 下自动圆角带阴影,页面层不需要写主题分支。
+- **容器语言由主题和语义角色共同收口。** `theme.container` 决定是否允许圆角/阴影，`theme.componentStyle.<role>.elevation` 决定某个 surface 是否真正投影。Base 强制扁平；Base2 允许主 surface 投影但让 support/inset/control 平面；Global 按证据结构决定。不要把“主题允许阴影”误解为“所有形状都要阴影”。
+- **按语义复用 signature 元件。** `ui.regionEyebrow()` 可用于分区；`ui.barCard()` 只用于风险/状态档位；`ui.conclusionBand()` 只用于真实决策或边界。它们不是每页配额，不能用来把所有内容页做成同一种卡片墙。
 - **四个共享高容量工程模式。** `evidenceBoard()`、`compactKpiRail()`、`engineeringVariableTable()`、`deltaCompare()` 共用一套 renderer,并读取主题签名调整密度/几何。Global 用它们避免平均铺满的大卡片阵列；Base/Base2 仍可在关系匹配时复用。
 - **Chrome 跟随主题 `signature`。** 只有 chrome(`cover` / `header` / `footer` / `closing`)随主题变化,由主题 token 里的一个 `signature` 块驱动(`titleColor`、`headerRule`、`footer`、`divider`、`cover`、`closing`、`coverPhoto`)。这就是 Base 和 Global 在不 fork 库的情况下看起来确实不同的原因。`footer` 支持 `bar` / `thin` / `wordmark` / `none`;`divider` 支持 `big-number` / `white-underline`;`conclusion` 支持 `plain`(居中红字、无容器)/ `band`(描边圆角带 + 眉标)。要加一个新主题:加 token + 一个 `signature`;不要复制组件。
 - **封面和尾页是纯 chrome 页面。** `cover` 角色必须且只能以 `ui.cover()` 生成，`closing` 角色必须且只能以 `ui.closing()` 生成；页面不得用 custom 构图替代、不得覆盖主题 tagline、不得通过局部扩展槽继续堆行动或证据。需要额外解释时，放到相邻内容页，不要稀释主题首页/尾页。

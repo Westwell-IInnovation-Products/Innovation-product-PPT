@@ -1,0 +1,49 @@
+{
+  "id": "base2-card-only-drift",
+  "contentDensity": "high",
+  "visualSelection": {
+    "selectedRoute": {
+      "route": "page-specific-custom",
+      "name": "custom-composition"
+    }
+  },
+  "themeFidelity": {
+    "version": "theme-fidelity.v1",
+    "theme": "base2",
+    "archetype": "base2.layered-evidence-board",
+    "features": [
+      "layered-evidence-board",
+      "meaningful-rule-integration",
+      "role-based-elevation",
+      "region-eyebrows"
+    ],
+    "composition": {
+      "majorRegions": 4,
+      "primaryVisualCore": false,
+      "meaningfulLines": 0,
+      "shadowedPrimarySurfaces": 8,
+      "flatSupportLayers": 0,
+      "decorativeRails": 4,
+      "semanticStateRails": 4,
+      "statusStates": 0,
+      "uniformCardGrid": {
+        "uniform": true,
+        "rows": 2,
+        "columns": 4,
+        "count": 8,
+        "emptyCards": 0
+      }
+    }
+  },
+  "_testModuleFidelity": {
+    "theme": "base2",
+    "archetype": "base2.layered-evidence-board",
+    "features": [
+      "layered-evidence-board",
+      "meaningful-rule-integration",
+      "role-based-elevation",
+      "region-eyebrows"
+    ]
+  },
+  "_testModuleSource": "ui.card(slide, items[0]); ui.card(slide, items[1]); ui.card(slide, items[2]);"
+}

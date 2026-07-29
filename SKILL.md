@@ -16,7 +16,7 @@ description: "Create, redesign, standardize, review, or polish editable PPTX dec
 1. 每个新的 Innovation-Products_ppt 任务,都要先用 `node <skill-root>/scripts/init-scaffold.js <project-root> <create|redesign|review>` 初始化一个干净的框架。该命令会复制发布态干净模板、安装锁定版依赖、运行 environment doctor,并创建 Gate 0。Gate 0 仍会拒绝已经很重、已 compact 或不可观测的旧任务,避免在错误基线上开新 deck。如果框架已存在,在出片之前先运行 `npm ci`、`node tools/environment-doctor.js`,再运行 `node tools/workflow-gate.js init <create|redesign|review>`。
 2. 每个被恢复(resumed)的项目,先运行 `node <skill-root>/scripts/sync-scaffold-tools.js <project-root>`,再运行 `node tools/workflow-gate.js status`。该 sync 只更新受管的 workflow/QA 工具,把旧版 agent-collaboration 证据迁移到 V3(并留一份审计备份),同时保留项目的 pages、theme、components、config、内容、state 和审批。迁移绝不伪造"新评审"证据:缺失的 V3 事件摘要、agent-run receipt、来源内容哈希,或缺失的锚点/终审独立运行,仍然是阻塞项。从工具报告的 gate 继续;绝不根据旧文件或对话语气推断审批已通过。
    - 对于在 workflow receipt 机制出现之前就创建的旧 Innovation-Products_ppt 框架,只能迁移到 `outline|blueprint|anchor|production`,并且必须显式提供 `--run-id`、`--receipt-dir` 和迁移说明。`final` 不能直接迁移;迁移后必须重新执行终版门禁。绝不对新任务使用 migrate。
-3. 既有 deck 的反馈、改版、润色、增删页或重排默认采用 `delta-revision`,不是整套重做。先读 `references/REVISION-MODE.md`,建立并验证 `state/revision-contract.json` 与逐页 preserve/modify/reorder/delete/add 映射。**当存在已验证的 `delta-revision` 合同时,`workflow-gate.js init redesign` 会把上一轮已批的 `designTermsState`/`theme`/`layoutBlueprint`/`anchorSample`/`productionMode` 结转下来(以新 `runId` 重新签章,并写 `carriedFromRunId` 溯源),只重开 `plan` 让用户确认本轮修订范围(合同 pageMap)——不重走蓝图/主题/锚点,不重跑整片。随后走增量短流水线:只 patch 合同里 `modify`/`add` 的页 → 只重渲这些页 → 只对变化页重做人工 QA → build；但正式终验的机器几何审计始终覆盖全部当前页面，`preserve` 只限制编辑，绝不豁免验证。仅当本轮反馈真的动了主题、共享 token 或共享组件时,才显式重新审批对应检查点并按 Gate 7 扩大重渲;不要用结转蒙混掉一次本该发生的共享重渲。** `full-rebuild` 或首次 `create` 仍然重置全部检查点。只有用户明确表示不沿用原版并留下证据时才允许 `full-rebuild`;在验证通过前不得移动、清空或替换既有 `pages/`。
+3. 既有 deck 的反馈、改版、润色、增删页或重排默认采用 `delta-revision`,不是整套重做。先读 `references/REVISION-MODE.md`,建立并验证 `state/revision-contract.json` 与逐页 preserve/modify/reorder/delete/add 映射。**当存在已验证的 `delta-revision` 合同时,`workflow-gate.js init redesign` 会把上一轮已批的 `designTermsState`/`theme`/`layoutBlueprint`/`anchorSample`/`productionMode` 结转下来(以新 `runId` 重新签章,并写 `carriedFromRunId` 溯源),只重开 `plan` 让用户确认本轮修订范围(合同 pageMap)。纯内容修改走增量短流水线；一旦 pageMap、实际页面签名或共享文件表明视觉语言发生变化，必须按 `visualImpact` 扩大读取、锚点和评审范围。多页视觉改版自动要求本轮新锚点与终版 visual-designer，主题/共享 token/共享组件变化还要重新审批 theme/layoutBlueprint 并按 Gate 7 全量重渲。不得用结转状态掩盖视觉改版，也不得把“只改页面代码”误判成不会偏离主题。** `full-rebuild` 或首次 `create` 仍然重置全部检查点。只有用户明确表示不沿用原版并留下证据时才允许 `full-rebuild`;在验证通过前不得移动、清空或替换既有 `pages/`。
 4. 完整成片(full-deck)请求必须按此顺序推进:brief → 页面 outline → 设计/术语/state → theme → 布局蓝图 → 标杆样张 → production 模式 → 分批/全量生产 → 渲染 QA → 终版 build。
    - 在 brief/outline 完成后、审批 `plan` 之前,必须读 `references/REQUIREMENTS-TRACE.md`,把原始用户消息或历史任务保存成项目内快照,建立并 seal `state/requirements-contract.json`。Gate 1 审批必须绑定该合同,而不是只绑定被压缩后的 outline。
 5. 在 `plan`、`layoutBlueprint`、`anchorSample`、`productionMode` 这几处停下来,取得用户的明确审批。先用 `tools/approval-receipt.js create` 把当前 `runId`、宿主提供的 Codex task/message ID、审批消息哈希和被审批产物哈希绑定为 receipt,再运行 `node tools/workflow-gate.js approve <checkpoint> [A|B|C] --receipt <receipt-file> --note "<user confirmation>"`。绝不把 note 本身当审批,也不手工编辑审批状态。`pending`、缺 receipt、产物已变化或来自另一个 `runId` 的审批都无效。
@@ -37,7 +37,7 @@ description: "Create, redesign, standardize, review, or polish editable PPTX dec
 - 内容的丰富度是自适应的。密集的机制/证据页可以承载更多细节;聚焦页、转场页、图片主导页、大字号页,在 `whitespaceIntent` 和 `densityRationale` 解释了理由的前提下,可以保留大量刻意设计的留白。
 - 任何多页 deck,都要在从 `templates/innovation-products-ppt-scaffold/` 复制出的真实框架里工作。
 - 一个文件夹一页:`pages/<id>/{page.js,page.json,qa-result.json,qa.md,out/}`。
-- 组件是积木,不是页面模板:每一张内容页都由一个标题带、2-3 个信息区、一个结论带组成;单组件页仅限封面和章节分隔页。只有当图片承载真正的解释价值时,才使用图片槽位。
+- 组件是积木,不是页面模板:每一张内容页都由标题带、2–3 个有职责的大区和一个主证据/主机制/主决策核心组成。结论可以放在标题下副标题、正文闭环或确有语义的 decision band 中；禁止为了凑结构给每页强塞底部总结框。单组件页仅限封面和章节分隔页。只有当图片承载真正的解释价值时,才使用图片槽位。
 - 在布局蓝图里为每张内容页声明 `primaryShapeClass`,取值来自受控集合(diamond-fanout、funnel-converge、timeline、grid-matrix、tree-hierarchy、layered-rail、swimlane、radial-hub、evidence-board、big-type、cover)。它比 `skeletonFamily` 更粗,而且不能是自由字符串,这样会渲染成同一形状的页面就会显眼地"雷同",而不是靠各自不同的标签藏起来。声明的 class 必须与页面实际渲染出的形状一致;共享同一 class 的两页必须在真实构图上不同,而不只是把 `visualSignature` 重新贴个标签。`lint-layout-blueprint.js` 会给复用设上限;`render-diversity.js` 会强制同 class 的页面进入必做的并排对比评审(占用率类特征看不出形状 gestalt,所以这是唯一能抓住"两张都是菱形"的守卫)。
 - 画内容页之前先跑视觉选路线:`node tools/select-visual-route.js pages/<id>/page.json --write`。
 - render 之前先跑中文动态 QA:`node tools/build-qa-profile.js pages/<id>/page.json --write`。
@@ -47,7 +47,7 @@ description: "Create, redesign, standardize, review, or polish editable PPTX dec
 - 对既有 deck,在新的 `redesign` Gate 0、归档现有页面或改变内容基线之前,必须运行 `node tools/revision-mode.js verify`。页数变化、新增/删除页、主题确认或概括性的“继续”都不能单独作为 full rebuild 授权或跨 checkpoint 批准。
 - 每张内容页的 `page.js` 都必须导出 `visualBinding: { route, name }`,并与 `page.json.visualSelection.selectedRoute` 一致。若某条组件库路线所绑定的组件在运行时 trace 里不存在,只触发一条评审警告(确认这是不是有意的手工构图),不构成阻塞。
 - 内容页必须通过 `tools/verify-theme-fidelity.js`。`page-specific-custom` 必须在 `page.json` 与 `page.js` 声明同一 `theme-fidelity.v1` 合同,落实至少三个、跨至少两类的内容层主题特征；只换颜色、字体或 chrome 不算。Global 高容量页禁止均匀空指标卡墙,优先证据主画面、紧凑 KPI rail、工程变量表、Δ 对比和显式待仿真状态。
-- Base2 页面必须遵守发布态视觉锚点：`review` 保持中性卡面并用蓝色状态轨，只有 `blocked`、当前 Gate、显式 active 或决策边界使用淡红面；主体使用 2–3 个大区、内嵌层和底部决策带，禁止用通用圆角卡墙替代页面关系。具体合同见 `references/THEMES.md` 与 `references/THEME-FIDELITY.md`。
+- Base2 页面必须遵守发布态视觉锚点：图形是主体但必须与有意义的规则线、连接线、矩阵线或层级线融合；主 surface 使用一层轻阴影，support/inset/control 保持平面。`review` 保持中性卡面；`blocked/high` 使用危险面、描边和明确标签。状态 rail 与 decision band 只在确有对应语义时使用，项目可禁用，绝不能当装饰。主体使用 2–3 个大区和一个主证据/机制/决策核心，禁止用通用圆角卡墙替代页面关系。具体合同见 `references/THEMES.md` 与 `references/THEME-FIDELITY.md`。
 - `tiny/micro` 只能承担短标签、图例、来源或图内注释，不能批量承载长正文；高卡片不得把标题/正文钉在顶部、标签钉在底部而留下大面积中段空洞。上述问题由几何审计 V2 作为 P1 阻断。
 - 主题 chrome 是例外且实行硬绑定：`cover` 必须且只能调用一次 `ui.cover()`，`closing` 必须且只能调用一次 `ui.closing()`；禁止 custom 覆盖、局部扩展和显式 tagline 覆盖。静态页面合同与运行时 trace 任一不符都阻塞 render、verify 和 build。
 - 报告质量之前先 render。瞄一眼代码不算 QA。
@@ -220,7 +220,7 @@ node tools/deck.js build
 - 英文/数字:可用时用 Century Gothic。
 - 内部/公司 deck:从 `leander-base` 起步。
 - 对外/国际/面向客户 deck:从 `leander-global` 起步。
-- 需要圆角证据板、状态轨和克制轻阴影的内部机制 deck:优先考虑 `Base2`。
+- 需要圆角证据板、图形/线条融合、角色化轻阴影和明确状态层级的内部机制 deck:优先考虑 `Base2`。
 - 红色/天蓝是语义强调色,不是装饰。
 - 每张内容页都需要一个真实的视觉解释:图示、图表、图片、时间线、矩阵、dashboard mockup、机制图或等价物。
 

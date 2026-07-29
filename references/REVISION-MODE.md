@@ -42,6 +42,7 @@
 2. 对 `delta-revision`，完成逐页映射：`preserve`、`modify`、`reorder`、`delete`、`add`。
 3. 每个旧页面必须且只能出现一次；每个非删除的新页面 ID 必须唯一。
 4. 每条 `modify` 应区分“反馈要求改变的部分”和“必须保留的部分”。
+   - `change[]` 涉及布局、构图、主题、颜色、阴影、线条、卡片、rail、视觉路线或 shape class 时，必须直接写明；不要用“优化一下”隐藏视觉改版。
 5. 在编辑前运行 `node tools/revision-mode.js verify --intent redesign`,验证合同结构与授权；它不会要求尚未发生的 diff。
 6. 初始化新的 redesign receipt,让用户通过 approval receipt 审批本轮 `pageMap`,然后只修改映射允许的页面。
    - 同时把 pageMap 对应到 requirements contract 的需求 ID；删除页面不等于删除需求，需求必须迁移到其他 planned target，或以用户明确证据标记 deferred/removed。
@@ -62,7 +63,7 @@
 3. 再运行 `node tools/revision-mode.js verify`,确认 `preserve` 未变、`modify` 确有变化、`add/delete/reorder` 与真实目录一致,且没有未映射页面。
 4. `node tools/deck.js verify --final` 与 `build`。因为下游检查点仍是带回执结转的 approved，短流水线可以直达 build，不必重画蓝图、不必重出锚点、不必整片重评。
 
-**关键警示：** 如果本轮反馈实际动了主题、共享 token 或共享组件，必须**显式重新审批**对应检查点（重新 `approve theme`/`layoutBlueprint`），并按 Gate 7 对受影响页做整片级重渲。不要因为它被结转成了 approved 就跳过这次本该发生的共享重渲——结转只服务于“下游没变”的常见情形，不能用来掩盖一次真实的共享改动。
+**关键警示：** revision-mode 会从 pageMap、baseline 视觉签名和共享文件摘要计算 `visualImpact`。纯内容修改保持短流水线；多页视觉改版要求本轮新锚点和终版 fresh visual-designer；主题、共享 token、共享组件、`DESIGN.md` 或 `visual-direction.md` 变化必须**显式重新审批**对应检查点（重新 `approve theme`/`layoutBlueprint`），并按 Gate 7 对受影响页做整片级重渲。不要因为文件只改在 `pages/` 下就把视觉改版误判为纯内容修改。
 
 ## 基线操作规则
 
@@ -121,6 +122,8 @@
   ]
 }
 ```
+
+初始化后的 baseline 还会记录 `visualSignature`、`implementationVisualSignature` 和 `visualSystem`。终验时，如果页面的 theme/archetype/primaryShapeClass/selectedRoute，或 `page.js` 中 surface/card/line/connector/shadow/rail 等结构调用发生变化，但该页 `change[]` 没有声明视觉改版，`revision-mode.js verify` 会阻塞。多页视觉改版还会核对 anchorSample 是否在本轮合同创建后重新批准。
 
 ## 失败即停止
 

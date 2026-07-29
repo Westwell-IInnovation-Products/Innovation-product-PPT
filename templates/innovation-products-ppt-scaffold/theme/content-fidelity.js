@@ -46,6 +46,8 @@ const profiles = {
       "layered-evidence-board": { category: "composition", description: "Use one primary evidence plane plus inset supporting evidence." },
       "state-rail": { category: "state", description: "Encode current, blocked, done, and pending states through position, outline, and labels." },
       "tiered-radius-depth": { category: "depth", description: "Use distinct panel, card, and inset levels with one restrained elevation layer." },
+      "role-based-elevation": { category: "depth", description: "Apply one light shadow to primary surfaces while support, inset, row, and control layers stay flat." },
+      "meaningful-rule-integration": { category: "composition", description: "Combine form-led surfaces with connectors, matrix rules, timelines, hierarchy branches, swimlane boundaries, or equivalent relationship-bearing lines." },
       "region-eyebrows": { category: "hierarchy", description: "Use compact region labels to separate evidence, mechanism, and decision zones." },
       "semantic-focus-panel": { category: "state", description: "Reserve the soft focus panel for the current gate, risk, blockage, or conclusion." },
       "decision-band": { category: "hierarchy", description: "Resolve a decision or governance page with a bounded conclusion band." }
@@ -60,17 +62,20 @@ const profiles = {
       "uniform-radius-card-wall",
       "multi-layer-shadow-stack",
       "decorative-soft-red",
-      "equal-weight-card-array"
+      "equal-weight-card-array",
+      "decorative-state-rail",
+      "all-surfaces-shadowed"
     ],
+    strictRequiredFeatures: ["meaningful-rule-integration", "role-based-elevation"],
     componentFeatureMap: {
       stateFlow: ["state-rail", "semantic-focus-panel"],
       stageGateRail: ["state-rail", "region-eyebrows"],
-      barCard: ["semantic-focus-panel", "tiered-radius-depth"],
-      statusCard: ["state-rail", "tiered-radius-depth"],
+      barCard: ["semantic-focus-panel", "tiered-radius-depth", "role-based-elevation"],
+      statusCard: ["state-rail", "tiered-radius-depth", "role-based-elevation"],
       conclusionBand: ["decision-band", "tiered-radius-depth"],
-      base2GovernanceChain: ["layered-evidence-board", "region-eyebrows", "semantic-focus-panel", "decision-band"],
-      evidenceBoard: ["layered-evidence-board", "region-eyebrows"],
-      engineeringVariableTable: ["state-rail", "tiered-radius-depth"]
+      base2GovernanceChain: ["layered-evidence-board", "region-eyebrows", "semantic-focus-panel", "decision-band", "meaningful-rule-integration", "role-based-elevation"],
+      evidenceBoard: ["layered-evidence-board", "region-eyebrows", "role-based-elevation"],
+      engineeringVariableTable: ["tiered-radius-depth", "meaningful-rule-integration", "role-based-elevation"]
     }
   },
   "leander-global": {
@@ -149,6 +154,9 @@ function selfTest() {
     });
   });
   assert(getContentFidelity("Base2").id === "base2");
+  for (const feature of getContentFidelity("Base2").strictRequiredFeatures) {
+    assert(getContentFidelity("Base2").features[feature], `Base2 strict feature missing: ${feature}`);
+  }
   assert(getContentFidelity("global").id === "leander-global");
   console.log("PASS theme content-fidelity profile contract");
 }

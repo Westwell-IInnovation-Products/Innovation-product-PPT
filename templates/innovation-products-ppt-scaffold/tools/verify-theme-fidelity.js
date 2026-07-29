@@ -8,6 +8,7 @@ const ROOT = path.join(__dirname, "..");
 const PAGES = path.join(ROOT, "pages");
 const OUTPUT = path.join(ROOT, "output");
 const { getContentFidelity, normalizeThemeId } = require("../theme/content-fidelity");
+const { classifyVisualImpact } = require("./revision-mode");
 const COMPONENT_INDEX = readJson(path.join(__dirname, "component-index.min.json"), { components: [] });
 
 function readJson(file, fallback = null) {
@@ -33,6 +34,27 @@ function moduleEvidence(pageDir) {
   } catch {
     return null;
   }
+}
+function moduleSource(pageDir) {
+  const file = path.join(pageDir, "page.js");
+  return fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
+}
+function sourceSignals(source = "") {
+  const meaningfulLines = (source.match(/\b(?:ui\.)?(?:line|connector|timeline|pipeline|processFlow|swimlane|matrix|tree|hierarchy)\s*\(/g) || []).length;
+  const primaryShadow = /\b(?:surface|card|panel|evidencePanel|outcomeCard|gate|decisionGate)\s*\([^)]*(?:role\s*:\s*["'](?:primary|evidence|decision|activeState)["']|shadow\s*:\s*true)/s.test(source)
+    || /\b(?:barCard|statusCard|evidenceBoard|base2GovernanceChain)\s*\(/.test(source);
+  const flatSupport = /\b(?:insetRow|control|supportLayer)\s*\(/.test(source)
+    || /\b(?:surface|card|panel)\s*\([^)]*(?:role\s*:\s*["'](?:support|inset|row|control)["']|shadow\s*:\s*false)/s.test(source);
+  const railCalls = (source.match(/\b(?:semanticRail|statusCard|barCard)\s*\(/g) || []).length;
+  return { meaningfulLines, primaryShadow, flatSupport, railCalls };
+}
+function inferSourceFeatures(themeId, source = "") {
+  if (themeId !== "base2") return [];
+  const signals = sourceSignals(source);
+  return [
+    ...(signals.meaningfulLines > 0 ? ["meaningful-rule-integration"] : []),
+    ...(signals.primaryShadow && signals.flatSupport ? ["role-based-elevation"] : [])
+  ];
 }
 function inputDigest(pageDir, themeId = "") {
   const hash = crypto.createHash("sha256");
@@ -84,13 +106,18 @@ function inspectPage(page, options = {}) {
   const custom = route === "page-specific-custom";
   const componentName = selectedComponent(page);
   const moduleContract = options.moduleThemeFidelity || null;
+  const source = options.moduleSource || "";
+  const signals = sourceSignals(source);
   const composition = contract?.composition || {};
   const declared = featureIds(contract?.features);
   const moduleFeatures = featureIds(moduleContract?.features);
   const componentMeta = (COMPONENT_INDEX.components || []).find(item => text(item.name).toLowerCase() === componentName.toLowerCase());
-  const mapped = featureIds(componentMeta?.themeFidelityFeatures?.[themeId] || profile.componentFeatureMap?.[componentName]);
+  const mapped = featureIds([
+    ...(componentMeta?.themeFidelityFeatures?.[themeId] || []),
+    ...(profile.componentFeatureMap?.[componentName] || [])
+  ]);
   const inferred = inferCompositionFeatures(themeId, composition);
-  const implemented = [...new Set([...moduleFeatures, ...mapped, ...inferred])];
+  const implemented = [...new Set([...moduleFeatures, ...mapped, ...inferred, ...inferSourceFeatures(themeId, source)])];
   const validDeclared = declared.filter(id => profile.features[id]);
   const invalidDeclared = declared.filter(id => !profile.features[id]);
   const categories = new Set(validDeclared.map(id => profile.features[id]?.category).filter(Boolean));
@@ -116,6 +143,11 @@ function inspectPage(page, options = {}) {
   const gridCount = Number(grid.count || (Number(grid.rows || 0) * Number(grid.columns || 0)));
   const emptyCards = Number(grid.emptyCards || 0);
   const genericGrid = grid.uniform === true && gridCount >= 6 && emptyCards >= 4;
+  const cardWall = grid.uniform === true
+    && gridCount >= 6
+    && !composition.matrixPurpose
+    && !composition.primaryVisualCore
+    && Number(composition.meaningfulLines || 0) < 1;
   const engineeringEvidence = composition.evidenceDominant
     || Number(composition.tableRows || 0) >= 4
     || Number(composition.deltaPairs || 0) >= 2
@@ -136,6 +168,31 @@ function inspectPage(page, options = {}) {
   if (themeId === "leander-global" && Number(composition.pendingStates || 0) > 0 && Number(composition.inventedPendingValues || 0) > 0) {
     errors.push("pending simulation/measurement states must not contain invented values");
   }
+  if (cardWall) {
+    errors.push("body is a generic uniform card wall without a primary evidence/mechanism/decision core or meaningful relationship lines");
+  }
+  if (themeId === "base2" && options.strictVisualContinuity === true) {
+    const strictFeatures = profile.strictRequiredFeatures || [];
+    const missingStrict = strictFeatures.filter(id => !validDeclared.includes(id));
+    if (missingStrict.length) errors.push(`Base2 visual revision must declare strict features: ${missingStrict.join(", ")}`);
+    const majorRegions = Number(composition.majorRegions || 0);
+    if (majorRegions < 2 || majorRegions > 3) errors.push(`Base2 content page must use 2–3 major regions; got ${majorRegions || 0}`);
+    if (composition.primaryVisualCore !== true) errors.push("Base2 content page must identify one primary evidence, mechanism, or decision core");
+    if (Number(composition.meaningfulLines || 0) < 1) errors.push("Base2 must integrate at least one meaningful connector, rule, branch, timeline, matrix, or hierarchy line");
+    if (Number(composition.shadowedPrimarySurfaces || 0) < 1) errors.push("Base2 must give at least one primary surface a light shadow");
+    if (Number(composition.flatSupportLayers || 0) < 1) errors.push("Base2 support, inset, row, or control layers must include at least one flat layer");
+    if (Number(composition.decorativeRails || 0) > 0) errors.push("Base2 rails are semantic state tools; decorative rails are forbidden");
+    if (Number(composition.semanticStateRails || 0) > Number(composition.statusStates || 0)) errors.push("Base2 semantic rails cannot outnumber actual status states");
+    if (Number(composition.meaningfulLines || 0) > 0 && signals.meaningfulLines < 1 && !mapped.includes("meaningful-rule-integration")) {
+      errors.push("Base2 composition declares meaningful lines but page.js/component evidence does not implement them");
+    }
+    if (Number(composition.shadowedPrimarySurfaces || 0) > 0 && !signals.primaryShadow && !mapped.includes("role-based-elevation")) {
+      errors.push("Base2 composition declares primary elevation but page.js/component evidence does not implement it");
+    }
+    if (Number(composition.flatSupportLayers || 0) > 0 && !signals.flatSupport && !mapped.includes("role-based-elevation")) {
+      errors.push("Base2 composition declares flat support layers but page.js/component evidence does not implement them");
+    }
+  }
   if (!contract && !custom) warnings.push("themeFidelity evidence missing; contact-sheet reviewer must verify the body is not a generic reskin");
 
   const score = Math.min(100, Math.round((implemented.filter(id => profile.features[id]).length / Math.max(1, profile.minimumFeatures)) * 70)
@@ -154,7 +211,7 @@ function inspectPage(page, options = {}) {
     verdict: errors.length ? "FIX-FIRST" : "PASS",
     errors,
     warnings,
-    humanReviewRequired: themeId === "leander-global" || warnings.length > 0,
+    humanReviewRequired: themeId === "leander-global" || options.strictVisualContinuity === true || warnings.length > 0,
     humanReviewInstruction: "Compare the current full-size PNG and contact sheet against approved anchors; verify body composition, not only colors/chrome.",
     inputDigest: options.inputDigest || ""
   };
@@ -168,15 +225,33 @@ function pageDirs(wanted = new Set()) {
   }).sort();
 }
 function writeReport(rows) {
-  const report = {
+  const outputFile = path.join(OUTPUT, "theme-fidelity-audit.json");
+  const semanticReport = {
     version: "theme-fidelity-audit.v1",
-    generatedAt: new Date().toISOString(),
     verdict: rows.some(row => row.verdict !== "PASS") ? "FIX-FIRST" : "PASS",
     humanReviewPages: rows.filter(row => row.humanReviewRequired).map(row => row.pageId),
     pages: rows
   };
+  const previous = readJson(outputFile, null);
+  const previousSemantic = previous ? {
+    version: previous.version,
+    verdict: previous.verdict,
+    humanReviewPages: previous.humanReviewPages,
+    pages: previous.pages
+  } : null;
+  const unchanged = previousSemantic
+    && JSON.stringify(previousSemantic) === JSON.stringify(semanticReport);
+  const report = {
+    ...semanticReport,
+    generatedAt: unchanged && previous.generatedAt
+      ? previous.generatedAt
+      : new Date().toISOString()
+  };
   fs.mkdirSync(OUTPUT, { recursive: true });
-  fs.writeFileSync(path.join(OUTPUT, "theme-fidelity-audit.json"), JSON.stringify(report, null, 2) + "\n", "utf8");
+  const serialized = JSON.stringify(report, null, 2) + "\n";
+  if (!fs.existsSync(outputFile) || fs.readFileSync(outputFile, "utf8") !== serialized) {
+    fs.writeFileSync(outputFile, serialized, "utf8");
+  }
   const md = [
     "# 主题保真审计", "",
     `- 结论：${report.verdict}`,
@@ -199,12 +274,29 @@ function selfTest() {
   const fixtures = path.join(ROOT, "tests", "theme-fidelity");
   const bad = readJson(path.join(fixtures, "global-generic-dashboard.json"));
   const good = readJson(path.join(fixtures, "global-engineering-evidence.json"));
+  const base2Bad = readJson(path.join(fixtures, "base2-card-only-drift.json"));
+  const base2Good = readJson(path.join(fixtures, "base2-line-form-balanced.json"));
   const badResult = inspectPage(bad, { theme: "leander-global", moduleThemeFidelity: bad._testModuleFidelity });
   const goodResult = inspectPage(good, { theme: "leander-global", moduleThemeFidelity: good._testModuleFidelity });
   assert.equal(badResult.verdict, "FIX-FIRST");
   assert(badResult.errors.some(item => /generic uniform card wall/.test(item)));
   assert.equal(goodResult.verdict, "PASS", goodResult.errors.join("; "));
   assert(goodResult.implementedFeatures.includes("engineering-variable-table"));
+  const base2BadResult = inspectPage(base2Bad, {
+    theme: "base2",
+    strictVisualContinuity: true,
+    moduleThemeFidelity: base2Bad._testModuleFidelity,
+    moduleSource: base2Bad._testModuleSource
+  });
+  const base2GoodResult = inspectPage(base2Good, {
+    theme: "base2",
+    strictVisualContinuity: true,
+    moduleThemeFidelity: base2Good._testModuleFidelity,
+    moduleSource: base2Good._testModuleSource
+  });
+  assert.equal(base2BadResult.verdict, "FIX-FIRST");
+  assert(base2BadResult.errors.some(item => /card wall|meaningful connector|flat layer/.test(item)));
+  assert.equal(base2GoodResult.verdict, "PASS", base2GoodResult.errors.join("; "));
   const chromeResult = inspectPage({
     id: "cover-fixture",
     relationship: "cover"
@@ -228,6 +320,20 @@ function main() {
   if (process.argv.includes("--self-test")) return selfTest();
   const direct = process.argv.slice(2).find(arg => !arg.startsWith("--") && fs.existsSync(path.resolve(arg)));
   const cfg = (() => { try { return require(path.join(ROOT, "deck.config.js")); } catch { return {}; } })();
+  const revisionContract = readJson(path.join(ROOT, "state", "revision-contract.json"), null);
+  const impact = revisionContract ? classifyVisualImpact(ROOT, revisionContract) : null;
+  const strictPages = new Set(revisionContract?.mode === "full-rebuild" || impact?.wide || impact?.sharedSystemChanged
+    ? pageDirs().flatMap(dir => {
+      const page = readJson(path.join(PAGES, dir, "page.json"), {});
+      return [dir, String(page.id || "")];
+    })
+    : impact?.declaredVisualPages || []);
+  const eventVisualChange = ["layoutChanged", "designChanged", "themeChanged", "componentChanged"]
+    .some(name => cfg.workflow?.events?.[name] === true);
+  if (!revisionContract && eventVisualChange) {
+    const active = cfg.workflow?.activePages || [];
+    (active.length ? active : pageDirs()).forEach(id => strictPages.add(id));
+  }
   if (direct) {
     const file = path.resolve(direct);
     const page = readJson(file, {});
@@ -235,6 +341,8 @@ function main() {
     const row = inspectPage(page, {
       theme,
       moduleThemeFidelity: moduleEvidence(path.dirname(file)),
+      moduleSource: moduleSource(path.dirname(file)),
+      strictVisualContinuity: process.argv.includes("--strict") || strictPages.has(path.basename(path.dirname(file))) || strictPages.has(String(page.id || "")),
       inputDigest: inputDigest(path.dirname(file), theme)
     });
     console.log(JSON.stringify(row, null, 2));
@@ -248,6 +356,8 @@ function main() {
     return inspectPage(readJson(path.join(pageDir, "page.json"), {}), {
       theme: cfg.theme,
       moduleThemeFidelity: moduleEvidence(pageDir),
+      moduleSource: moduleSource(pageDir),
+      strictVisualContinuity: process.argv.includes("--strict") || strictPages.has(dir) || strictPages.has(String(readJson(path.join(pageDir, "page.json"), {}).id || "")),
       inputDigest: inputDigest(pageDir, cfg.theme)
     });
   });
@@ -258,4 +368,4 @@ function main() {
 }
 
 if (require.main === module) main();
-module.exports = { inspectPage, inferCompositionFeatures, featureIds, inputDigest, writeReport, selfTest };
+module.exports = { inspectPage, inferCompositionFeatures, inferSourceFeatures, sourceSignals, featureIds, inputDigest, writeReport, selfTest };

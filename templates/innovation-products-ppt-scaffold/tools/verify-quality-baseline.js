@@ -134,7 +134,7 @@ for (const { dir, data: page } of pages) {
     const compositionMoves = (uiCalls.length - componentCalls.length) + (src.match(/\bslide\.add\w+\s*\(/g) || []).length;
     if (componentCalls.length >= 1 && compositionMoves < 6) {
       add(intentionallySparse ? warnings : errors, id, "composition",
-        `疑似单组件直出页（组件调用 ${componentCalls.length}，构图动作仅 ${compositionMoves}）。组件只允许承担主体区块，页面还需标题带、结论带或图例/标注等自定义区。`);
+        `疑似单组件直出页（组件调用 ${componentCalls.length}，构图动作仅 ${compositionMoves}）。组件只允许承担主体区块，页面还需标题带、2–3 个职责清楚的大区、主证据/机制/决策核心，以及必要的图例、标注或关系线。`);
     } else if (componentCalls.length === 0 && compositionMoves < 8) {
       add(warnings, id, "composition", `页面构图动作偏少（${compositionMoves}），请确认不是内容单薄的占位构图。`);
     }

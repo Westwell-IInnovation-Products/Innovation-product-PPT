@@ -203,7 +203,7 @@ node tools/build-qa-profile.js pages/<id>/page.json --write
 ### 主题保真
 
 - Base 主体是否由规则、分栏、轨道、扁平内容面和单一焦点组织，而不是阴影卡墙。
-- Base2 是否存在有意义的主板/内嵌层、状态轨或决策层级，而不是均匀圆角卡墙。
+- Base2 是否存在主证据/机制/决策核心、平面内嵌层、承担关系的线条和角色化轻阴影，而不是均匀圆角卡墙；状态 rail 与 decision band 是否只在真实语义需要时出现。
 - Global 高容量页是否使用证据主画面、紧凑 KPI rail、工程变量表、Δ 对比或显式待仿真状态。
 - Global 的 2×3 空指标卡 + 三张普通信息卡即使配色/chrome 正确，也必须由 `t.global.no-card-wall` 阻塞。
 - `output/theme-fidelity-audit.json` 的机器 FAIL 不能被 reviewer 自然语言覆盖；机器 PASS 仍需联系表/全尺寸人工相似度审查。

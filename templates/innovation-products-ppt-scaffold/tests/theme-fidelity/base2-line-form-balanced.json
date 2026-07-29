@@ -1,0 +1,47 @@
+{
+  "id": "base2-line-form-balanced",
+  "contentDensity": "high",
+  "visualSelection": {
+    "selectedRoute": {
+      "route": "page-specific-custom",
+      "name": "custom-composition"
+    }
+  },
+  "themeFidelity": {
+    "version": "theme-fidelity.v1",
+    "theme": "base2",
+    "archetype": "base2.mechanism-chain",
+    "features": [
+      "layered-evidence-board",
+      "meaningful-rule-integration",
+      "role-based-elevation",
+      "region-eyebrows"
+    ],
+    "composition": {
+      "majorRegions": 3,
+      "primaryVisualCore": true,
+      "meaningfulLines": 4,
+      "shadowedPrimarySurfaces": 2,
+      "flatSupportLayers": 3,
+      "decorativeRails": 0,
+      "semanticStateRails": 1,
+      "statusStates": 1,
+      "uniformCardGrid": {
+        "uniform": false,
+        "count": 4,
+        "emptyCards": 0
+      }
+    }
+  },
+  "_testModuleFidelity": {
+    "theme": "base2",
+    "archetype": "base2.mechanism-chain",
+    "features": [
+      "layered-evidence-board",
+      "meaningful-rule-integration",
+      "role-based-elevation",
+      "region-eyebrows"
+    ]
+  },
+  "_testModuleSource": "ui.line(slide, 1, 1, 2, 2); ui.surface(slide, 0, 0, 4, 3, { role: 'primary', shadow: true }); ui.insetRow(slide, { shadow: false });"
+}

@@ -6,7 +6,7 @@
 |---|---|
 | 安装目录 | `innovation-products-ppt` |
 | 调用方式 | `$innovation-products-ppt` |
-| 当前版本 | `0.6.0-beta.26` |
+| 当前版本 | `0.6.0-beta.27` |
 | 公开主题 | `leander-base`、`base2`、`leander-global` |
 | 主要输出 | 可编辑 PPTX、逐页渲染图与总览图 |
 
@@ -254,6 +254,7 @@ git pull --ff-only origin main
 
 | 版本 | 日期 | 主要变化 |
 |---|---|---|
+| `0.6.0-beta.27` | 2026-07-29 | 新增跨主题修改防漂移：视觉影响自动识别、共享主题/组件变更后的新鲜审批、Base2 线形融合与分角色阴影审计，以及通用卡片墙拦截。 |
 | `0.6.0-beta.26` | 2026-07-29 | 修复 review 与 active 叠加造成的红卡蓝轨冲突，统一 blocked/high/current/Gate 危险语义，并增加小字号正文和卡内纵向空洞审计。 |
 | `0.6.0-beta.25` | 2026-07-28 | 统一三套主题的 review/blocked 状态语义，修复 Global 阻断状态误用天蓝强调色，并增加跨主题回归测试。 |
 | `0.6.0-beta.24` | 2026-07-28 | 恢复 Base2 状态轨、内嵌层与决策带语义，新增 `statusCard` 和 `base2GovernanceChain`，并锁定 review/blocked 状态回归。 |

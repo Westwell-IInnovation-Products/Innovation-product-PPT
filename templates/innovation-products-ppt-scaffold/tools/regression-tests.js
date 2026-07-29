@@ -46,6 +46,7 @@ function assertBase2Contract() {
     focusShadowOpacity: 0.18,
     focusShadowBlur: 2,
     railThickness: 6,
+    railEnabled: true,
     railEdgeInset: 1,
     railCrossInset: 12,
     reviewRail: "blue",
@@ -71,6 +72,7 @@ function assertBase2Contract() {
     focusShadowOpacity: theme.elevation.focus.opacity,
     focusShadowBlur: theme.elevation.focus.blur,
     railThickness: theme.rail.thickness,
+    railEnabled: theme.rail.enabled,
     railEdgeInset: theme.rail.edgeInset,
     railCrossInset: theme.rail.crossInset,
     reviewRail: theme.rail.meanings.review,
@@ -134,6 +136,17 @@ function assertBase2ComponentContract() {
   const highRail = runtime.components.semanticRail(fakeSlide, 0, 0, 320, 100, "high");
   if (highRail.color !== runtime.theme.colors.danger) {
     throw new Error(`Base2 high rail must normalize to danger: ${JSON.stringify(highRail)}`);
+  }
+  const originalRailEnabled = runtime.theme.rail.enabled;
+  runtime.theme.rail.enabled = false;
+  const railDisabledShapes = [];
+  const railDisabled = runtime.components.statusCard({
+    addShape(type, options) { railDisabledShapes.push(options); },
+    addText() {}
+  }, 0, 0, 320, 100, { state: "review", title: "Review without rail" });
+  runtime.theme.rail.enabled = originalRailEnabled;
+  if (railDisabledShapes.length !== 1 || railDisabled.railMeaning !== "review") {
+    throw new Error(`Base2 theme.rail.enabled=false must suppress the rail without changing state semantics: ${JSON.stringify({ railDisabledShapes, railDisabled })}`);
   }
   console.log("PASS Base2 component and state semantic contract");
 }
@@ -207,8 +220,11 @@ function assertThemeFidelityContract() {
     if (typeof runtime.components[name] !== "function") throw new Error(`Shared high-capacity renderer missing: ${name}`);
   }
   const base2 = getTheme("base2");
-  for (const feature of ["layered-evidence-board", "state-rail", "tiered-radius-depth", "region-eyebrows", "semantic-focus-panel", "decision-band"]) {
+  for (const feature of ["layered-evidence-board", "state-rail", "tiered-radius-depth", "role-based-elevation", "meaningful-rule-integration", "region-eyebrows", "semantic-focus-panel", "decision-band"]) {
     if (!base2.contentFidelity.features[feature]) throw new Error(`Base2 content-fidelity feature missing: ${feature}`);
+  }
+  for (const feature of ["role-based-elevation", "meaningful-rule-integration"]) {
+    if (!base2.contentFidelity.strictRequiredFeatures?.includes(feature)) throw new Error(`Base2 strict visual-continuity feature missing: ${feature}`);
   }
   if (!base2.contentFidelity.componentFeatureMap.base2GovernanceChain?.includes("decision-band")) {
     throw new Error("Base2 governance-chain renderer must map to the decision-band fidelity feature");

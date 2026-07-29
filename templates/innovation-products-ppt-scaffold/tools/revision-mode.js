@@ -51,19 +51,83 @@ function listFiles(root) {
   return files.sort();
 }
 
+const VISUAL_CHANGE_PATTERN = /(layout|design|visual|theme|style|shadow|elevation|line|rule|connector|card|rail|radius|colour|color|composition|archetype|shape|region|panel|surface|spacing|typography|版式|布局|设计|视觉|主题|风格|阴影|层级|线条|连线|卡片|状态条|圆角|颜色|构图|原型|形状|分区|面板|间距|字体)/i;
+
+function pageVisualSignature(pageJson = {}) {
+  const fidelity = pageJson.themeFidelity || {};
+  const visualSelection = pageJson.visualSelection || {};
+  const route = pageJson.selectedRoute || visualSelection.selectedRoute || pageJson.route || {};
+  return stable({
+    theme: fidelity.theme || pageJson.theme || "",
+    archetype: fidelity.archetype || pageJson.archetype || "",
+    features: Array.isArray(fidelity.features) ? [...fidelity.features].sort() : [],
+    primaryShapeClass: pageJson.primaryShapeClass || visualSelection.primaryShapeClass || fidelity.primaryShapeClass || "",
+    skeletonFamily: pageJson.skeletonFamily || visualSelection.skeletonFamily || fidelity.skeletonFamily || "",
+    selectedRoute: typeof route === "string" ? route : {
+      route: route.route || route.type || "",
+      name: route.name || route.component || ""
+    }
+  });
+}
+
+function implementationVisualSignature(source = "") {
+  const structuralCalls = [
+    "surface", "card", "panel", "insetRow", "barCard", "statusCard",
+    "line", "connector", "timeline", "processTimeline", "pipelineFlow", "processFlow",
+    "swimlane", "matrix", "tree", "hierarchy", "semanticRail", "conclusionBand",
+    "evidenceBoard", "base2GovernanceChain", "engineeringVariableTable", "deltaCompare"
+  ];
+  const calls = Object.fromEntries(structuralCalls.map(name => [
+    name,
+    (source.match(new RegExp(`\\b(?:ui\\.)?${name}\\s*\\(`, "g")) || []).length
+  ]).filter(([, count]) => count > 0));
+  const shapeClasses = [...new Set([
+    ...(source.match(/ShapeType\.([A-Za-z0-9_]+)/g) || []).map(value => value.split(".")[1]),
+    ...(source.match(/\b(?:diamond|hexagon|chevron|arc|ellipse|triangle|rect|roundRect)\b/g) || [])
+  ])].sort();
+  return stable({
+    calls,
+    shapeClasses,
+    shadowTrue: (source.match(/\bshadow\s*:\s*true\b/g) || []).length,
+    shadowFalse: (source.match(/\bshadow\s*:\s*false\b/g) || []).length,
+    railDisabled: (source.match(/\brail\s*:\s*false\b/g) || []).length
+  });
+}
+
+function treeHash(root) {
+  const files = listFiles(root).map(file => [
+    path.relative(root, file).replace(/\\/g, "/"),
+    shaFile(file)
+  ]);
+  return stableHash(files);
+}
+
+function visualSystemSnapshot(root) {
+  const files = ["DESIGN.md", "visual-direction.md", "theme-contract.md"];
+  return {
+    files: Object.fromEntries(files.map(file => [file, shaFile(path.join(root, file))])),
+    themeTreeSha256: treeHash(path.join(root, "theme")),
+    componentTreeSha256: treeHash(path.join(root, "components"))
+  };
+}
+
 function pageSnapshot(root, dir) {
   const pageDir = path.join(root, "pages", dir);
   const pageJsonFile = path.join(pageDir, "page.json");
+  const pageJsFile = path.join(pageDir, "page.js");
   const pageJson = readJson(pageJsonFile, {});
+  const pageSource = fs.existsSync(pageJsFile) ? fs.readFileSync(pageJsFile, "utf8") : "";
   const pageContract = Object.fromEntries(Object.entries(pageJson).filter(([key]) => key !== "qaProfile"));
   const assets = listFiles(pageDir)
     .filter(file => !["page.js", "page.json"].includes(path.basename(file).toLowerCase()))
     .map(file => [path.relative(pageDir, file).replace(/\\/g, "/"), shaFile(file)]);
   return {
-    pageJsSha256: shaFile(path.join(pageDir, "page.js")),
+    pageJsSha256: shaFile(pageJsFile),
     pageJsonSha256: shaFile(pageJsonFile),
     pageContractSha256: stableHash(pageContract),
-    assetTreeSha256: stableHash(assets)
+    assetTreeSha256: stableHash(assets),
+    visualSignature: pageVisualSignature(pageJson),
+    implementationVisualSignature: implementationVisualSignature(pageSource)
   };
 }
 
@@ -103,6 +167,7 @@ function initialize(root, mode, options = {}) {
       pageCount: ids.length,
       pageIds: ids,
       pages: Object.fromEntries(ids.map(id => [id, pageSnapshot(root, id)])),
+      visualSystem: visualSystemSnapshot(root),
       source: note || "existing editable pages"
     },
     authorization: {
@@ -123,6 +188,86 @@ function initialize(root, mode, options = {}) {
   };
   writeJson(path.join(root, "state", "revision-contract.json"), contract);
   return contract;
+}
+
+function changeText(item) {
+  return Array.isArray(item?.change) ? item.change.join(" ") : String(item?.change || "");
+}
+
+function classifyVisualImpact(root, contract) {
+  const map = Array.isArray(contract?.pageMap) ? contract.pageMap : [];
+  const affected = map.filter(item => ["modify", "add", "reorder"].includes(item.operation));
+  const declaredVisualPages = affected
+    .filter(item => VISUAL_CHANGE_PATTERN.test(changeText(item)))
+    .map(item => item.targetPage || item.sourcePage)
+    .filter(Boolean);
+  const signatureChanges = [];
+  for (const item of affected) {
+    if (!item.sourcePage || !item.targetPage) continue;
+    const baselinePage = contract?.baseline?.pages?.[item.sourcePage];
+    if (!baselinePage?.visualSignature || !fs.existsSync(path.join(root, "pages", item.targetPage))) continue;
+    const currentPage = pageSnapshot(root, item.targetPage);
+    const metadataChanged = stableHash(baselinePage.visualSignature) !== stableHash(currentPage.visualSignature);
+    const implementationChanged = baselinePage.implementationVisualSignature
+      ? stableHash(baselinePage.implementationVisualSignature) !== stableHash(currentPage.implementationVisualSignature)
+      : false;
+    if (metadataChanged || implementationChanged) {
+      signatureChanges.push({
+        sourcePage: item.sourcePage,
+        targetPage: item.targetPage,
+        metadataChanged,
+        implementationChanged,
+        declared: VISUAL_CHANGE_PATTERN.test(changeText(item))
+      });
+    }
+  }
+  const baselineSystem = contract?.baseline?.visualSystem;
+  const currentSystem = visualSystemSnapshot(root);
+  const sharedSystemChanged = !!baselineSystem && stableHash(baselineSystem) !== stableHash(currentSystem);
+  const baselineCount = Number(contract?.baseline?.pageCount || 0);
+  const wide = declaredVisualPages.length >= 3
+    && baselineCount > 0
+    && declaredVisualPages.length / baselineCount >= 0.35;
+  const hasPageVisual = declaredVisualPages.length > 0 || signatureChanges.length > 0;
+  const level = sharedSystemChanged ? "shared-system"
+    : wide ? "deck-wide"
+      : hasPageVisual ? "page-level"
+        : "content-only";
+  return {
+    level,
+    declaredVisualPages: [...new Set(declaredVisualPages)].sort(),
+    signatureChanges,
+    sharedSystemChanged,
+    wide,
+    requiresFreshAnchor: sharedSystemChanged || wide,
+    requiresFullDeckVisualReview: sharedSystemChanged || wide,
+    requiresFreshThemeBlueprint: sharedSystemChanged
+  };
+}
+
+function freshCheckpointErrors(root, contract, visualImpact) {
+  const errors = [];
+  if (!visualImpact.requiresFreshAnchor) return errors;
+  const state = readJson(path.join(root, "state", "run-state.json"), {});
+  const receipt = readJson(path.join(root, "workflow-receipt.json"), {});
+  const checkpoints = readJson(path.join(root, "checkpoint-status.json"), {}).checkpoints || {};
+  const runId = state.runId || receipt.runId || "";
+  const createdAt = Date.parse(contract.createdAt || "");
+  const requireFresh = (key, label) => {
+    const item = checkpoints[key] || {};
+    const approvedAt = Date.parse(item.approvedAt || "");
+    if (item.status !== "approved") errors.push(`${label} must be approved after a wide/shared visual revision`);
+    if (!runId || (item.approvalReceiptRunId || item.runId) !== runId) errors.push(`${label} approval must belong to the current runId`);
+    if (!Number.isFinite(createdAt) || !Number.isFinite(approvedAt) || approvedAt <= createdAt) {
+      errors.push(`${label} approval must be fresh after revision-contract.createdAt`);
+    }
+  };
+  requireFresh("anchorSample", "anchorSample");
+  if (visualImpact.requiresFreshThemeBlueprint) {
+    requireFresh("theme", "theme");
+    requireFresh("layoutBlueprint", "layoutBlueprint");
+  }
+  return errors;
 }
 
 function inspect(root, options = {}) {
@@ -208,8 +353,30 @@ function inspect(root, options = {}) {
         }
       });
     }
+    const visualImpact = classifyVisualImpact(root, contract);
+    visualImpact.signatureChanges
+      .filter(item => !item.declared)
+      .forEach(item => errors.push(`visual signature changed without a visual change declaration: ${item.sourcePage} -> ${item.targetPage}`));
+    if (options.enforceDiff === true) errors.push(...freshCheckpointErrors(root, contract, visualImpact));
+    return { ok: errors.length === 0, errors, contract, visualImpact };
   }
-  return { ok: errors.length === 0, errors, contract };
+  return {
+    ok: errors.length === 0,
+    errors,
+    contract,
+    visualImpact: contract.mode === "full-rebuild"
+      ? {
+        level: "full-rebuild",
+        declaredVisualPages: pageIds(root),
+        signatureChanges: [],
+        sharedSystemChanged: true,
+        wide: true,
+        requiresFreshAnchor: true,
+        requiresFullDeckVisualReview: true,
+        requiresFreshThemeBlueprint: true
+      }
+      : classifyVisualImpact(root, contract)
+  };
 }
 
 function verify(root, options = {}) {
@@ -236,6 +403,16 @@ function upgradeContract(root) {
     }
   }
   contract.scopes = contract.scopes || { editScope: ["modify", "add", "delete", "reorder"], finalValidationScope: "all-current-pages" };
+  contract.baseline.visualSystem = contract.baseline.visualSystem || visualSystemSnapshot(root);
+  for (const id of baselineIds) {
+    const before = contract.baseline.pages?.[id];
+    if (before && !before.visualSignature && fs.existsSync(path.join(root, "pages", id, "page.json"))) {
+      before.visualSignature = pageVisualSignature(readJson(path.join(root, "pages", id, "page.json"), {}));
+    }
+    if (before && !before.implementationVisualSignature && fs.existsSync(path.join(root, "pages", id, "page.js"))) {
+      before.implementationVisualSignature = implementationVisualSignature(fs.readFileSync(path.join(root, "pages", id, "page.js"), "utf8"));
+    }
+  }
   writeJson(file, contract);
   return contract;
 }
@@ -247,7 +424,12 @@ function selfTest() {
     fs.mkdirSync(path.join(temp, "pages", "p02-b"), { recursive: true });
     ["p01-a", "p02-b"].forEach(id => {
       fs.writeFileSync(path.join(temp, "pages", id, "page.js"), `module.exports={id:${JSON.stringify(id)}};\n`, "utf8");
-      fs.writeFileSync(path.join(temp, "pages", id, "page.json"), JSON.stringify({ id }) + "\n", "utf8");
+      fs.writeFileSync(path.join(temp, "pages", id, "page.json"), JSON.stringify({
+        id,
+        themeFidelity: { theme: "base2", archetype: "process", features: ["meaningful-rule-integration"] },
+        primaryShapeClass: "rounded-panel",
+        selectedRoute: { route: "component-library", name: "timeline" }
+      }) + "\n", "utf8");
     });
     if (inspect(temp).ok) throw new Error("missing contract must fail");
     const delta = initialize(temp, "delta-revision", { note: "Revise the existing deck from user feedback." });
@@ -267,6 +449,36 @@ function selfTest() {
     writeJson(path.join(temp, "state", "revision-contract.json"), resetDelta);
     const unchangedModify = inspect(temp, { enforceDiff: true });
     if (unchangedModify.ok || !unchangedModify.errors.some(item => /modify page has no actual change/.test(item))) throw new Error("unchanged modify page must fail");
+    const visuallyChanged = readJson(path.join(temp, "pages", "p01-a", "page.json"), {});
+    visuallyChanged.primaryShapeClass = "diamond";
+    fs.writeFileSync(path.join(temp, "pages", "p01-a", "page.json"), JSON.stringify(visuallyChanged) + "\n", "utf8");
+    const undeclaredVisual = inspect(temp, { enforceDiff: true });
+    if (undeclaredVisual.ok || !undeclaredVisual.errors.some(item => /visual signature changed without/.test(item))) throw new Error("undeclared visual signature change must fail");
+    resetDelta.pageMap[0].change = ["Change layout and primary shape while preserving content."];
+    writeJson(path.join(temp, "state", "revision-contract.json"), resetDelta);
+    const declaredVisual = inspect(temp, { enforceDiff: true });
+    if (!declaredVisual.visualImpact.declaredVisualPages.includes("p01-a")) throw new Error("declared page visual impact must be classified");
+    const implementationDelta = initialize(temp, "delta-revision", { note: "Test source-level visual drift." });
+    implementationDelta.pageMap[1].operation = "modify";
+    implementationDelta.pageMap[1].change = ["Rewrite the body copy."];
+    implementationDelta.pageMap[1].preserve = ["Keep the current layout and component structure."];
+    writeJson(path.join(temp, "state", "revision-contract.json"), implementationDelta);
+    fs.appendFileSync(path.join(temp, "pages", "p02-b", "page.js"), "\nui.line(slide, 0, 0, 1, 1);\n");
+    const undeclaredImplementation = inspect(temp, { enforceDiff: true });
+    if (undeclaredImplementation.ok || !undeclaredImplementation.visualImpact.signatureChanges.some(item => item.implementationChanged && !item.declared)) {
+      throw new Error("source-level visual structure change must require a visual declaration");
+    }
+    const sharedSystemDelta = initialize(temp, "delta-revision", { note: "Test shared visual-system change." });
+    writeJson(path.join(temp, "state", "revision-contract.json"), sharedSystemDelta);
+    fs.writeFileSync(path.join(temp, "DESIGN.md"), "# Changed design system\n", "utf8");
+    const sharedSystemResult = inspect(temp, { enforceDiff: true });
+    if (sharedSystemResult.ok
+      || sharedSystemResult.visualImpact.level !== "shared-system"
+      || !sharedSystemResult.errors.some(item => /anchorSample must be approved/.test(item))
+      || !sharedSystemResult.errors.some(item => /theme must be approved/.test(item))
+      || !sharedSystemResult.errors.some(item => /layoutBlueprint must be approved/.test(item))) {
+      throw new Error("shared visual-system change must require fresh theme, blueprint, and anchor approvals");
+    }
     delta.pageMap.pop();
     writeJson(path.join(temp, "state", "revision-contract.json"), delta);
     if (inspect(temp).ok) throw new Error("incomplete baseline coverage must fail");
@@ -293,11 +505,12 @@ if (require.main === module) {
       const contract = upgradeContract(root);
       console.log(`Upgraded revision contract semantic hashes for ${contract.baseline.pageCount} pages.`);
     } else if (command === "verify") {
-      const contract = verify(root, { enforceDiff: arg("intent") !== "redesign" });
-      console.log(`PASS revision mode: ${contract.mode}; baseline=${contract.baseline.pageCount}; map=${contract.pageMap.length}`);
+      const result = inspect(root, { enforceDiff: arg("intent") !== "redesign" });
+      if (!result.ok) throw new Error(`REVISION MODE BLOCKED:\n- ${result.errors.join("\n- ")}`);
+      console.log(`PASS revision mode: ${result.contract.mode}; baseline=${result.contract.baseline.pageCount}; map=${result.contract.pageMap.length}; visualImpact=${result.visualImpact.level}`);
     } else if (command === "status") {
       const result = inspect(root);
-      console.log(JSON.stringify({ ok: result.ok, mode: result.contract?.mode || null, errors: result.errors }, null, 2));
+      console.log(JSON.stringify({ ok: result.ok, mode: result.contract?.mode || null, visualImpact: result.visualImpact || null, errors: result.errors }, null, 2));
       if (!result.ok) process.exitCode = 1;
     } else throw new Error("usage: revision-mode.js init <delta-revision|full-rebuild>|upgrade-contract|verify|status");
   } catch (error) {
@@ -306,4 +519,19 @@ if (require.main === module) {
   }
 }
 
-module.exports = { initialize, inspect, verify, upgradeContract, pageIds, pageSnapshot, sameSnapshot, stableHash, shaFile, selfTest };
+module.exports = {
+  initialize,
+  inspect,
+  verify,
+  upgradeContract,
+  pageIds,
+  pageSnapshot,
+  pageVisualSignature,
+  implementationVisualSignature,
+  visualSystemSnapshot,
+  classifyVisualImpact,
+  sameSnapshot,
+  stableHash,
+  shaFile,
+  selfTest
+};

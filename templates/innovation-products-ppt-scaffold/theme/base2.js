@@ -62,6 +62,7 @@ const base2Theme = {
   // Approved Base2 state-rail geometry. The rail stays visually attached to
   // the container edge; large insets make it look like an unrelated blue line.
   rail: {
+    enabled: true,
     thickness: 6,
     edgeInset: 1,
     crossInset: 12,
@@ -104,6 +105,8 @@ const base2Theme = {
     divider: "big-number",
     cover: "warm-right",
     closing: "center-warm",
+    // Style used only when a page explicitly calls conclusionBand.
+    // A Base2 content page does not need a bottom band by default.
     conclusion: "band"
   },
   // Resolved to the executable profile by theme/tokens.js.
